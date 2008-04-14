@@ -1,0 +1,215 @@
+From msg@joachim-breitner.de Sat Apr 12 01:11:10 2008
+Return-path: <msg@joachim-breitner.de>
+Envelope-to: mail@joachim-breitner.de
+Delivery-date: Sat, 12 Apr 2008 01:11:10 +0200
+Received: from otto.vpn.ehbuehl.net ([10.254.1.11] helo=otto.ehbuehl.net)
+	by quimby.ehbuehl.net with esmtpsa (TLS-1.0:RSA_AES_256_CBC_SHA1:32) (Exim
+	4.63) (envelope-from <msg@joachim-breitner.de>) id 1JkSOb-0003tD-P8; Sat,
+	12 Apr 2008 01:11:10 +0200
+Received: from jojo by otto.ehbuehl.net with local (Exim 4.69)
+	(envelope-from <msg@joachim-breitner.de>) id 1JkSOb-0003b5-2E; Sat, 12 Apr
+	2008 01:11:01 +0200
+To: HAppS@googlegroups.com
+From: Joachim Breitner <mail@joachim-breitner.de>
+Subject: darcs patch: instance MonadError e m => MonadError e ... (and 1
+	more)
+Cc: mail@joachim-breitner.de
+X-Mail-Originator: Darcs Version Control System
+X-Darcs-Version: 1.0.9 (release)
+DarcsURL: http://happs.org/repos/HAppS-HTTP
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="=_"
+Message-Id: <E1JkSOb-0003b5-2E@otto.ehbuehl.net>
+Sender: Joachim Breitner <msg@joachim-breitner.de>
+Date: Sat, 12 Apr 2008 01:11:01 +0200
+X-Spam-Score: -6.6 (------)
+X-Spam-Report: Status No, score=-6.6 required=5.0 bayes=0.0000
+	tests=BAYES_00=-6.599 autolearn=ham version=3.2.3
+X-Evolution-Source: imap://mail%40joachim-breitner.de@10.254.1.101/
+
+
+--=_
+Content-Type: text/plain
+Content-Transfer-Encoding: 8bit
+
+Hi,
+
+these two patches add some simple optinoal error handling capabilities
+to HAppS, by allowing the programmer to add the ErrorT transformer into
+the stack, and by providing a simple function to catch these errors
+in the WebT monad. Both functions have haddock documentation. I quote it here:
+
+errorHandlerSP :: (Monad m, Error e) => (Request -> e -> WebT m a) ->
+                           [ServerPartT (ErrorT e m) a] -> [ServerPartT m a]
+
+This ServerPart modifier enables the use of throwError and catchError inside
+the WebT actions, by adding the ErrorT monad transformer to the stack.
+
+You can wrap the complete second argument to simpleHTTP in this function.
+
+See simpleErrorHandler for an example error handler.
+
+simpleErrorHandler :: Monad m => Request -> String -> WebT m Response
+
+An example error Handler to be used with errorHandlerSP, which returns the
+error message as a plain text message to the browser.
+
+Another possibility is to store the error message, e.g. as a FlashMsg, and then
+redirect the user somewhere. 
+
+Thanks,
+Joachim
+
+Sat Apr 12 00:48:37 CEST 2008  Joachim Breitner <mail@joachim-breitner.de>
+  * instance MonadError e m => MonadError e (WebT m)
+  This makes it easier to use throwError inside a ErrorT inside WebT,
+  maybe together with errorHandlerSP
+
+Sat Apr 12 01:03:30 CEST 2008  Joachim Breitner <mail@joachim-breitner.de>
+  * errorHandling functions
+  Adds errorHanderSP and simpleErrorHander, which allows the use of the
+  ErrorT transformer in WebT.
+
+
+--=_
+Content-Type: text/x-darcs-patch; name="instance-monaderror-e-m-__-monaderror-e-_webt-m_.dpatch"
+Content-Description: A darcs patch for your repository!
+Content-Transfer-Encoding: 8bit
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+
+New patches:
+
+[instance MonadError e m => MonadError e (WebT m)
+Joachim Breitner <mail@joachim-breitner.de>**20080411224837
+ This makes it easier to use throwError inside a ErrorT inside WebT,
+ maybe together with errorHandlerSP
+] {
+hunk ./src/HAppS/Server/SimpleHTTP.hs 106
++import Control.Monad.Error
+hunk ./src/HAppS/Server/SimpleHTTP.hs 169
++instance MonadError e m => MonadError e (WebT m) where
++	throwError err = WebT $ throwError err
++ 	catchError action handler = WebT $ catchError (unWebT action) (unWebT . handler)
++
+}
+
+[errorHandling functions
+Joachim Breitner <mail@joachim-breitner.de>**20080411230330
+ Adds errorHanderSP and simpleErrorHander, which allows the use of the
+ ErrorT transformer in WebT.
+] {
+hunk ./src/HAppS/Server/SimpleHTTP.hs 90
++      -- * Error Handlng
++    , errorHandlerSP
++    , simpleErrorHandler
+hunk ./src/HAppS/Server/SimpleHTTP.hs 606
++--------------------------------------------------------------
++-- Error Handling
++--------------------------------------------------------------
++
++-- | This ServerPart modifier enables the use of throwError and catchError inside the
++--   WebT actions, by adding the ErrorT monad transformer to the stack.
++--
++--   You can wrap the complete second argument to 'simpleHTTP' in this function.
++--
++--   See 'simpleErrorHandler' for an example error handler.
++errorHandlerSP :: (Monad m, Error e) => (Request -> e -> WebT m a) -> [ServerPartT (ErrorT e m) a] -> [ServerPartT m a] 
++errorHandlerSP handler sps = [ ServerPartT $ \req -> WebT $ do
++			eer <- runErrorT $ unWebT $ unServerPartT (multi sps) req
++			case eer of
++				Left err -> unWebT (handler req err)
++				Right res -> return res
++		]
++
++-- | An example error Handler to be used with 'errorHandlerSP', which returns the
++--   error message as a plain text message to the browser.
++--
++--   Another possibility is to store the error message, e.g. as a FlashMsg, and
++--   then redirect the user somewhere.
++simpleErrorHandler :: (Monad m) => Request -> String -> WebT m Response
++simpleErrorHandler _ err = ok $ toResponse $ ("An error occured: " ++ err)
++
+}
+
+Context:
+
+[Add rqUri field to Record
+Joachim Breitner <mail@joachim-breitner.de>**20080403110245
+ This makes sure the exact Uri is not lost (otherwise a trailing slash would be
+ lost to the rest of the HAppS code). This makes it possible to write a handler
+ like this:
+ 
+ addSlash :: Monad m => ServerPartT m Response
+ addSlash = ServerPartT $ \rq -> do
+ 	case last (rqUri rq) of
+ 		'/' -> noHandle
+ 		_   -> seeOther (rqUri rq ++ "/" ++ rqQuery rq) $
+ 				toResponse "Missing trainling slash"
+ 
+ which ensures that all paths end with a trailing slash, or of course a similar
+ removeSlash handler, to make relative paths in HTML links behave nicely.
+ More on this issue at http://groups.google.com/group/HAppS/browse_frm/thread/4065c842b1cfe7c7
+] 
+[Distributed chat example.
+lemmih <lemmih@vo.com>**20080318144925] 
+[Add a signature to 'debugFilter'. Haddock doesn't show it otherwise.
+lemmih <lemmih@vo.com>**20080314162252] 
+[Multimaster example.
+lemmih <lemmih@vo.com>**20080314162014] 
+[Fix typo in runTests.sh
+lemmih <lemmih@vo.com>**20080314160613] 
+[Fix haddock annotation and bump version.
+Lemmih <lemmih@vo.com>**20080229152550] 
+[Cabal wibble.
+Lemmih <lemmih@vo.com>**20080222232935] 
+[Cabal wibble.
+Lemmih <lemmih@vo.com>**20080222232730] 
+[TAG 0.9.2
+Lemmih <lemmih@vo.com>**20080222225514] 
+[Bump version to 0.9.2
+Lemmih <lemmih@vo.com>**20080222225151] 
+[Update snippet in package-info.xml
+Lemmih <lemmih@vo.com>**20080222223603] 
+[Don't rely on Xml for serialization.
+Lemmih <lemmih@vo.com>**20080222223302] 
+[Match changes in HAppS-State.
+Lemmih <lemmih@vo.com>**20080218201437] 
+[fix conflicts
+alex@happs.org**20080216004432] 
+[Match development in HAppS-State.
+Lemmih <lemmih@vo.com>**20080215010026] 
+[Match changes in HAppS-State.
+Lemmih <lemmih@vo.com>**20080215004016] 
+[Comment for AllIn.hs
+Lemmih <lemmih@vo.com>**20080214234424] 
+[Don't use Xml for serialization.
+Lemmih <lemmih@vo.com>**20080214233742] 
+[Don't export Cron from SimpleHTTP.
+Lemmih <lemmih@vo.com>**20080212154505] 
+[Remove ServerPart.hs
+Lemmih <lemmih@vo.com>**20080212154312] 
+[Update examples to match development in HAppS-State.
+Lemmih <lemmih@vo.com>**20080212142058] 
+[Show usage of componentInit in AllIn.hs
+Lemmih <lemmih@vo.com>**20080212011338] 
+[TAG 0.9.1.5
+Lemmih <lemmih@vo.com>**20080209112439] 
+Patch bundle hash:
+6579a6aeca01a58d2845d04ea5fe1c1d4b26f8f2
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.6 (GNU/Linux)
+
+iD8DBQFH/+8c9ijrk0dDIGwRAuK7AJ9oCvypMMyHlNmyGq9YKja18EykXQCePZC1
+eg+57CyqIz4VNbwrS3BKx9Q=
+=qqvc
+-----END PGP SIGNATURE-----
+
+--=_--
+
+.
+
+
+

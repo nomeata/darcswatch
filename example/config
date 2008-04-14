@@ -1,0 +1,7 @@
+DarcsWatchConfig {
+	cRepositories = [
+		"/home/jojo/build/haskell/HAppS-HTTP/"
+	],
+	cOutput = "/home/jojo/projekte/programming/haskell/darcswatch/example/output",
+	cMails = "/home/jojo/projekte/programming/haskell/darcswatch/example/mails"
+}
