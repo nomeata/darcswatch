@@ -66,6 +66,10 @@ userPage d u = showHtml $
 			r +++ ": "+++ state d p r
 		)
 	) +++
+	h2 << ("Unmatched patches") +++
+	(unordList $ flip map unmatched $ \p ->
+		patchView d p 
+	) +++
 	h2 << ("Applied patches") +++
 	(unordList $ flip map appPatches $ \p ->
 		patchView d p +++
@@ -75,9 +79,10 @@ userPage d u = showHtml $
 	)
 	)
   where ps = patchSort $ M.findWithDefault [] u (u2p d)
+  	(unmatched, ps') = partition (\p -> null ((M.findWithDefault [] p (p2pr d)))) ps
   	(appPatches, unappPatches) = partition (
 		\p -> all (\r -> applied d p r) (M.findWithDefault [] p (p2pr d))
-		) ps
+		) ps'
 
 repoPage d r = showHtml $
    header << thetitle << ("DarcsWatch overview for " +++ r) +++
