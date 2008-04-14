@@ -3,6 +3,7 @@ DarcsWatchConfig
 		[ "http://happs.org/repos/HAppS-HTTP/"
 		, "http://code.haskell.org/xmonad"
 		, "http://code.haskell.org/XMonadContrib"
+		, "http://code.haskell.org/lambdabot"
 		]
 	, cOutput = "/home/jojo/projekte/programming/haskell/darcswatch/example/output"
 	, cMails = "/home/jojo/projekte/programming/haskell/darcswatch/example/mails"
