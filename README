@@ -1,0 +1,40 @@
+darcswatch
+
+© 2008 Joachim Breitner <mail@joachim-breitner.de>
+
+This program tracks darcs patches and repositories, giving
+an overview over their state (applied or not applied).
+
+The patches are expected to come in via the mailfilter.sh
+program, which checks the gpg signature and stores the
+patches in the appropriate place.
+
+The main program then downloads the repository inventories
+and compares the mailed patches against the repository. It
+summaries their status per submitter and per repository.
+
+The program expects a directory as a parameter and will read
+the config file therin for configuration. An example
+configuration is included.
+
+
+There are a lot of open issues, and help is very
+appreciated. A non exlusive list of TODO items is:
+
+ * Support for tagged repositories (fetching older
+   inventories)
+ * Cache the inventories and only update when needed, by
+   issuing a HEAD request.
+ * Add a download link to each pach
+ * Add the diff to each patch, with some javascript
+   hiding/unhiding.
+ * Cabalize the program.
+ * Detect inverted patches and treat specially (e.g. an
+   unapplied patch where the user also submitted an inverted
+   patch can be considered obsolete)
+ * Nicer output (CSS magic!)
+ * (Maybe) Add repositores per gpg signed command
+
+When commiting patches, please make sure that they work with
+the version of ghc in the latest debian stable release, at
+the moment ghc6.6, and compatible libraries.
