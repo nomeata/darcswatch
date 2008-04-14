@@ -1,7 +1,6 @@
 DarcsWatchConfig
 	{ cRepositories =
-		[ "/home/jojo/build/haskell/HAppS-HTTP/"
-		, "http://happs.org/repos/HAppS-HTTP/"
+		[ "http://happs.org/repos/HAppS-HTTP/"
 		, "http://code.haskell.org/xmonad"
 		, "http://code.haskell.org/XMonadContrib"
 		]

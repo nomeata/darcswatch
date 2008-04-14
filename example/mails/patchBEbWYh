@@ -1,0 +1,156 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+
+New patches:
+
+[Fix window order in EWMH
+Joachim Breitner <mail@joachim-breitner.de>**20080411134411
+ For pagers to draw the stacking order correctly, the focused window has to
+ be the last in the list. Thus put an appropriate implementation of allWindows
+ into the Module.
+ This does not work perfectly with floating windows.
+] {
+hunk ./XMonad/Hooks/EwmhDesktops.hs 62
+- -    let wins = W.allWindows s
+hunk ./XMonad/Hooks/EwmhDesktops.hs 76
++    -- all windows, with focused windows last
++    let wins =  nub . concatMap (maybe [] (\(W.Stack x l r)-> reverse l ++ r ++ [x]) . W.stack) $ ws
+}
+
+Context:
+
+[remove myself as maintainer of CopyWindow.
+David Roundy <droundy@darcs.net>**20080409144333
+ I'm not sure who's maintaining this, but it's not me.
+] 
+[XMonad.Util.WindowProperties: add WM_WINDOW_ROLE as Role
+Roman Cheplyaka <roma@ro-che.info>**20080409174935] 
+[Generalize copyWindow, minor style change
+Spencer Janssen <sjanssen@cse.unl.edu>**20080408210050] 
+[XMonad.Actions.CopyWindow: added copyToAll and killAllOtherCopies functions
+Ivan N. Veselov <veselov@gmail.com>**20080408195111] 
+[XMonad.Actions.UpdatePointer: doc fix
+Lukas Mai <l.mai@web.de>**20080407152741] 
+[XMonad.Util.Font: minor reformatting
+Lukas Mai <l.mai@web.de>**20080406020935] 
+[DynamicLog: resolve merge conflict
+Lukas Mai <l.mai@web.de>**20080406020527] 
+[Encode the entire DynamicLog output, instead of just window title.
+lithis <xmonad@selg.hethrael.org>**20080329031537] 
+[DynamicLog: add support for UTF-8 locales when compiled with XFT or UFT-8 support
+Andrea Rossato <andrea.rossato@unibz.it>**20080313102643] 
+[XMonad.Util.Font: don't call setlocale; core does it for us
+Lukas Mai <l.mai@web.de>**20080406013123] 
+[XMonad.Util.NamedWindows: fix imports
+Lukas Mai <l.mai@web.de>**20080326172745] 
+[Changed getName to use locale-aware functions
+Mats Jansborg <mats@jansb.org>**20070819132104
+ Rewrote getName using getTextProperty and wcTextPropertyToTextList.
+] 
+[Added next-window versions of the raise* functions.
+Ian Zerny <ian@zerny.dk>**20080405182900] 
+[XMonad.Layout.Master: initial import
+Lukas Mai <l.mai@web.de>**20080404220734] 
+[update contrib for applySizeHints changes
+Lukas Mai <l.mai@web.de>**20080404220558] 
+[XMonad.Hooks.ManageDocks: haddock fix
+Lukas Mai <l.mai@web.de>**20080404220532] 
+[MultiToggle/Instances: ghc 6.6 can't parse LANGUAGE pragma
+Brent Yorgey <byorgey@gmail.com>**20080404200157] 
+[onstart=lower, solves floating dzen issue
+Don Stewart <dons@galois.com>**20080403203425] 
+[some bang patterns
+Don Stewart <dons@galois.com>**20080403172246] 
+[have 'dzen' use autoStruts to detect the gaps
+Don Stewart <dons@galois.com>**20080403003130] 
+[Actions/Search.hs: add dictionary.com search
+Brent Yorgey <byorgey@gmail.com>**20080402150521] 
+[HintedGrid: guesstimate window flexibility and layout rigid windows first
+Lukas Mai <l.mai@web.de>**20080402042846] 
+[HintedGrid: try both bottom-up/top-down window placement to minimize unused space
+Lukas Mai <l.mai@web.de>**20080402012538] 
+[Grid/HintedGrid: use an ncolumns formula inspired by dwm's "optimal" mode
+Lukas Mai <l.mai@web.de>**20080402012126] 
+[XMonad.Layout.Gaps: new contrib module for manual gap support, in the few cases where ManageDocks is not appropriate (dock apps that don't set STRUTS properly, adjusting for a display that is cut off on one edge, etc.)
+Brent Yorgey <byorgey@gmail.com>**20080402003742] 
+[improve WindowGo.hs Haddock formatting
+gwern0@gmail.com**20080401023130] 
+[forgot a haddock for getEditor in Shell.hs
+gwern0@gmail.com**20080401022012] 
+[WindowGo.hs: +raiseBrowser, raiseEditor
+gwern0@gmail.com**20080401021740
+ Specialize runOrRaise in the same way as with Actions.Search, for one's browser and one's editors.
+] 
+[RunOrRaise.hs: FF 3 doesn't use the "Firefox-bin" classname
+gwern0@gmail.com**20080401015049] 
+[Search.hs: remove an argument from selectSearch and promptSearch
+gwern0@gmail.com**20080401013947
+ The new getBrowser function allows us to mv the old selectSearch and promptSearch aside as too-general functions, and replace them with new versions, which employ getBrowser to supply one more argument. This allows us to replace the tedious 'selectSearch google "firefox"; selectSearch yahoo "firefox"...' with shorter 'selectSearch google' and so on. One less argument.
+ 
+ Also, update the docs.
+] 
+[Shell.hs: +getBrowser, getEditor, helper function
+gwern0@gmail.com**20080401013447
+ The helper function asks the shell for the value of a variable, else returns the second argument.
+ getBrowser and getEditor obviously specialize it for two particular possibly queries
+] 
+[XMonad.Layout.HintedGrid: initial import
+Lukas Mai <l.mai@web.de>**20080401231722] 
+[Documentation improvement.
+Roman Cheplyaka <roma@ro-che.info>**20080401134305] 
+[Remove broken link to screenshot.
+Roman Cheplyaka <roma@ro-che.info>**20080331210854] 
+[MultiToggle: add new XMonad.Layout.MultiToggle.Instances module for common instances of Transformer, update MultiToggle docs accordingly
+Brent Yorgey <byorgey@gmail.com>**20080331201739] 
+[XMonad.Actions.CycleRecentWS: initial import
+Michal Janeczek <janeczek@gmail.com>**20080331111906] 
+[XMonad.Hooks.ManageDocks: export checkDoc
+Lukas Mai <l.mai@web.de>**20080331012911] 
+[XMonad.Layout.Grid: fix indentation
+Lukas Mai <l.mai@web.de>**20080330004859] 
+[move Direction type from WindowNavigation to ManageDocks (ManageDocks will move into the core, taking Direction with it)
+Brent Yorgey <byorgey@gmail.com>**20080331010127] 
+[ManageDocks: clean up + add more documentation
+Brent Yorgey <byorgey@gmail.com>**20080331002929] 
+[Util.Run, Hooks.DynamicLog: re-export hPutStrLn and hPutStr from Util.Run for convenience, and update DynamicLog documentation to show proper imports
+Brent Yorgey <byorgey@gmail.com>**20080328205446] 
+[ManageDocks: add avoidStrutsOn, for covering some docks and not others by default.
+Brent Yorgey <byorgey@gmail.com>**20080327203940] 
+[ManageDocks: add ability to toggle individual gaps independently
+Brent Yorgey <byorgey@gmail.com>**20080327111722] 
+[PerWorkspace: add modWorkspace(s) combinators, for selectively applying layout modifiers to certain workspaces but not others
+Brent Yorgey <byorgey@gmail.com>**20080326214351] 
+[Haddock fix
+Roman Cheplyaka <roma@ro-che.info>**20080330134435] 
+[Remove stale status gaps code
+Spencer Janssen <sjanssen@cse.unl.edu>**20080329230737] 
+[Document _NET_ACTIVE_WINDOW behaviour more exactly
+Joachim Breitner <mail@joachim-breitner.de>**20080404072944] 
+[_NET_ACTIVE_WINDOW moves windows if necessary
+Joachim Breitner <mail@joachim-breitner.de>*-20080402143811
+ This makes EWMH behave a bit more like metacity: If _NET_ACTIVE_WINDOW is
+ received and the window is not on the current worspace, it is brought here 
+ (instead of the workspace switched to the other one). So for example, if you
+ click on the pidgin icon in the panel and the buddy list is already open some
+ where it is moved here.
+] 
+[_NET_ACTIVE_WINDOW moves windows if necessary
+Joachim Breitner <mail@joachim-breitner.de>**20080402143811
+ This makes EWMH behave a bit more like metacity: If _NET_ACTIVE_WINDOW is
+ received and the window is not on the current worspace, it is brought here 
+ (instead of the workspace switched to the other one). So for example, if you
+ click on the pidgin icon in the panel and the buddy list is already open some
+ where it is moved here.
+] 
+[TAG 0.7
+Spencer Janssen <sjanssen@cse.unl.edu>**20080329202416] 
+Patch bundle hash:
+ab26456486b1f248e095142caf4024e933dc010a
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.6 (GNU/Linux)
+
+iD8DBQFH/2vF9ijrk0dDIGwRAptwAJ9n0lgCRYVBsC99ADebFthaUf8wXwCgwD/+
+UvLM4JSNTaZgd6MhA+Y7BYk=
+=2Nz3
+-----END PGP SIGNATURE-----
