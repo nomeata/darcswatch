@@ -1,7 +1,10 @@
-DarcsWatchConfig {
-	cRepositories = [
-		"/home/jojo/build/haskell/HAppS-HTTP/"
-	],
-	cOutput = "/home/jojo/projekte/programming/haskell/darcswatch/example/output",
-	cMails = "/home/jojo/projekte/programming/haskell/darcswatch/example/mails"
-}
+DarcsWatchConfig
+	{ cRepositories =
+		[ "/home/jojo/build/haskell/HAppS-HTTP/"
+		, "http://happs.org/repos/HAppS-HTTP/"
+		, "http://code.haskell.org/xmonad"
+		, "http://code.haskell.org/XMonadContrib"
+		]
+	, cOutput = "/home/jojo/projekte/programming/haskell/darcswatch/example/output"
+	, cMails = "/home/jojo/projekte/programming/haskell/darcswatch/example/mails"
+	}
