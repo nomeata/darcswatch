@@ -15,9 +15,10 @@ data PatchInfo = PatchInfo
 
 
 parseInventory :: String -> IO [PatchInfo]
-parseInventory content = do
-	let (firstLine, rest) = breakOn '\n' content
-	let pis = readPatchInfos rest
+parseInventory content' = do
+	let (firstLine, rest) = breakOn '\n' content'
+	let content = if firstLine == "Starting with tag:" then rest else content'
+	let pis = readPatchInfos content
 	putStrLn ("Found " ++ show (length (pis)) ++ " patches")
 	return pis
 
