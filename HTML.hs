@@ -128,4 +128,4 @@ repoStats r d = stringToHtml $ printf
 userFile u = "user_" ++ md5 u ++ ".html"
 repoFile r = "repo_" ++ md5 r ++ ".html"
 
-patchSort = sortBy (compare `on` piDate)
+patchSort = reverse . sortBy (compare `on` piDate)
