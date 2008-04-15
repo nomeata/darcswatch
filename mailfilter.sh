@@ -25,7 +25,8 @@ echo "Verifying patch"
 if gpg --no-default-keyring --no-options --keyring "$KEYRING" --trust-model always --verify "$FILE" 
 then
 	echo "Patch ok, adding to patch directory"
-	perl -n -e 'print if (/^-----BEGIN PGP SIGNED MESSAGE-----/.../^-----END PGP SIGNATURE-----/)' < "$FILE" > "$DIR/$(basename "$FILE")"
+	MD5SUM=$(perl -n -e 'print if (/^-----BEGIN PGP SIGNED MESSAGE-----/.../^-----END PGP SIGNATURE-----/)' < "$FILE" |md5sum - |cut -c-32)
+	perl -n -e 'print if (/^-----BEGIN PGP SIGNED MESSAGE-----/.../^-----END PGP SIGNATURE-----/)' < "$FILE" > "$DIR/patch_$MD5SUM"
 	echo "Updateing darcswatch web view"
 	$DARCSWATCH $CONFIG 
 else
