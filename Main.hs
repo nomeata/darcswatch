@@ -33,8 +33,8 @@ main = do
 	let readInv (p2r,r2p) rep = do 
 		putStrLn $ "Reading " ++ rep ++ " ..." 
 		invFile <- getInventory (rep ++ "/_darcs/inventory")
-		ps <- parseInventory invFile
-		let p2r' = foldr (\p -> M.insertWith (++) p [rep]) p2r ps
+		let ps = parseInventory invFile
+		    p2r' = foldr (\p -> M.insertWith (++) p [rep]) p2r ps
 		    r2p' = M.insertWith (++) rep ps r2p
 		return (p2r', r2p')
 	(p2r,r2p) <- foldM readInv (M.empty, M.empty) (cRepositories config)
