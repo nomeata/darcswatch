@@ -31,8 +31,6 @@ appreciated. A non exlusive list of TODO items is:
    inventories)
  * Cache the inventories and only update when needed, by
    issuing a HEAD request.
- * Add the diff to each patch, with some javascript
-   hiding/unhiding.
  * Cabalize the program.
  * Detect inverted patches and treat specially (e.g. an
    unapplied patch where the user also submitted an inverted
