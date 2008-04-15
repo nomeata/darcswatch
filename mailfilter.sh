@@ -17,21 +17,66 @@ test -n "$KEYRING" || { echo "Missing keyring parameter"; exit 1; }
 test -n "$DARCSWATCH" || { echo "Missing darcswatch parameter"; exit 1; }
 test -n "$CONFIG" || { echo "Missing config parameter"; exit 1; }
 
+function grep_dpatch { perl -n -e 'print if (/^New patches:/.../^--=_/)'; }
+function grep_gpg {
+	perl -n -e 'print if (/^-----BEGIN PGP SIGNED MESSAGE-----/.../^-----END PGP SIGNATURE-----/)';
+	}
+function md5 { md5sum - |cut -c-32 ; }
 
 FILE=$(tempfile --prefix patch)
 mimedecode > "$FILE"
 
-echo "Verifying patch"
-if gpg --no-default-keyring --no-options --keyring "$KEYRING" --trust-model always --verify "$FILE" 
+if fgrep -q 'List-Post: <mailto:darcs-devel@darcs.net>' "$FILE"
 then
-	echo "Patch ok, adding to patch directory"
-	MD5SUM=$(perl -n -e 'print if (/^-----BEGIN PGP SIGNED MESSAGE-----/.../^-----END PGP SIGNATURE-----/)' < "$FILE" |md5sum - |cut -c-32)
-	perl -n -e 'print if (/^-----BEGIN PGP SIGNED MESSAGE-----/.../^-----END PGP SIGNATURE-----/)' < "$FILE" > "$DIR/patch_$MD5SUM"
-	echo "Updateing darcswatch web view"
-	$DARCSWATCH $CONFIG 
+	echo "Looking for a patch"
+	
+	if fgrep -q 'Content-Type: text/x-darcs-patch;' "$FILE"
+	then
+
+		echo "Looking for gpg frame"
+		if fgrep -q -- '-----BEGIN PGP SIGNED MESSAGE-----' "$FILE"
+		then
+
+			echo "Patch ok, adding to patch directory"
+			MD5SUM=$(grep_gpg < "$FILE" | md5)
+			grep_gpg < "$FILE" > "$DIR/patch_$MD5SUM"
+			echo "Updateing darcswatch web view"
+			$DARCSWATCH $CONFIG 
+
+			rm "$FILE"
+			exit 0
+
+		else
+			echo "Patch ok, adding to patch directory"
+			MD5SUM=$(perl -n -e 'print if (/^New patches:/.../^--=_/)' < "$FILE" |md5sum - |cut -c-32)
+			perl -n -e 'print if (/^New patches:/.../^--=_/)' < "$FILE" > "$DIR/patch_$MD5SUM"
+			echo "Updateing darcswatch web view"
+			$DARCSWATCH $CONFIG 
+
+			rm "$FILE"
+			exit 0
+
+		fi
+
+	else
+		echo "No patch contained, it seems"
+	fi
 else
-	echo "Verification failed:" 
-	echo "Did you sign your patches?" 
-	rm "$FILE"
-	exit 1
+	echo "Verifying patch"
+	if gpg --no-default-keyring --no-options --keyring "$KEYRING" --trust-model always --verify "$FILE" 
+	then
+		echo "Patch ok, adding to patch directory"
+		MD5SUM=$(grep_gpg < "$FILE" | md5)
+		grep_gpg < "$FILE" > "$DIR/patch_$MD5SUM"
+		echo "Updateing darcswatch web view"
+		$DARCSWATCH $CONFIG 
+
+		rm "$FILE"
+		exit 0
+	else
+		echo "Verification failed:" 
+		echo "Did you sign your patches?" 
+		rm "$FILE"
+		exit 1
+	fi
 fi
