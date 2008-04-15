@@ -41,3 +41,10 @@ appreciated. A non exlusive list of TODO items is:
 When commiting patches, please make sure that they work with
 the version of ghc in the latest debian stable release, at
 the moment ghc6.6, and compatible libraries.
+
+BTW, the simple darcs repository parsing code might be useful for
+other projects as well. I try to keep the patches for the Darcs.hs
+related stuff separate from the rest, so you can select them when
+darcs pull’ing. If you also follow this procedure, we can share the
+Darcs.hs code between projects, by making sure our patches to these
+files can be shared without dragging in the rest of the project.
