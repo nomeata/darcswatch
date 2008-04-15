@@ -16,9 +16,10 @@ import qualified Data.Map as M
 import Data.Map ((!))
 import Data.List
 import Data.Ord
---import Data.Function
+import System.Time
 
 import Darcs
+
 
 -- not in ghc6.6
 infixl 0 `on`
@@ -39,7 +40,7 @@ data ResultData = ResultData
 users d = M.keys (u2p d)
 repos d = M.keys (r2p d)
 
-mainPage d = showHtml $
+mainPage d date = showHtml $
    header << thetitle << "DarcsWatch overview" +++
    body << (
 	h1 << "DarcsWatch overview" +++
@@ -51,7 +52,17 @@ mainPage d = showHtml $
 	h2 << "Listing by user" +++ 
 	unordList (map (\u -> hotlink (userFile u) << u +++ userStats u d) (users d)) +++
 	h2 << "Listing by repository" +++ 
-	unordList (map (\r -> hotlink (repoFile r) << r +++ repoStats r d) (repos d))
+	unordList (map (\r -> hotlink (repoFile r) << r +++ repoStats r d) (repos d)) +++
+	h2 << "Remarks" +++
+	p << (
+		"darcswatch © Joachim Breitner <" +++
+		hotlink "mailto:mail@joachim-breitner.de" << "mail@joachim-breitner.d" +++
+		">. Source code at " +++
+		hotlink "http://darcs.nomeata.de/darcswatch/" << "http://darcs.nomeata.de/darcswatch/"+++
+		". Last update " +++
+		calendarTimeToString date +++
+		"."
+		)
    )
 
 userPage d u = showHtml $
