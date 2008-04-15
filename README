@@ -17,6 +17,12 @@ The program expects a directory as a parameter and will read
 the config file therin for configuration. An example
 configuration is included.
 
+darcsweb uses modules from these non-standard packages:
+ * xhtml
+ * network
+ * HTTP
+ * Crypto
+ * parsec
 
 There are a lot of open issues, and help is very
 appreciated. A non exlusive list of TODO items is:
