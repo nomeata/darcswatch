@@ -7,7 +7,7 @@ module HTML
 	, repoFile
 	) where
 
-import MD5String (md5)
+import StringCrypto (md5)
 
 import Text.XHtml hiding ((!))
 import qualified Text.XHtml ((!))
@@ -145,5 +145,6 @@ userData u d = (ps, unmatched, appPatches, unappPatches)
 
 userFile u = "user_" ++ md5 u ++ ".html"
 repoFile r = "repo_" ++ md5 r ++ ".html"
+
 
 patchSort = reverse . sortBy (compare `on` piDate)
