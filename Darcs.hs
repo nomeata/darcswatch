@@ -2,8 +2,12 @@ module Darcs
 	( parseInventory
 	, parseMail
 	, PatchInfo(..)
+	, patchBasename
 	) where
 
+import OldDate
+import System.Time
+import StringCrypto
 
 data PatchInfo = PatchInfo
 	{ piDate :: String
@@ -188,6 +192,26 @@ readPatch s =
 	      then Nothing
 	      else return (unlines want ++ (head r), unlines (tail r))
     where dn x = if null x || head x /= '\n' then x else tail x
+
+patchFilename :: PatchInfo -> String
+patchFilename pi = patchBasename pi ++ ".gz"
+
+patchBasename :: PatchInfo -> String
+patchBasename pi = showIsoDateTime d++"-"++sha1_a++"-"++sha1 sha1_me
+        where b2ps True = "t"
+              b2ps False = "f"
+              sha1_me = concat   [piName pi,
+                                  piAuthor pi,
+                                  piDate pi,
+                                  concat $ piLog pi,
+                                  b2ps $ piInverted pi]
+              d = readPatchDate $ piDate pi
+              sha1_a = take 5 $ sha1 $ piAuthor pi
+
+readPatchDate :: String -> CalendarTime
+readPatchDate = ignoreTz . readUTCDate
+  where ignoreTz ct = ct { ctTZ = 0 }
+
 
 (-:-) :: a -> ([a],b)  -> ([a],b)
 a -:- (as,r) = (a:as,r)
