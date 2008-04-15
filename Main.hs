@@ -71,10 +71,10 @@ main = do
 	-- Unapplicable patches
 	let unapplicable = filter (\p -> not (M.member p p2pr)) patches
 
-	let resultData = ResultData p2r r2p u2p p2c p2d p2pr r2mp unapplicable
-	putStrLn "Writing output..."
 	now <- getClockTime >>= toCalendarTime
- 	writeFile (cOutput config ++ "/index.html") (mainPage resultData now)
+	let resultData = ResultData p2r r2p u2p p2c p2d p2pr r2mp unapplicable now
+	putStrLn "Writing output..."
+ 	writeFile (cOutput config ++ "/index.html") (mainPage resultData)
  
  	forM_ users $ \u ->
  		writeFile (cOutput config ++ "/" ++ userFile u) (userPage resultData u)

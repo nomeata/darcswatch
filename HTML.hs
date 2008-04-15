@@ -35,12 +35,13 @@ data ResultData = ResultData
 	, p2pr :: M.Map PatchInfo [String]
 	, r2mp :: M.Map String    [PatchInfo]
 	, unapplicable :: [PatchInfo]
+	, date :: CalendarTime
 	}
 
 users d = M.keys (u2p d)
 repos d = M.keys (r2p d)
 
-mainPage d date = showHtml $
+mainPage d = showHtml $
    header << thetitle << "DarcsWatch overview" +++
    body << (
 	h1 << "DarcsWatch overview" +++
@@ -53,17 +54,19 @@ mainPage d date = showHtml $
 	unordList (map (\u -> hotlink (userFile u) << u +++ userStats u d) (users d)) +++
 	h2 << "Listing by repository" +++ 
 	unordList (map (\r -> hotlink (repoFile r) << r +++ repoStats r d) (repos d)) +++
-	h2 << "Remarks" +++
-	p << (
+	footer d
+	)
+
+footer d = 
+	p !!! [thestyle "font-size:80%"] << (
 		"darcswatch © Joachim Breitner <" +++
 		hotlink "mailto:mail@joachim-breitner.de" << "mail@joachim-breitner.de" +++
 		">. Source code at " +++
 		hotlink "http://darcs.nomeata.de/darcswatch/" << "http://darcs.nomeata.de/darcswatch/"+++
 		". Last update " +++
-		calendarTimeToString date +++
+		calendarTimeToString (date d) +++
 		"."
 		)
-   )
 
 userPage d u = showHtml $
    header << thetitle << ("DarcsWatch overview for " +++ u) +++
@@ -71,7 +74,8 @@ userPage d u = showHtml $
 	h1 << ("DarcsWatch overview for " +++ u) +++
 	patchList d unappPatches "Unapplied patches" True +++
 	patchList d unmatched "Unmatched patches" True +++
-	patchList d appPatches "Applied patches" True
+	patchList d appPatches "Applied patches" True +++
+	footer d
 	)
   where (ps, unmatched, appPatches, unappPatches) = userData u d
 
@@ -80,7 +84,8 @@ repoPage d r = showHtml $
    body << (
 	h1 << ("DarcsWatch overview for " +++ r) +++
 	patchList d unappPatches "Unapplied patches" False +++
-	patchList d appPatches "Applied patches" False
+	patchList d appPatches "Applied patches" False +++
+	footer d
 	)
   where (ps, appPatches, unappPatches) = repoData r d
  
