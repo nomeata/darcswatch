@@ -26,17 +26,17 @@ data PatchInfo = PatchInfo
 getInventory :: String -> IO [PatchInfo]
 getInventory repo = do
 		old_inv <- httpGet old_inventory
-		case old_inv of
-			Just content ->	return (parseInventory content)
-			Nothing ->	do
-				new_inv <- httpGet hashed_inventory
-				case new_inv of 
-					Just content ->	return (parseHashedInventory content)
-					Nothing -> do
-						putStrLn $ "Repository " ++ repo ++ " not found."
-						return []
+		maybe' old_inv (return . parseInventory) $ do
+
+			new_inv <- httpGet hashed_inventory
+			maybe' new_inv (return . parseInventory) $ do
+
+				putStrLn $ "Repository " ++ repo ++ " not found."
+				return []
+
   where	old_inventory = addSlash repo ++ "_darcs/inventory"
         hashed_inventory = addSlash repo ++ "_darcs/hashed_inventory"
+	maybe' m f d = maybe d f m
 
 httpGet uri' = do
 	let Just uri = parseURI uri'
@@ -48,21 +48,19 @@ httpGet uri' = do
 		})
 	return $ case result of
 		Left err -> Nothing
-		Right response -> Just $ rspBody response
-
-parseHashedInventory :: String -> [PatchInfo]
-parseHashedInventory content' = undefined
+		Right response -> case rspCode response of 
+			(2,_,_) -> Just $ rspBody response
+			_       -> Nothing
 
 parseInventory :: String -> [PatchInfo]
-parseInventory content' = do readPatchInfos content
-  where (firstLine, rest) = breakOn '\n' content'
-	content = if firstLine == "Starting with tag:" then rest else content'
+parseInventory content = readPatchInfos content
 
 readPatchInfos :: String -> [PatchInfo]
 readPatchInfos inv | null inv = []
-readPatchInfos inv = case readPatchInfo inv of
-                     Just (pinfo,r) -> pinfo : readPatchInfos r
-                     Nothing -> []
+readPatchInfos inv = case breakOn '[' inv of
+			(_,r) -> case readPatchInfo r of
+			     Just (pinfo,r) -> pinfo : readPatchInfos r
+			     Nothing -> []
 
 readPatchInfo :: String -> Maybe (PatchInfo, String)
 readPatchInfo s | null (dropWhite s) = Nothing
