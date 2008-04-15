@@ -1,13 +1,17 @@
 module Darcs
-	( parseInventory
+	( getInventory
+	, parseInventory
 	, parseMail
 	, PatchInfo(..)
 	, patchBasename
 	) where
 
 import OldDate
-import System.Time
 import StringCrypto
+
+import System.Time
+import Network.HTTP
+import Network.URI
 
 data PatchInfo = PatchInfo
 	{ piDate :: String
@@ -18,6 +22,36 @@ data PatchInfo = PatchInfo
    } deriving (Eq,Ord,Show)
 
 
+
+getInventory :: String -> IO [PatchInfo]
+getInventory repo = do
+		old_inv <- httpGet old_inventory
+		case old_inv of
+			Just content ->	return (parseInventory content)
+			Nothing ->	do
+				new_inv <- httpGet hashed_inventory
+				case new_inv of 
+					Just content ->	return (parseHashedInventory content)
+					Nothing -> do
+						putStrLn $ "Repository " ++ repo ++ " not found."
+						return []
+  where	old_inventory = addSlash repo ++ "_darcs/inventory"
+        hashed_inventory = addSlash repo ++ "_darcs/hashed_inventory"
+
+httpGet uri' = do
+	let Just uri = parseURI uri'
+	result <- simpleHTTP (Request
+		{ rqURI = uri
+		, rqMethod = GET
+		, rqHeaders = []
+		, rqBody = ""
+		})
+	return $ case result of
+		Left err -> Nothing
+		Right response -> Just $ rspBody response
+
+parseHashedInventory :: String -> [PatchInfo]
+parseHashedInventory content' = undefined
 
 parseInventory :: String -> [PatchInfo]
 parseInventory content' = do readPatchInfos content
@@ -207,3 +241,5 @@ readPatchDate = ignoreTz . readUTCDate
 (-:-) :: a -> ([a],b)  -> ([a],b)
 a -:- (as,r) = (a:as,r)
 
+addSlash filename | last filename == '/' = filename
+                  | otherwise            = filename ++ "/"
