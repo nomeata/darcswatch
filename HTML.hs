@@ -56,7 +56,7 @@ mainPage d date = showHtml $
 	h2 << "Remarks" +++
 	p << (
 		"darcswatch © Joachim Breitner <" +++
-		hotlink "mailto:mail@joachim-breitner.de" << "mail@joachim-breitner.d" +++
+		hotlink "mailto:mail@joachim-breitner.de" << "mail@joachim-breitner.de" +++
 		">. Source code at " +++
 		hotlink "http://darcs.nomeata.de/darcswatch/" << "http://darcs.nomeata.de/darcswatch/"+++
 		". Last update " +++
