@@ -67,9 +67,19 @@ footer d =
 		calendarTimeToString (date d) +++
 		"."
 		)
+myHeader d = script !!! [thetype "text/javascript"] << (
+		" function toggle_diff(id) {  "++
+		"    elem = document.getElementById(id); "++
+		"    if (elem) {if (elem.style.display == 'none') {elem.style.display = 'block';} else {elem.style.display = 'none'} }"++ 
+		" }"
+		)
+
 
 userPage d u = showHtml $
-   header << thetitle << ("DarcsWatch overview for " +++ u) +++
+   header << (
+   	thetitle << ("DarcsWatch overview for " +++ u) +++
+	myHeader d
+	) +++
    body << (
 	h1 << ("DarcsWatch overview for " +++ u) +++
 	patchList d unappPatches "Unapplied patches" True +++
@@ -80,7 +90,10 @@ userPage d u = showHtml $
   where (ps, unmatched, appPatches, unappPatches) = userData u d
 
 repoPage d r = showHtml $
-   header << thetitle << ("DarcsWatch overview for " +++ r) +++
+   header << (
+   	thetitle << ("DarcsWatch overview for " +++ r) +++
+	myHeader d
+	) +++
    body << (
 	h1 << ("DarcsWatch overview for " +++ r) +++
 	patchList d unappPatches "Unapplied patches" False +++
@@ -107,9 +120,15 @@ patchView d userCentric p =
 		)
 	 else	noHtml
 	) +++
+	pre !!! [identifier diffId, thestyle "display:none"] <<
+		M.findWithDefault "" p (p2d d) +++
 	paragraph << (	strong << "Actions: " +++
-			hotlink (patchBasename p ++ ".dpatch") << "Download .dpatch"
+			hotlink (pid ++ ".dpatch") << "Download .dpatch" +++
+			" "+++ 
+			anchor !!! [href "#", strAttr "onClick" ("toggle_diff('"++diffId++"')")] << "Show/Hide diff"
 			)
+  where pid = patchBasename p
+	diffId = "diff_"++pid
 		
 
 applied d p r = p `elem` (r2p d ! r)
