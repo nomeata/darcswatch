@@ -2,6 +2,7 @@
 import Control.Monad
 import System
 import System.Directory
+import System.Posix.Files
 import System.Time
 
 import Network.HTTP
@@ -41,14 +42,15 @@ main = do
 	putStrLn "Reading emails..."
 	mailFiles <- getDirectoryFiles (cMails config)
 
-	let readMail (u2p, p2c, p2d) mailFile = do
+	let readMail (u2p, p2c, p2d, p2f) mailFile = do
 		putStrLn $ "Reading mail " ++ mailFile ++ " ..."
 		(new,context) <- parseMail mailFile
 		let u2p' = foldr (\(p,_) -> M.insertWith (++) (piAuthor p) [p]) u2p new
 		    p2c' = foldr (\(p,_) -> M.insert p context) p2c new 
 		    p2d' = foldr (\(p,d) -> M.insert p d) p2d new
-		return (u2p', p2c', p2d')
-	(u2p, p2c, p2d) <- foldM readMail (M.empty, M.empty, M.empty) mailFiles
+		    p2f' = foldr (\(p,_) -> M.insert p mailFile) p2f new
+		return (u2p', p2c', p2d', p2f')
+	(u2p, p2c, p2d, p2f) <- foldM readMail (M.empty, M.empty, M.empty, M.empty) mailFiles
 
 	let patches = M.keys p2d -- Submitted patches
 	let repos   = M.keys r2p -- Repos with patches
@@ -79,6 +81,14 @@ main = do
  
  	forM_ repos $ \r ->
  		writeFile (cOutput config ++ "/" ++ repoFile r) (repoPage resultData r)
+
+	putStrLn "Linking patches"
+	let patchLink p f = do
+		let link = cOutput config ++ "/" ++ patchBasename p ++ ".dpatch"
+		ex <- fileExist link
+		unless ex $ createSymbolicLink f link
+	M.foldWithKey (\p f -> ( >> patchLink p f)) (return ()) p2f
+
 	return ()
 
 	
