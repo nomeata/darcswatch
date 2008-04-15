@@ -18,13 +18,11 @@ data PatchInfo = PatchInfo
    } deriving (Eq,Ord,Show)
 
 
-parseInventory :: String -> IO [PatchInfo]
-parseInventory content' = do
-	let (firstLine, rest) = breakOn '\n' content'
-	let content = if firstLine == "Starting with tag:" then rest else content'
-	let pis = readPatchInfos content
-	putStrLn ("Found " ++ show (length (pis)) ++ " patches")
-	return pis
+
+parseInventory :: String -> [PatchInfo]
+parseInventory content' = do readPatchInfos content
+  where (firstLine, rest) = breakOn '\n' content'
+	content = if firstLine == "Starting with tag:" then rest else content'
 
 readPatchInfos :: String -> [PatchInfo]
 readPatchInfos inv | null inv = []
