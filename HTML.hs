@@ -52,7 +52,6 @@ mainPage d = showHtml $
 	unordList (map (\u -> hotlink (userFile u) << u +++ userStats u d) (users d)) +++
 	h2 << "Listing by repository" +++ 
 	unordList (map (\r -> hotlink (repoFile r) << r +++ repoStats r d) (repos d))
-
    )
 
 userPage d u = showHtml $
@@ -78,11 +77,7 @@ userPage d u = showHtml $
 		)
 	)
 	)
-  where ps = patchSort $ M.findWithDefault [] u (u2p d)
-  	(unmatched, ps') = partition (\p -> null ((M.findWithDefault [] p (p2pr d)))) ps
-  	(appPatches, unappPatches) = partition (
-		\p -> all (\r -> applied d p r) (M.findWithDefault [] p (p2pr d))
-		) ps'
+  where (ps, unmatched, appPatches, unappPatches) = userData u d
 
 repoPage d r = showHtml $
    header << thetitle << ("DarcsWatch overview for " +++ r) +++
@@ -97,8 +92,7 @@ repoPage d r = showHtml $
 		patchView d p
 	)
 	)
-  where ps = patchSort $ M.findWithDefault [] r (r2mp d)
-  	(appPatches, unappPatches) = partition (\p -> applied d p r) ps
+  where (ps, appPatches, unappPatches) = repoData r d
 
 patchView d p =
 	piDate p +++ ": " +++ strong << piName p +++
@@ -114,16 +108,29 @@ state d p r | applied d p r = thespan !!! [thestyle "color:green"] << "Applied"
 
 
 userStats u d = stringToHtml $ printf
-	" %d total patches" -- , %d unapplied"
-	(length (M.findWithDefault [] u (u2p d))) -- ? 
+	" %d tracked patches, %d unapplied, %d unmatched" -- , %d unapplied"
+	(length ps)
+	(length unappPatches)
+	(length unmatched)
+  where (ps, unmatched, appPatches, unappPatches) = userData u d
 
 repoStats r d = stringToHtml $ printf
 	" %d patches in inventory, %d tracked, %d applicable" 
 	(length (M.findWithDefault [] r (r2p d)))
 	(length (ps))
 	(length (unappPatches))
+  where (ps, appPatches, unappPatches) = repoData r d
+
+repoData r d = (ps, appPatches, unappPatches) 
   where ps = patchSort $ M.findWithDefault [] r (r2mp d)
   	(appPatches, unappPatches) = partition (\p -> applied d p r) ps
+
+userData u d = (ps, unmatched, appPatches, unappPatches)
+  where ps = patchSort $ M.findWithDefault [] u (u2p d)
+  	(unmatched, ps') = partition (\p -> null ((M.findWithDefault [] p (p2pr d)))) ps
+  	(appPatches, unappPatches) = partition (
+		\p -> all (\r -> applied d p r) (M.findWithDefault [] p (p2pr d))
+		) ps'
 
 userFile u = "user_" ++ md5 u ++ ".html"
 repoFile r = "repo_" ++ md5 r ++ ".html"
