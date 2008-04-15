@@ -5,9 +5,6 @@ import System.Directory
 import System.Posix.Files
 import System.Time
 
-import Network.HTTP
-import Network.URI
-
 import qualified Data.Map as M
 
 -- Darcs stuff
@@ -32,9 +29,8 @@ main = do
 	putStrLn "Reading repositories..."
 	let readInv (p2r,r2p) rep = do 
 		putStrLn $ "Reading " ++ rep ++ " ..." 
-		invFile <- getInventory (rep ++ "/_darcs/inventory")
-		let ps = parseInventory invFile
-		    p2r' = foldr (\p -> M.insertWith (++) p [rep]) p2r ps
+		ps <- getInventory rep
+		let p2r' = foldr (\p -> M.insertWith (++) p [rep]) p2r ps
 		    r2p' = M.insertWith (++) rep ps r2p
 		return (p2r', r2p')
 	(p2r,r2p) <- foldM readInv (M.empty, M.empty) (cRepositories config)
@@ -90,22 +86,6 @@ main = do
 	M.foldWithKey (\p f -> ( >> patchLink p f)) (return ()) p2f
 
 	return ()
-
-	
-
-getInventory :: String -> IO String
-getInventory file | head file == '/' = readFile file	
-                  | otherwise        = do
-		  	let Just uri = parseURI file
-		  	result <- simpleHTTP (Request
-				{ rqURI = uri
-				, rqMethod = GET
-				, rqHeaders = []
-				, rqBody = ""
-				})
-			return $ case result of
-				Left err ->       ""
-				Right response -> rspBody response
 
 getDirectoryFiles dir' = getDirectoryContents dir >>=
 			return . (map (dir++)) >>=
