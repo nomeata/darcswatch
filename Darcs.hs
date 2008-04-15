@@ -183,15 +183,8 @@ filter_gpg_dashes ps =
 
 readPatch :: String -> Maybe (String, String)
 readPatch s | null (dropWhite s) = Nothing
-readPatch s =
-    if head (dropWhite s) /= '{' -- ]
-    then Nothing
-    else do let l = lines $ dn s
-    	        (want, r) = (takeWhile (/="}") l, dropWhile (/="}") l)
-	    if null r
-	      then Nothing
-	      else return (unlines want ++ (head r), unlines (tail r))
-    where dn x = if null x || head x /= '\n' then x else tail x
+readPatch s = if null r then Nothing else Just (unlines p,unlines r)
+  where (p,r) = break (\l -> null l || head l == '[') (lines s)
 
 patchFilename :: PatchInfo -> String
 patchFilename pi = patchBasename pi ++ ".gz"
