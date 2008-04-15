@@ -31,7 +31,6 @@ appreciated. A non exlusive list of TODO items is:
    inventories)
  * Cache the inventories and only update when needed, by
    issuing a HEAD request.
- * Add a download link to each pach
  * Add the diff to each patch, with some javascript
    hiding/unhiding.
  * Cabalize the program.
