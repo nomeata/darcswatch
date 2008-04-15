@@ -69,24 +69,9 @@ userPage d u = showHtml $
    header << thetitle << ("DarcsWatch overview for " +++ u) +++
    body << (
 	h1 << ("DarcsWatch overview for " +++ u) +++
-	h2 << ("Unapplied patches") +++
-	(unordList $ flip map unappPatches $ \p ->
-		patchView d p +++
-		(unordList $ flip map (M.findWithDefault [] p (p2pr d)) $ \r ->
-			r +++ ": "+++ state d p r
-		)
-	) +++
-	h2 << ("Unmatched patches") +++
-	(unordList $ flip map unmatched $ \p ->
-		patchView d p 
-	) +++
-	h2 << ("Applied patches") +++
-	(unordList $ flip map appPatches $ \p ->
-		patchView d p +++
-		(unordList $ flip map (M.findWithDefault [] p (p2pr d)) $ \r ->
-			r +++ ": "+++ state d p r
-		)
-	)
+	patchList d unappPatches "Unapplied patches" True +++
+	patchList d unmatched "Unmatched patches" True +++
+	patchList d appPatches "Applied patches" True
 	)
   where (ps, unmatched, appPatches, unappPatches) = userData u d
 
@@ -94,20 +79,33 @@ repoPage d r = showHtml $
    header << thetitle << ("DarcsWatch overview for " +++ r) +++
    body << (
 	h1 << ("DarcsWatch overview for " +++ r) +++
-	h2 << ("Unapplied patches") +++
-	(unordList $ flip map unappPatches $ \p ->
-		patchView d p
-	) +++
-	h2 << ("Applied patches") +++
-	(unordList $ flip map appPatches   $ \p ->
-		patchView d p
-	)
+	patchList d unappPatches "Unapplied patches" False +++
+	patchList d appPatches "Applied patches" False
 	)
   where (ps, appPatches, unappPatches) = repoData r d
+ 
+patchList d [] title userCentric = h5 << ("No "++title)
+patchList d ps title userCentric = 
+	h2 << title +++ (unordList $ map (patchView d userCentric) ps)
 
-patchView d p =
+patchView d userCentric p =
 	piDate p +++ ": " +++ strong << piName p +++
-	pre << unlines (piLog p)
+	(if userCentric
+	 then	noHtml
+	 else   (	" " +++ small << (" by " +++ hotlink (userFile (piAuthor p)) << piAuthor p)
+	 	)
+	) +++
+	pre << unlines (piLog p) +++
+	(if userCentric
+	 then	(unordList $ flip map (M.findWithDefault [] p (p2pr d)) $ \r ->
+			hotlink (repoFile r) << r +++ ": "+++ state d p r
+		)
+	 else	noHtml
+	) +++
+	paragraph << (	strong << "Actions: " +++
+			hotlink (patchBasename p ++ ".dpatch") << "Download .dpatch"
+			)
+		
 
 applied d p r = p `elem` (r2p d ! r)
 
