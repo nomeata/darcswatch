@@ -22,6 +22,10 @@ function grep_gpg {
 	perl -n -e 'print if (/^-----BEGIN PGP SIGNED MESSAGE-----/.../^-----END PGP SIGNATURE-----/)';
 	}
 function md5 { md5sum - |cut -c-32 ; }
+function update {
+	echo "Updateing darcswatch web view"
+	$DARCSWATCH $CONFIG new ;
+	}
 
 FILE=$(tempfile --prefix patch)
 mimedecode > "$FILE"
@@ -41,8 +45,7 @@ then
 			echo "Patch ok, adding to patch directory"
 			MD5SUM=$(grep_gpg < "$FILE" | md5)
 			grep_gpg < "$FILE" > "$DIR/patch_$MD5SUM"
-			echo "Updateing darcswatch web view"
-			$DARCSWATCH $CONFIG 
+			update
 
 			rm "$FILE"
 			exit 0
@@ -51,8 +54,7 @@ then
 			echo "Patch ok, adding to patch directory"
 			MD5SUM=$(perl -n -e 'print if (/^New patches:/.../^--=_/)' < "$FILE" |md5sum - |cut -c-32)
 			perl -n -e 'print if (/^New patches:/.../^--=_/)' < "$FILE" > "$DIR/patch_$MD5SUM"
-			echo "Updateing darcswatch web view"
-			$DARCSWATCH $CONFIG 
+			update
 
 			rm "$FILE"
 			exit 0
@@ -69,8 +71,7 @@ else
 		echo "Patch ok, adding to patch directory"
 		MD5SUM=$(grep_gpg < "$FILE" | md5)
 		grep_gpg < "$FILE" > "$DIR/patch_$MD5SUM"
-		echo "Updateing darcswatch web view"
-		$DARCSWATCH $CONFIG 
+		update
 
 		rm "$FILE"
 		exit 0
