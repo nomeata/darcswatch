@@ -132,7 +132,10 @@ patchList d ps title userCentric =
 	h2 << title +++ (unordList $ map (patchView d userCentric) ps)
 
 patchView d userCentric p =
-	piDate p +++ ": " +++ strong << piName p +++
+	piDate p +++ ": " +++ strong << (
+		(if piInverted p then stringToHtml "UNDO: " else noHtml) +++
+		piName p
+		) +++
 	(if userCentric
 	 then	noHtml
 	 else   (	" " +++ small << (" by " +++ hotlink (userFile (piAuthor p)) << piAuthor p)
