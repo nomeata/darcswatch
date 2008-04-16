@@ -103,6 +103,7 @@ userPage d u = showHtml $
 	) +++
    body << (
 	h1 << ("DarcsWatch overview for " +++ u) +++
+	p << hotlink "." << "Return to main page" +++
 	patchList d (sps !!!! NotApplied) "Unapplied patches" True +++
 	patchList d (sps !!!! Unmatched) "Unmatched patches" True +++
 	patchList d (sps !!!! Obsolete) "Obsolete patches" True +++
@@ -118,6 +119,7 @@ repoPage d r = showHtml $
 	) +++
    body << (
 	h1 << ("DarcsWatch overview for " +++ r) +++
+	p << hotlink "." << "Return to main page" +++
 	patchList d (sps !!!! NotApplied) "Unapplied patches" False +++
 	patchList d (sps !!!! Applied) "Applied patches" False +++
 	patchList d (sps !!!! Obsolete) "Obsolete patches" False +++
