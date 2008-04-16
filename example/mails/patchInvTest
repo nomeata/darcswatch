@@ -1,0 +1,147 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+
+New patches:
+
+[Dummy commit
+Joachim Breitner <mail@joachim-breitner.de>**20080416213715] {
+hunk ./README 50
++Dummy commit
++
+}
+
+[Dummy commit
+Joachim Breitner <mail@joachim-breitner.de>*-20080416213715] {
+hunk ./README 50
+- -Dummy commit
+- -
+}
+
+Context:
+
+[MultiMap.fromList
+Joachim Breitner <mail@joachim-breitner.de>**20080416213440] 
+[Multimap lookup with default
+Joachim Breitner <mail@joachim-breitner.de>**20080416200945] 
+[TODO: Documentation
+mail@joachim-breitner.de**20080416193846] 
+[unTODO Cabal and Caching
+mail@joachim-breitner.de**20080416193826] 
+[add License-File header
+Joachim Breitner <mail@joachim-breitner.de>**20080416193135] 
+[basic cabal support - please check that you like the contents
+marco-oweber@gmx.de**20080416191953] 
+[strict reading of tagFile
+Joachim Breitner <mail@joachim-breitner.de>**20080416191500] 
+[Force an update from the mail script
+Joachim Breitner <mail@joachim-breitner.de>**20080416150644] 
+[Only regenerate pages if there is something new.
+Joachim Breitner <mail@joachim-breitner.de>**20080416150525] 
+[pass up-to-dateness to caller in getInventory
+Joachim Breitner <mail@joachim-breitner.de>**20080416144419] 
+[Add UserAgent Header to requests
+Joachim Breitner <mail@joachim-breitner.de>**20080416143833] 
+[Pass cache directory to getInventory
+Joachim Breitner <mail@joachim-breitner.de>**20080416143402] 
+[Use CachedGet in Darcs.hs
+Joachim Breitner <mail@joachim-breitner.de>**20080416142626] 
+[CachedGet module for Cached HTTP
+Joachim Breitner <mail@joachim-breitner.de>**20080416142301] 
+[Enable receiving mails from the darcs list
+Joachim Breitner <mail@joachim-breitner.de>**20080416135921] 
+[Use MultiMap
+Joachim Breitner <mail@joachim-breitner.de>**20080416135024] 
+[Some helpers for Map k [v] or Map k (Set v)
+Joachim Breitner <mail@joachim-breitner.de>**20080416135006] 
+[Describe Darcs.hs separation
+Joachim Breitner <mail@joachim-breitner.de>**20080415225608] 
+[Put the rest under the GPL
+Joachim Breitner <mail@joachim-breitner.de>**20080415225151] 
+[Put Darcs.hs and StringCrypto.hs under the GPL
+Joachim Breitner <mail@joachim-breitner.de>**20080415225137] 
+[Add GPL licence
+Joachim Breitner <mail@joachim-breitner.de>**20080415225118] 
+[unTODO diff view
+Joachim Breitner <mail@joachim-breitner.de>**20080415222355] 
+[Add toggle button for diffs
+Joachim Breitner <mail@joachim-breitner.de>**20080415222114] 
+[Liberal inventory parsing, also works with hashed
+Joachim Breitner <mail@joachim-breitner.de>**20080415215043] 
+[Add darcs.net to example file
+Joachim Breitner <mail@joachim-breitner.de>**20080415213149] 
+[Use getInventory from Darcs.hs
+Joachim Breitner <mail@joachim-breitner.de>**20080415213128] 
+[Move getInventory to darcs.hs, stub for hashed
+Joachim Breitner <mail@joachim-breitner.de>**20080415212944] 
+[Use pure parseInventory
+Joachim Breitner <mail@joachim-breitner.de>**20080415212126] 
+[Make parseInventory pure
+Joachim Breitner <mail@joachim-breitner.de>**20080415212101] 
+[Make Darcs.hs accept darcs2.0 submissions without '{'
+Joachim Breitner <mail@joachim-breitner.de>**20080415211235] 
+[Improve bash code quality slightly
+Joachim Breitner <mail@joachim-breitner.de>**20080415210005] 
+[Use the md5sum for the patch file to avoid duplicates
+Joachim Breitner <mail@joachim-breitner.de>**20080415202850] 
+[unTODO download link
+Joachim Breitner <mail@joachim-breitner.de>**20080415201447] 
+[Document dependencies
+Joachim Breitner <mail@joachim-breitner.de>**20080415201439] 
+[Factor out common page footer
+Joachim Breitner <mail@joachim-breitner.de>**20080415200819] 
+[Refactor patchlists, add crosslinks and links to dpatch files
+Joachim Breitner <mail@joachim-breitner.de>**20080415200401] 
+[Create symlinks to the dpatch files
+Joachim Breitner <mail@joachim-breitner.de>**20080415194550] 
+[patchBasename function for Darcs.hs
+Joachim Breitner <mail@joachim-breitner.de>**20080415193016] 
+[HTML.hs uses StringCrypto
+Joachim Breitner <mail@joachim-breitner.de>**20080415192014] 
+[OldDate module stolen from darcs
+Joachim Breitner <mail@joachim-breitner.de>**20080415191533] 
+[Use the crypto library, create wrapper module for md5,sha1
+Joachim Breitner <mail@joachim-breitner.de>**20080415191246] 
+[typo
+Joachim Breitner <mail@joachim-breitner.de>**20080415100920] 
+[Add footer with current date
+Joachim Breitner <mail@joachim-breitner.de>**20080415100517] 
+[Factor out repo/user statistics
+Joachim Breitner <mail@joachim-breitner.de>**20080415095612] 
+[Add lambdabot to example (large repository)
+Joachim Breitner <mail@joachim-breitner.de>**20080414225332] 
+[Newest patches first
+Joachim Breitner <mail@joachim-breitner.de>**20080414225311] 
+[Also work on untagged repositories (lambdabot)
+Joachim Breitner <mail@joachim-breitner.de>**20080414225251] 
+[List unmatched patches separately
+Joachim Breitner <mail@joachim-breitner.de>**20080414224435] 
+[Split patches in the per-user view
+Joachim Breitner <mail@joachim-breitner.de>**20080414214504] 
+[Added README
+Joachim Breitner <mail@joachim-breitner.de>**20080414213958] 
+[Adding the rest of the files for the very alpha release
+Joachim Breitner <mail@joachim-breitner.de>**20080414213500] 
+[Actually add Igloos MD5.lhs file
+Joachim Breitner <mail@joachim-breitner.de>**20080414212717] 
+[Mailfilter helper script
+Joachim Breitner <mail@joachim-breitner.de>**20080414212622] 
+[More examples
+Joachim Breitner <mail@joachim-breitner.de>**20080414212513] 
+[Darcs glue code: Parsing mails and inventories
+Joachim Breitner <mail@joachim-breitner.de>**20080414201515] 
+[Igloos MD5 script, with glue
+Joachim Breitner <mail@joachim-breitner.de>**20080414191343
+ Changes made so that it runs without cpp.
+] 
+[Example files
+Joachim Breitner <mail@joachim-breitner.de>**20080414105511] 
+Patch bundle hash:
+36530b7ca0867608c190be96207c3589c20a73c0
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.6 (GNU/Linux)
+
+iD8DBQFIBnG59ijrk0dDIGwRAl0mAJ9B71aQ/8YqM1DPiOPgij5y2WZ0ugCdGDsq
+Zd1DG512xTXedFmTwKYrQFw=
+=VF6v
+-----END PGP SIGNATURE-----

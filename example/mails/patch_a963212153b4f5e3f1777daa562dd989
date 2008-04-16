@@ -1,0 +1,35 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+
+New patches:
+
+[_NET_ACTIVE_WINDOW moves windows if necessary
+Joachim Breitner <mail@joachim-breitner.de>**20080402143811
+ This makes EWMH behave a bit more like metacity: If _NET_ACTIVE_WINDOW is
+ received and the window is not on the current worspace, it is brought here 
+ (instead of the workspace switched to the other one). So for example, if you
+ click on the pidgin icon in the panel and the buddy list is already open some
+ where it is moved here.
+] {
+hunk ./XMonad/Hooks/EwmhDesktops.hs 103
+- ---  * _NET_ACTIVE_WINDOW (activate another window)
++--  * _NET_ACTIVE_WINDOW (activate another window, possibly moving to the current desktop)
+hunk ./XMonad/Hooks/EwmhDesktops.hs 136
+- -               windows $ W.focusWindow w
++               windows $ W.focusWindow w . W.shiftWin (W.tag (W.workspace (W.current s))) w
+}
+
+Context:
+
+[TAG 0.7
+Spencer Janssen <sjanssen@cse.unl.edu>**20080329202416] 
+Patch bundle hash:
+f36c5831faf5b9da4034c203bd52fd22d1ba67bb
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.6 (GNU/Linux)
+
+iD8DBQFH85t89ijrk0dDIGwRAvt7AJ0UMm4M/tISQqG6zXn1kLqt28becACggtU6
+fjpKiTWI0EyGvJJYmY1bmZQ=
+=Orgm
+-----END PGP SIGNATURE-----

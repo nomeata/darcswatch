@@ -1,0 +1,332 @@
+New patches:
+
+[Little style change (avoid a bind+return).
+Nicolas Pouillard <nicolas.pouillard@gmail.com>**20080413142318] hunk ./src/Darcs/Commands/MarkConflicts.lhs 76
+ markconflicts_cmd opts [] = withRepoLock opts $- \repository -> do
+   pend <- get_unrecorded_unsorted repository
+   Sealed r <- read_repo repository
+-  Sealed res <- return $ patchset_conflict_resolutions r
++  let (Sealed res) = patchset_conflict_resolutions r
+   case res of NilFL -> do putStrLn "No conflicts to mark."
+                           exitWith ExitSuccess
+               _ -> return ()
+[Extend a little color printing, and prettify hunks with mangenta and cyan.
+nicolas.pouillard@gmail.com**20080414214559] hunk ./src/Darcs/ColourPrinter.lhs 9
+ import System.IO ( stderr )
+ import Darcs.External (getTermNColors)
+ import Printer (Printer, Printers, Printers'(..), Printable(..), Color(..),
+-                invisiblePrinter, (<>), Doc(..), unDoc, unsafeBoth, simplePrinter, hcat,
+-                unsafeText, unsafeChar, space, unsafePackedString,
+-                renderStringWith )
++                invisiblePrinter, (<>), Doc(Doc,unDoc), unsafeBoth, unsafeBothStr,
++                simplePrinter, hcat, unsafeText, unsafeChar, space,
++                unsafePackedString, renderStringWith )
+ import Data.Char ( isAscii, isPrint, isSpace, isControl, ord, chr, intToDigit )
+ import Data.Bits ( bit, xor )
+ import System ( getEnv )
+hunk ./src/Darcs/ColourPrinter.lhs 99
+ -- printers
+ 
+ fancyPrinters :: Printers
+-fancyPrinters h = Printers { colorP     = colorPrinter (getPolicy h),
++fancyPrinters h = Printers { colorP     = color (getPolicy h),
+                              invisibleP = invisiblePrinter,
+                              hiddenP = colorPrinter (getPolicy h) Green,
+                              userchunkP  = userchunkPrinter (getPolicy h),
+hunk ./src/Darcs/ColourPrinter.lhs 197
+          in ['\\', intToDigit q, intToDigit r]
+ 
+ 
+--- make colours and highlightings
++-- make colors and highlightings
+ 
+ mark_escape :: Policy -> Doc -> Doc
+ mark_escape po | poAltColor po  = make_invert
+hunk ./src/Darcs/ColourPrinter.lhs 209
+          | otherwise     = make_color
+ 
+ make_color :: Color -> Doc -> Doc
+-make_color Blue  = make_blue
+-make_color Red   = make_red
+-make_color Green = make_green
++make_color Blue    = make_blue
++make_color Red     = make_red
++make_color Green   = make_green
++make_color Cyan    = make_cyan
++make_color Magenta = make_magenta
+ 
+ make_asciiart :: Doc -> Doc
+hunk ./src/Darcs/ColourPrinter.lhs 216
+-make_asciiart x = unsafeBoth "[_" (packString "[_")
+-               <> x
+-               <> unsafeBoth "_]" (packString "_]")
++make_asciiart x = unsafeBothStr "[_" <> x <> unsafeBothStr "_]"
+ 
+hunk ./src/Darcs/ColourPrinter.lhs 218
+-make_bold :: Doc -> Doc
+-make_bold x = unsafeBoth "\x1B[01m" (packString "\x1B[01m")
+-              <> x
+-              <> reset_colour
++set_bold, set_invert, set_blue, set_red, set_green, set_magenta, set_cyan, reset_color :: Doc
++set_bold    = unsafeBothStr "\x1B[01m"
++set_invert  = unsafeBothStr "\x1B[07m"
++set_blue    = unsafeBothStr "\x1B[01;34m" -- bold blue
++set_red     = unsafeBothStr "\x1B[01;31m" -- bold red
++set_green   = unsafeBothStr "\x1B[01;32m" -- bold green
++set_magenta = unsafeBothStr "\x1B[35m"    -- light magenta
++set_cyan    = unsafeBothStr "\x1B[36m"    -- light cyan
++reset_color = unsafeBothStr "\x1B[00m"
+ 
+hunk ./src/Darcs/ColourPrinter.lhs 228
+-make_invert :: Doc -> Doc
+-make_invert x = unsafeBoth "\x1B[07m" (packString "\x1B[07m")
+-                <> x
+-                <> reset_colour
++set_color :: Doc -> Doc -> Doc
++set_color set_some_color = \x -> set_some_color <> x <> reset_color
+ 
+hunk ./src/Darcs/ColourPrinter.lhs 231
+-make_blue :: Doc -> Doc
+-make_blue x = unsafeBoth "\x1B[01;34m" (packString "\x1B[01;34m")
+-           <> x
+-           <> reset_colour
+-
+-make_red :: Doc -> Doc
+-make_red x = unsafeBoth "\x1B[01;31m" (packString "\x1B[01;31m")
+-          <> x
+-          <> reset_colour
+-
+-make_green :: Doc -> Doc
+-make_green x = unsafeBoth "\x1B[01;32m" (packString "\x1B[01;32m")
+-            <> x
+-            <> reset_colour
+-
+-reset_colour :: Doc
+-reset_colour = unsafeBoth "\x1B[00m" (packString "\x1B[00m")
++make_bold, make_invert, make_blue, make_red, make_green, make_magenta, make_cyan :: Doc -> Doc
++make_bold    = set_color set_bold
++make_invert  = set_color set_invert
++make_blue    = set_color set_blue
++make_red     = set_color set_red
++make_green   = set_color set_green
++make_cyan    = set_color set_cyan
++make_magenta = set_color set_magenta
+ 
+ \end{code}
+hunk ./src/Darcs/Patch/Prim.lhs 66
+ import Darcs.Utils ( nubsort )
+ import Lcs ( getChanges )
+ import RegChars ( regChars )
+-import Printer ( Doc, vcat, packedString,
++import Printer ( Doc, vcat, packedString, Color(Cyan,Magenta), colorDoc,
+                  text, userchunk, invisibleText, invisiblePS, blueText,
+                  ($$), (<+>), (<>), prefix, userchunkPS,
+                )
+hunk ./src/Darcs/Patch/Prim.lhs 400
+ showHunk :: FileNameFormat -> FileName -> Int -> [PackedString] -> [PackedString] -> Doc
+ showHunk x f line old new =
+            blueText "hunk" <+> formatFileName x f <+> text (show line)
+-        $$ prefix "-" (vcat $ map userchunkPS old)
+-        $$ prefix "+" (vcat $ map userchunkPS new)
++        $$ colorDoc Magenta (prefix "-" (vcat $ map userchunkPS old))
++        $$ colorDoc Cyan    (prefix "+" (vcat $ map userchunkPS new))
+ \end{code}
+ 
+ \paragraph{Token replace}
+hunk ./src/Darcs/Patch/Viewing.lhs 32
+ import FastPackedString ( nullPS, linesPS )
+ import FileName ( FileName, fp2fn, fn2fp )
+ import Printer ( Doc, empty, vcat,
+-                 text, blueText,
++                 text, blueText, Color(Cyan,Magenta), colorDoc,
+                  minus, plus, ($$), (<+>), (<>),
+                  prefix, renderString,
+                  userchunkPS,
+hunk ./src/Darcs/Patch/Viewing.lhs 130
+             post = take numpost $ drop (max 0 $ l+length o-1) cleanedls
+             in blueText "hunk" <+> formatFileName OldFormat f <+> text (show l)
+             $$ prefix " " (vcat $ map userchunkPS pre)
+-            $$ prefix "-" (vcat $ map userchunkPS o)
+-            $$ prefix "+" (vcat $ map userchunkPS n)
++            $$ colorDoc Magenta (prefix "-" $ vcat $ map userchunkPS o)
++            $$ colorDoc Cyan    (prefix "+" $ vcat $ map userchunkPS n)
+             $$ prefix " " (vcat $ map userchunkPS post)
+ coolContextHunk _ _ _ _ = impossible
+ \end{code}
+hunk ./src/Printer.lhs 41
+ 
+ This code was made generic in the element type by Juliusz Chroboczek.
+ \begin{code}
+-module Printer (Printable(..), Doc(..), unDoc, Printers, Printers'(..), Printer, Color(..),
++module Printer (Printable(..), Doc(Doc,unDoc), Printers, Printers'(..), Printer, Color(..),
+                 hPutDoc,     hPutDocLn,     putDoc,     putDocLn,
+                 hPutDocWith, hPutDocLnWith, putDocWith, putDocLnWith,
+                 renderString, renderStringWith, renderPS, renderPSWith,
+hunk ./src/Printer.lhs 47
+                 renderPSs, renderPSsWith,
+                 prefix, colorText, invisibleText, hiddenText, hiddenPrefix, userchunk, text,
+-                printable, wrap_text,
+-                blueText, redText, greenText,
+-                unsafeText, unsafeBoth, unsafeChar,
++                printable, wrap_text, colorDoc,
++                blueText, redText, greenText, magentaText, cyanText,
++                unsafeText, unsafeBoth, unsafeBothStr, unsafeChar,
+                 invisiblePS, packedString, unsafePackedString, userchunkPS,
+                 simplePrinters, invisiblePrinter, simplePrinter,
+                 doc, empty, (<>), (<+>), ($$), vcat, vsep, hcat,
+hunk ./src/Printer.lhs 112
+ hPrintPrintable h (PS ps) = hPutPS h ps
+ hPrintPrintable h (Both _ ps) = hPutPS h ps
+ 
+-newtype Doc = Doc (Reader St Document)
+-unDoc :: Doc -> Reader St Document
+-unDoc (Doc d) = d
++newtype Doc = Doc { unDoc :: Reader St Document }
+ 
+ data St = St { printers :: !Printers', current_prefix :: !DocumentInternals }
+ type Printers = Handle -> Printers'
+hunk ./src/Printer.lhs 116
+-data Printers' = Printers {colorP :: !(Color -> Printer),
++data Printers' = Printers {colorP :: !(Color -> Doc -> Doc),
+                            invisibleP :: !Printer,
+                            hiddenP :: !Printer,
+                            userchunkP :: !Printer,
+hunk ./src/Printer.lhs 124
+                           }
+ type Printer = Printable -> Reader St Document
+ 
+-data Color = Blue | Red | Green
++data Color = Blue | Red | Green | Cyan | Magenta
+ 
+ type DocumentInternals = [Printable] -> [Printable]
+ data Document = Document DocumentInternals
+hunk ./src/Printer.lhs 184
+ unsafeBoth :: String -> PackedString -> Doc
+ unsafeBoth s ps = Doc $ simplePrinter (Both s ps)
+ 
++unsafeBothStr :: String -> Doc
++unsafeBothStr s = Doc $ simplePrinter (Both s (packString s))
++
+ packedString, unsafePackedString, invisiblePS, userchunkPS :: PackedString -> Doc
+ packedString = printable . PS
+ unsafePackedString = Doc . simplePrinter . PS
+hunk ./src/Printer.lhs 196
+ unsafeChar :: Char -> Doc
+ unsafeChar = unsafeText . return
+ 
+-text, unsafeText, invisibleText, hiddenText, userchunk, blueText, redText, greenText :: String -> Doc
++text, unsafeText, invisibleText, hiddenText, userchunk, blueText, redText, greenText, magentaText, cyanText :: String -> Doc
+ text = printable . S
+ unsafeText = Doc . simplePrinter . S
+ invisibleText = invisiblePrintable . S
+hunk ./src/Printer.lhs 205
+ blueText = colorText Blue
+ redText = colorText Red
+ greenText = colorText Green
++magentaText = colorText Magenta
++cyanText = colorText Cyan
+ 
+ colorText :: Color -> String -> Doc
+hunk ./src/Printer.lhs 209
+-colorText c = mkColorPrintable c . S
++colorText c = colorDoc c . printable . S
++
++colorDoc :: Color -> Doc -> Doc
++colorDoc c d = Doc $ do st <- ask
++                        unDoc $ colorP (printers st) c d
+ 
+ wrap_text :: Int -> String -> Doc
+ wrap_text n s =
+hunk ./src/Printer.lhs 226
+ printable, invisiblePrintable, hiddenPrintable, userchunkPrintable :: Printable -> Doc
+ printable x = Doc $ do st <- ask
+                        defP (printers st) x
+-mkColorPrintable :: Color -> Printable -> Doc
+-mkColorPrintable c x = Doc $ do st <- ask
+-                                colorP (printers st) c x
+ invisiblePrintable x = Doc $ do st <- ask
+                                 invisibleP (printers st) x
+ hiddenPrintable x = Doc $ do st <- ask
+hunk ./src/Printer.lhs 237
+ simplePrinters _ = simplePrinters'
+ 
+ simplePrinters' :: Printers'
+-simplePrinters'  = Printers { colorP = \_ -> simplePrinter,
++simplePrinters'  = Printers { colorP = const id,
+                               invisibleP = simplePrinter,
+                               hiddenP = invisiblePrinter,
+                               userchunkP = simplePrinter,
+
+Context:
+
+[roll back implementation of joke oops command.
+David Roundy <droundy@darcs.net>**20080414133342
+ Apparently it didn't actually work...
+ 
+ rolling back:
+ 
+ Tue Apr  8 07:58:56 PDT 2008  David Roundy <droundy@darcs.net>
+   * resolve issue786:  implement oops command.
+ 
+     M ./src/Darcs/Commands/Tag.lhs -5 +47
+     M ./src/Darcs/TheCommands.lhs -1 +2
+] 
+[just remove concatLenPS
+David Roundy <droundy@darcs.net>**20080411205303
+ It is never used in a performance-critical situation, so I'm voting to just
+ trash it.  I'd rather have fewer unsafe operations.
+] 
+[FastPackedString.hs: simplify concatLenPS, although this removes its strictness properties
+**20080411035327] 
+[FastPackedString.hs: remove wfindPS
+**20080411035046
+ With better imports from bytestring, I believe it to be superfluous, and dangerous to leave around.
+] 
+[FastPackedString.hs: grmmr/sp
+**20080411034730] 
+[FastPackedString.hs: rw linesPS using ByteString split
+**20080411032229] 
+[doc updates
+gwern0@gmail.com**20080409170824
+ Convert all uses of 'http://darcs.net/repos/stable' to just darcs.net, since unstable and stable were merged together, and the old URL is a 404 for darcs getting. This is a real problem, see for example <http://reddit.com/info/6ewbq/comments/c03o6d5>.
+] 
+[fix typo in show_bug_help
+Matyas Janos <mjanos5@gmail.com>**20080408232600] 
+[Raise a configure error when no Text.Regex module can be found.
+nicolas.pouillard@gmail.com**20080409085522] 
+[update README url links
+gwern0@gmail.com**20080407201333] 
+[add a bit more debugging info to repository identification.
+David Roundy <droundy@darcs.net>**20080408151912] 
+[resolve issue385: don't worry if we can't get local changes.
+David Roundy <droundy@darcs.net>**20080408151823] 
+[add test for issue385.
+David Roundy <droundy@darcs.net>**20080408151808] 
+[resolve issue786:  implement oops command.
+David Roundy <droundy@darcs.net>**20080408145856] 
+[fix URL in network test.
+David Roundy <droundy@darcs.net>**20080408145407] 
+[fix manual bug.
+David Roundy <droundy@darcs.net>**20080407191736] 
+[add new show bug command (hidden) to see what darcs will report if we encounter a bug.
+David Roundy <droundy@darcs.net>**20080407175410] 
+[automatically work out the version of the stable release.
+David Roundy <droundy@darcs.net>**20080407171850] 
+[set prefs again (they got lost on convert).
+David Roundy <droundy@darcs.net>**20080407171559] 
+[update darcs repository URL.
+David Roundy <droundy@darcs.net>**20080407164601] 
+[fix up website for new release.
+David Roundy <droundy@darcs.net>**20080407164010] 
+[simplify determine_release_state.pl.
+David Roundy <droundy@darcs.net>**20080407153000] 
+[make determine_release_state.pl use changes --count.
+David Roundy <droundy@darcs.net>**20080407152347] 
+[add --count output option to changes.
+David Roundy <droundy@darcs.net>**20080407151825] 
+[TAG 2.0.0
+David Roundy <droundy@darcs.net>**20080407150638] 
+Patch bundle hash:
+45247877729e0cfc5f1be0417f1d8c7deb8e740f
+
+--=_
