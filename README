@@ -6,8 +6,7 @@ This program tracks darcs patches and repositories, giving
 an overview over their state (applied or not applied).
 
 The patches are expected to come in via the mailfilter.sh
-program, which checks the gpg signature and stores the
-patches in the appropriate place.
+program, which stores the patches in the appropriate place.
 
 The main program then downloads the repository inventories
 and compares the mailed patches against the repository. It
