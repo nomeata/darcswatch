@@ -23,6 +23,7 @@ module Darcs
 	, parseMail
 	, PatchInfo(..)
 	, patchBasename
+	, inversePatch
 	) where
 
 import OldDate
@@ -40,6 +41,7 @@ data PatchInfo = PatchInfo
    } deriving (Eq,Ord,Show)
 
 
+inversePatch p@(PatchInfo {piInverted = i}) = p {piInverted = not i}
 
 getInventory :: FilePath -> String -> IO ([PatchInfo], Bool)
 getInventory cDir repo = do
