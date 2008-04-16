@@ -41,19 +41,22 @@ data DarcsWatchConfig = DarcsWatchConfig {
 
 main = do
 	args <- getArgs
-	let confdir = addSlash $ case args of
-			[confdir] -> confdir
+	let (confdir, patchNew) = case args of
+			[confdir] -> (addSlash confdir, False)
+			[confdir, "new"] -> (addSlash confdir, True)
 			_         -> error "Use darcswatch confdir/"
 	putStrLn "Reading configuration..."
 	config <- read `fmap` readFile (confdir ++ "config")
 	putStrLn "Reading repositories..."
-	let readInv (p2r,r2p) rep = do 
+	let readInv (p2r,r2p,new) rep = do 
 		putStrLn $ "Reading " ++ rep ++ " ..." 
-		ps <- getInventory (cOutput config ++ "/cache/") rep
+		(ps,thisNew) <- getInventory (cOutput config ++ "/cache/") rep
 		let p2r' = foldr (\p -> MM.append p rep) p2r ps
 		    r2p' = MM.extend rep ps r2p
-		return (p2r', r2p')
-	(p2r,r2p) <- foldM readInv (MM.empty, MM.empty) (cRepositories config)
+		return (p2r', r2p', new || thisNew)
+	(p2r,r2p, new) <- foldM readInv (MM.empty, MM.empty, patchNew) (cRepositories config)
+
+	if not new then putStrLn "Nothing new, exiting" else do
 	
 	putStrLn "Reading emails..."
 	mailFiles <- getDirectoryFiles (cMails config)
