@@ -25,6 +25,7 @@ import System.Posix.Files
 import System.Time
 
 import qualified Data.Map as M
+import qualified MultiMap as MM
 
 -- Darcs stuff
 import Darcs
@@ -49,10 +50,10 @@ main = do
 	let readInv (p2r,r2p) rep = do 
 		putStrLn $ "Reading " ++ rep ++ " ..." 
 		ps <- getInventory rep
-		let p2r' = foldr (\p -> M.insertWith (++) p [rep]) p2r ps
-		    r2p' = M.insertWith (++) rep ps r2p
+		let p2r' = foldr (\p -> MM.append p rep) p2r ps
+		    r2p' = MM.extend rep ps r2p
 		return (p2r', r2p')
-	(p2r,r2p) <- foldM readInv (M.empty, M.empty) (cRepositories config)
+	(p2r,r2p) <- foldM readInv (MM.empty, MM.empty) (cRepositories config)
 	
 	putStrLn "Reading emails..."
 	mailFiles <- getDirectoryFiles (cMails config)
@@ -60,12 +61,12 @@ main = do
 	let readMail (u2p, p2c, p2d, p2f) mailFile = do
 		putStrLn $ "Reading mail " ++ mailFile ++ " ..."
 		(new,context) <- parseMail mailFile
-		let u2p' = foldr (\(p,_) -> M.insertWith (++) (piAuthor p) [p]) u2p new
+		let u2p' = foldr (\(p,_) -> MM.extend (piAuthor p) [p]) u2p new
 		    p2c' = foldr (\(p,_) -> M.insert p context) p2c new 
 		    p2d' = foldr (\(p,d) -> M.insert p d) p2d new
 		    p2f' = foldr (\(p,_) -> M.insert p mailFile) p2f new
 		return (u2p', p2c', p2d', p2f')
-	(u2p, p2c, p2d, p2f) <- foldM readMail (M.empty, M.empty, M.empty, M.empty) mailFiles
+	(u2p, p2c, p2d, p2f) <- foldM readMail (MM.empty, M.empty, M.empty, M.empty) mailFiles
 
 	let patches = M.keys p2d -- Submitted patches
 	let repos   = M.keys r2p -- Repos with patches
@@ -80,8 +81,8 @@ main = do
 		return (patch, repo)
 	-- Patch to possible repos
 	-- Repo to possible patch
-	let p2pr = foldr (\(p,r) -> M.insertWith (++) p [r]) M.empty addables
-	let r2mp = foldr (\(p,r) -> M.insertWith (++) r [p]) M.empty addables
+	let p2pr = foldr (\(p,r) -> MM.extend p [r]) MM.empty addables
+	let r2mp = foldr (\(p,r) -> MM.extend r [p]) MM.empty addables
 
 	-- Unapplicable patches
 	let unapplicable = filter (\p -> not (M.member p p2pr)) patches
