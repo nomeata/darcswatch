@@ -30,45 +30,16 @@ function update {
 FILE=$(tempfile --prefix patch)
 mimedecode > "$FILE"
 
-if fgrep -q 'List-Post: <mailto:darcs-devel@darcs.net>' "$FILE" ||
-   fgrep -q 'List-Post: <mailto:xmonad@haskell.org>' "$FILE"
+echo "Looking for a patch"
+
+if fgrep -q 'Content-Type: text/x-darcs-patch;' "$FILE" ||
+   fgrep -q 'Content-Type: text/x-patch;' "$FILE"
 then
-	echo "Looking for a patch"
-	
-	if fgrep -q 'Content-Type: text/x-darcs-patch;' "$FILE" ||
-	   fgrep -q 'Content-Type: text/x-patch;' "$FILE"
+
+	echo "Looking for gpg frame"
+	if fgrep -q -- '-----BEGIN PGP SIGNED MESSAGE-----' "$FILE"
 	then
 
-		echo "Looking for gpg frame"
-		if fgrep -q -- '-----BEGIN PGP SIGNED MESSAGE-----' "$FILE"
-		then
-
-			echo "Patch ok, adding to patch directory"
-			MD5SUM=$(grep_gpg < "$FILE" | md5)
-			grep_gpg < "$FILE" > "$DIR/patch_$MD5SUM"
-			update
-
-			rm "$FILE"
-			exit 0
-
-		else
-			echo "Patch ok, adding to patch directory"
-			MD5SUM=$(perl -n -e 'print if (/^New patches:/.../^--=_/)' < "$FILE" |md5sum - |cut -c-32)
-			perl -n -e 'print if (/^New patches:/.../^--=_/)' < "$FILE" > "$DIR/patch_$MD5SUM"
-			update
-
-			rm "$FILE"
-			exit 0
-
-		fi
-
-	else
-		echo "No patch contained, it seems"
-	fi
-else
-	echo "Verifying patch"
-	if gpg --no-default-keyring --no-options --keyring "$KEYRING" --trust-model always --verify "$FILE" 
-	then
 		echo "Patch ok, adding to patch directory"
 		MD5SUM=$(grep_gpg < "$FILE" | md5)
 		grep_gpg < "$FILE" > "$DIR/patch_$MD5SUM"
@@ -76,11 +47,18 @@ else
 
 		rm "$FILE"
 		exit 0
+
 	else
-		echo "Verification failed:" 
-		echo "Did you sign your patches?" 
-		#rm "$FILE"
-		#exit 1
+		echo "Patch ok, adding to patch directory"
+		MD5SUM=$(perl -n -e 'print if (/^New patches:/.../^--=_/)' < "$FILE" |md5sum - |cut -c-32)
+		perl -n -e 'print if (/^New patches:/.../^--=_/)' < "$FILE" > "$DIR/patch_$MD5SUM"
+		update
+
+		rm "$FILE"
 		exit 0
+
 	fi
+
+else
+	echo "No patch contained, it seems"
 fi
