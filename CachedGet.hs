@@ -26,6 +26,7 @@ import Network.URI
 import Network.HTTP
 import Network.HTTP.Headers
 import System.Directory
+import Control.Monad
 
 get :: FilePath -> String -> IO (Maybe (String, Bool))
 get dir' uri = do
@@ -45,7 +46,7 @@ get dir' uri = do
 
 	if e_cache && e_tag
 	   then do
-		oldTag <- readFile tagFile
+		oldTag <- slurpFile tagFile
 		mbNewTag <- head' uri
 		maybe'' mbNewTag (return Nothing) $ \newTag -> do
 			if oldTag == newTag
@@ -98,6 +99,10 @@ get' uri' = do
 			(2,_,_) -> Just $ (rspBody response, lookupHeader HdrLastModified (rspHeaders response))
 			_       -> Nothing
 
+slurpFile file = do
+	c <- readFile file
+	if (c == c) then return c else error "This should not happen"
+		
 
 addSlash filename | last filename == '/' = filename
                   | otherwise            = filename ++ "/"
