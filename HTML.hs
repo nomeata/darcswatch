@@ -150,7 +150,7 @@ patchView d userCentric p =
 	) +++
 	thediv !!! [identifier diffId, thestyle "display:none"] << (
 		actions +++
-		p2d d !!!! p
+		pre << p2d d !!!! p
 		) +++
 	actions
   where pid = patchBasename p
