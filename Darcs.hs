@@ -41,20 +41,21 @@ data PatchInfo = PatchInfo
 
 
 
-getInventory :: FilePath -> String -> IO [PatchInfo]
+getInventory :: FilePath -> String -> IO ([PatchInfo], Bool)
 getInventory cDir repo = do
 		old_inv <- get cDir old_inventory
-		maybe' old_inv (return . parseInventory . fst) $ do
+		maybe' old_inv parseReturn $ do
 
 			new_inv <- get cDir hashed_inventory
-			maybe' new_inv (return . parseInventory . fst) $ do
+			maybe' new_inv parseReturn $ do
 
 				putStrLn $ "Repository " ++ repo ++ " not found."
-				return []
+				return ([],False)
 
   where	old_inventory = addSlash repo ++ "_darcs/inventory"
         hashed_inventory = addSlash repo ++ "_darcs/hashed_inventory"
 	maybe' m f d = maybe d f m
+	parseReturn (body, updated) = return (parseInventory body, updated)
 
 
 parseInventory :: String -> [PatchInfo]
