@@ -79,7 +79,8 @@ else
 	else
 		echo "Verification failed:" 
 		echo "Did you sign your patches?" 
-		rm "$FILE"
-		exit 1
+		#rm "$FILE"
+		#exit 1
+		exit 0
 	fi
 fi
