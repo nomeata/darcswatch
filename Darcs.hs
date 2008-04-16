@@ -29,8 +29,7 @@ import OldDate
 import StringCrypto
 
 import System.Time
-import Network.HTTP
-import Network.URI
+import CachedGet
 
 data PatchInfo = PatchInfo
 	{ piDate :: String
@@ -42,13 +41,13 @@ data PatchInfo = PatchInfo
 
 
 
-getInventory :: String -> IO [PatchInfo]
-getInventory repo = do
-		old_inv <- httpGet old_inventory
-		maybe' old_inv (return . parseInventory) $ do
+getInventory :: FilePath -> String -> IO [PatchInfo]
+getInventory cDir repo = do
+		old_inv <- get cDir old_inventory
+		maybe' old_inv (return . parseInventory . fst) $ do
 
-			new_inv <- httpGet hashed_inventory
-			maybe' new_inv (return . parseInventory) $ do
+			new_inv <- get cDir hashed_inventory
+			maybe' new_inv (return . parseInventory . fst) $ do
 
 				putStrLn $ "Repository " ++ repo ++ " not found."
 				return []
@@ -57,19 +56,6 @@ getInventory repo = do
         hashed_inventory = addSlash repo ++ "_darcs/hashed_inventory"
 	maybe' m f d = maybe d f m
 
-httpGet uri' = do
-	let Just uri = parseURI uri'
-	result <- simpleHTTP (Request
-		{ rqURI = uri
-		, rqMethod = GET
-		, rqHeaders = []
-		, rqBody = ""
-		})
-	return $ case result of
-		Left err -> Nothing
-		Right response -> case rspCode response of 
-			(2,_,_) -> Just $ rspBody response
-			_       -> Nothing
 
 parseInventory :: String -> [PatchInfo]
 parseInventory content = readPatchInfos content
