@@ -33,6 +33,8 @@ import qualified Text.XHtml ((!))
 import Text.Printf
 import qualified Data.Map as M
 import Data.Map ((!))
+import qualified MultiMap as MM
+import MultiMap ((!!!!))
 import Data.List
 import Data.Ord
 import System.Time
@@ -101,12 +103,13 @@ userPage d u = showHtml $
 	) +++
    body << (
 	h1 << ("DarcsWatch overview for " +++ u) +++
-	patchList d unappPatches "Unapplied patches" True +++
-	patchList d unmatched "Unmatched patches" True +++
-	patchList d appPatches "Applied patches" True +++
+	patchList d (sps !!!! NotApplied) "Unapplied patches" True +++
+	patchList d (sps !!!! Unmatched) "Unmatched patches" True +++
+	patchList d (sps !!!! Obsolete) "Obsolete patches" True +++
+	patchList d (sps !!!! Applied) "Applied patches" True +++
 	footer d
 	)
-  where (ps, unmatched, appPatches, unappPatches) = userData u d
+  where (ps, sps) = userData u d
 
 repoPage d r = showHtml $
    header << (
@@ -115,11 +118,12 @@ repoPage d r = showHtml $
 	) +++
    body << (
 	h1 << ("DarcsWatch overview for " +++ r) +++
-	patchList d unappPatches "Unapplied patches" False +++
-	patchList d appPatches "Applied patches" False +++
+	patchList d (sps !!!! NotApplied) "Unapplied patches" False +++
+	patchList d (sps !!!! Applied) "Applied patches" False +++
+	patchList d (sps !!!! Obsolete) "Obsolete patches" False +++
 	footer d
 	)
-  where (ps, appPatches, unappPatches) = repoData r d
+  where (ps, sps) = repoData r d
  
 patchList d [] title userCentric = h5 << ("No "++title)
 patchList d ps title userCentric = 
@@ -134,13 +138,13 @@ patchView d userCentric p =
 	) +++
 	pre << unlines (piLog p) +++
 	(if userCentric
-	 then	(unordList $ flip map (M.findWithDefault [] p (p2pr d)) $ \r ->
-			hotlink (repoFile r) << r +++ ": "+++ state d p r
+	 then	(unordList $ flip map (p2pr d !!!! p) $ \r ->
+			hotlink (repoFile r) << r +++ ": "+++ viewState d p r
 		)
 	 else	noHtml
 	) +++
 	pre !!! [identifier diffId, thestyle "display:none"] <<
-		M.findWithDefault "" p (p2d d) +++
+		p2pr d !!!! p +++
 	paragraph << (	strong << "Actions: " +++
 			hotlink (pid ++ ".dpatch") << "Download .dpatch" +++
 			" "+++ 
@@ -149,40 +153,74 @@ patchView d userCentric p =
   where pid = patchBasename p
 	diffId = "diff_"++pid
 		
+-- The order defines what state a patch should be considered if it is
+-- in sevaral repositories
+data PatchState = Unmatched | Applied | NotApplied | Obsolete | Obsoleting deriving (Eq, Ord)
 
-applied d p r = p `elem` (r2p d ! r)
+state d p r | p `elem` ps                          = Applied
+            | ip `elem` ps                         = NotApplied
+            | ip `elem` subs && not (piInverted p) = Obsolete
+            | ip `elem` subs &&      piInverted p  = Obsoleting
+            | otherwise                            = NotApplied
+  where context = p2c d ! p
+  	ps = r2p d ! r
+        ip = inversePatch p
+	subs = M.keys (p2d d)
 
-state d p r | applied d p r = thespan !!! [thestyle "color:green"] << "Applied"
-	    -- recognize obsolete patches
-            | otherwise     = thespan !!! [thestyle "color:red"]  << "Not yet applied"
+instance Show PatchState where
+	show Unmatched = "Unmatched"
+	show Applied = "Applied"
+	show NotApplied = "Not yet applied"
+	show Obsolete = "Marked obsolete"
+	show Obsoleting = "Marking patch as obsolete"
+
+stateColor Applied = "green"
+stateColor NotApplied = "red"
+stateColor Obsolete = "gray"
+stateColor Obsoleting = "gray"
+stateColor Unmatched = "black"
+
+inColor c = thespan !!! [thestyle ("color:"++c)]
+
+viewState d p r = inColor (stateColor s) << (show s)
+  where	s = state d p r
 
 (!!!) = (Text.XHtml.!)	    
 
 
-userStats u d = stringToHtml $ printf
-	" %d tracked patches, %d unapplied, %d unmatched" -- , %d unapplied"
-	(length ps)
-	(length unappPatches)
-	(length unmatched)
-  where (ps, unmatched, appPatches, unappPatches) = userData u d
+userStats u d = " " +++
+	show (length ps) +++ 
+	" tracked patches, "+++
+	count NotApplied "unapplied" +++
+	count Obsolete "obsolete"
+  where (ps, sps) = userData u d
+  	count s t = case sps !!!! s of
+	              [] -> noHtml
+	              _  -> inColor (stateColor s) << (show (length ps) +++ " " +++ t) +++ " "
+	  where ps = (sps !!!! s)
 
-repoStats r d = stringToHtml $ printf
-	" %d patches in inventory, %d tracked, %d applicable" 
-	(length (M.findWithDefault [] r (r2p d)))
-	(length (ps))
-	(length (unappPatches))
-  where (ps, appPatches, unappPatches) = repoData r d
+repoStats r d = " " +++
+	show (length (r2p d !!!! r)) +++ 
+	" patches in inventory, "+++
+	count Applied "tracked" +++
+	count NotApplied "applicable" +++
+	count Obsolete "obsolete"
+  where (ps, sps) = repoData r d
+  	count s t = case sps !!!! s of
+	              [] -> noHtml
+	              _  -> inColor (stateColor s) << (show (length ps) +++ " " +++ t) +++ " "
+	  where ps = (sps !!!! s)
 
-repoData r d = (ps, appPatches, unappPatches) 
-  where ps = patchSort $ M.findWithDefault [] r (r2mp d)
-  	(appPatches, unappPatches) = partition (\p -> applied d p r) ps
+repoData r d = (ps, sorted) 
+  where ps = patchSort $ r2mp d !!!! r
+	sorted = MM.fromList $ map (\p -> (state d p r, p)) ps
 
-userData u d = (ps, unmatched, appPatches, unappPatches)
-  where ps = patchSort $ M.findWithDefault [] u (u2p d)
-  	(unmatched, ps') = partition (\p -> null ((M.findWithDefault [] p (p2pr d)))) ps
-  	(appPatches, unappPatches) = partition (
-		\p -> all (\r -> applied d p r) (M.findWithDefault [] p (p2pr d))
-		) ps'
+userData u d = (ps, sorted)
+  where ps = patchSort $ u2p d !!!! u
+	sorted = MM.fromList $ map (\p -> (state' p, p)) ps
+	state' p | null repos = Unmatched
+	         | otherwise  = maximum (map (state d p) repos)
+	  where repos = p2pr d !!!! p
 
 userFile u = "user_" ++ md5 u ++ ".html"
 repoFile r = "repo_" ++ md5 r ++ ".html"
