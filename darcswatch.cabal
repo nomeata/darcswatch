@@ -5,6 +5,7 @@ name:            darcswatch
 author:          Joachim Breitner <mail@joachim-breitner.de>
 Synopsis:        track application of darcs patches
 License:         GPL
+License-File:	 COPYING
 Build-Depends:   haskell98
                  ,base
                 , network
