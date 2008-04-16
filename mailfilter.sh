@@ -30,12 +30,13 @@ function update {
 FILE=$(tempfile --prefix patch)
 mimedecode > "$FILE"
 
-if fgrep -q '^List-Post: <mailto:darcs-devel@darcs.net>' "$FILE" ||
-   fgrep -q '^List-Post: <mailto:xmonad@haskell.org>' "$FILE"
+if fgrep -q 'List-Post: <mailto:darcs-devel@darcs.net>' "$FILE" ||
+   fgrep -q 'List-Post: <mailto:xmonad@haskell.org>' "$FILE"
 then
 	echo "Looking for a patch"
 	
-	if fgrep -q 'Content-Type: text/x-darcs-patch;' "$FILE"
+	if fgrep -q 'Content-Type: text/x-darcs-patch;' "$FILE" ||
+	   fgrep -q 'Content-Type: text/x-patch;' "$FILE"
 	then
 
 		echo "Looking for gpg frame"
