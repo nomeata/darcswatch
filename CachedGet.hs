@@ -66,12 +66,15 @@ get dir' uri = do
 
 head' uri' = do
 	let Just uri = parseURI uri'
-	result <- simpleHTTP (Request
+	let req = Request
 		{ rqURI = uri
 		, rqMethod = HEAD
-		, rqHeaders = []
+		, rqHeaders =
+			[ Header HdrUserAgent "DarcsWatch http://darcswatch.nomeata.de/"
+			] 
 		, rqBody = ""
-		})
+		}
+	result <- simpleHTTP req
 	return $ case result of
 		Left err -> Nothing
 		Right response -> case rspCode response of 
@@ -80,12 +83,15 @@ head' uri' = do
 
 get' uri' = do
 	let Just uri = parseURI uri'
-	result <- simpleHTTP (Request
+	let req = Request
 		{ rqURI = uri
 		, rqMethod = GET
-		, rqHeaders = []
+		, rqHeaders =
+			[ Header HdrUserAgent "DarcsWatch http://darcswatch.nomeata.de/"
+			] 
 		, rqBody = ""
-		})
+		}
+	result <- simpleHTTP req
 	return $ case result of
 		Left err -> Nothing
 		Right response -> case rspCode response of 
