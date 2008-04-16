@@ -156,7 +156,7 @@ patchView d userCentric p =
 			strong << "Actions: " +++
 			hotlink (pid ++ ".dpatch") << "Download .dpatch" +++
 			" "+++ 
-			anchor !!! [href "#", strAttr "onClick" ("toggle_diff('"++diffId++"')")]
+			anchor !!! [href $ "javascript:toggle_diff('"++diffId++"')"]
 				<< "Show/Hide diff"
 			)
 		
