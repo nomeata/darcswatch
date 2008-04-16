@@ -26,7 +26,8 @@ function md5 { md5sum - |cut -c-32 ; }
 FILE=$(tempfile --prefix patch)
 mimedecode > "$FILE"
 
-if fgrep -q 'List-Post: <mailto:darcs-devel@darcs.net>' "$FILE"
+if fgrep -q '^List-Post: <mailto:darcs-devel@darcs.net>' "$FILE" ||
+   fgrep -q '^List-Post: <mailto:xmonad@haskell.org>' "$FILE"
 then
 	echo "Looking for a patch"
 	
