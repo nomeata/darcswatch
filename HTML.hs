@@ -145,8 +145,7 @@ patchView d userCentric p =
 		)
 	 else	noHtml
 	) +++
-	pre !!! [identifier diffId, thestyle "display:none"] <<
-		p2pr d !!!! p +++
+	pre !!! [identifier diffId, thestyle "display:none"] << (p2d d !!!! p) +++
 	paragraph << (	strong << "Actions: " +++
 			hotlink (pid ++ ".dpatch") << "Download .dpatch" +++
 			" "+++ 
