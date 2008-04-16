@@ -145,14 +145,20 @@ patchView d userCentric p =
 		)
 	 else	noHtml
 	) +++
-	pre !!! [identifier diffId, thestyle "display:none"] << (p2d d !!!! p) +++
-	paragraph << (	strong << "Actions: " +++
-			hotlink (pid ++ ".dpatch") << "Download .dpatch" +++
-			" "+++ 
-			anchor !!! [href "#", strAttr "onClick" ("toggle_diff('"++diffId++"')")] << "Show/Hide diff"
-			)
+	thediv !!! [identifier diffId, thestyle "display:none"] << (
+		actions +++
+		p2d d !!!! p
+		) +++
+	actions
   where pid = patchBasename p
 	diffId = "diff_"++pid
+	actions = paragraph << (
+			strong << "Actions: " +++
+			hotlink (pid ++ ".dpatch") << "Download .dpatch" +++
+			" "+++ 
+			anchor !!! [href "#", strAttr "onClick" ("toggle_diff('"++diffId++"')")]
+				<< "Show/Hide diff"
+			)
 		
 -- The order defines what state a patch should be considered if it is
 -- in sevaral repositories
