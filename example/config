@@ -5,6 +5,7 @@ DarcsWatchConfig
 		, "http://code.haskell.org/XMonadContrib"
 		, "http://code.haskell.org/lambdabot"
 		, "http://darcs.net/"
+		, "http://darcs.nomeata.de/darcswatch/"
 		]
 	, cOutput = "/home/jojo/projekte/programming/haskell/darcswatch/example/output"
 	, cMails = "/home/jojo/projekte/programming/haskell/darcswatch/example/mails"
