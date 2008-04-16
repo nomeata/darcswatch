@@ -201,7 +201,7 @@ userStats u d = " " +++
 
 repoStats r d = " " +++
 	show (length (r2p d !!!! r)) +++ 
-	" patches in inventory, "+++
+	" patches in inventory "+++
 	count Applied "tracked" +++
 	count NotApplied "applicable" +++
 	count Obsolete "obsolete"
