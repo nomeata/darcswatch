@@ -25,6 +25,7 @@ module MultiMap
 	, extend
 	, append
 	, (!!!!)
+	, fromList
 	) where
 
 import qualified Data.Map as M
@@ -47,6 +48,9 @@ extend key addValues = M.insertWith mappend key addValues
 
 append :: (Ord k, Singleton c a) => k -> a -> M.Map k (c a) -> M.Map k (c a)
 append key addValue = M.insertWith mappend key (singleton addValue)
+
+fromList :: (Ord k, Singleton c a) => [(k,a)] -> M.Map k (c a)
+fromList = foldr (uncurry append) empty
 
 (!!!!) :: (Ord k, Singleton c a) => M.Map k (c a) -> k -> c a
 m !!!! key = M.findWithDefault mempty key m
