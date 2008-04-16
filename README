@@ -29,9 +29,6 @@ appreciated. A non exlusive list of TODO items is:
 
  * Support for tagged repositories (fetching older
    inventories)
- * Detect inverted patches and treat specially (e.g. an
-   unapplied patch where the user also submitted an inverted
-   patch can be considered obsolete)
  * Nicer output (CSS magic!)
  * (Maybe) Add repositores per gpg signed command
  * Documentation for users
