@@ -49,7 +49,7 @@ main = do
 	putStrLn "Reading repositories..."
 	let readInv (p2r,r2p) rep = do 
 		putStrLn $ "Reading " ++ rep ++ " ..." 
-		ps <- getInventory rep
+		ps <- getInventory (cOutput config ++ "/cache/") rep
 		let p2r' = foldr (\p -> MM.append p rep) p2r ps
 		    r2p' = MM.extend rep ps r2p
 		return (p2r', r2p')
