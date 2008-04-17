@@ -66,6 +66,10 @@ mainPage d = showHtml $
    header << thetitle << "DarcsWatch overview" +++
    body << (
 	h1 << "DarcsWatch overview" +++
+	p << ( "Welcome to DarcsWatch. If you want to know more, please read the " +++
+	       hotlink "http://darcs.nomeata.de/darcswatch/documentation.html" << "Documentation" +++
+	       "."
+	       ) +++
 	h2 << "Statistics" +++
 	p << stringToHtml (
 		printf "Tracking %d repositories and %d patches submitted by %d users"
