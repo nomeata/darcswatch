@@ -31,8 +31,6 @@ appreciated. A non exlusive list of TODO items is:
    inventories)
  * Nicer output (CSS magic!)
  * (Maybe) Add repositores per gpg signed command
- * Documentation for users
- * Normalize user names (e.g. with or without full name)
 
 When commiting patches, please make sure that they work with
 the version of ghc in the latest debian stable release, at
