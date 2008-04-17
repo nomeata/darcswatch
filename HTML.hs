@@ -247,8 +247,8 @@ userData u d = (ps, sorted)
 	         | otherwise    = S.findMax (S.map (state d p) repos)
 	  where repos = p2pr d !!!! p
 
-userFile u = "user_" ++ safeName (normalizeAuthor u) ++ ".html"
-repoFile r = "repo_" ++ md5 r ++ ".html"
+userFile u = "user_" ++ safeName u ++ ".html"
+repoFile r = "repo_" ++ safeName r ++ ".html"
 
 normalizeAuthor name | not (null r') && valid = email
                      | otherwise              = safeName name
@@ -259,7 +259,7 @@ normalizeAuthor name | not (null r') && valid = email
 safeName n = map s n
   where s c = if isSafeFileChar c then c else '_'
 
-isSafeFileChar c = isAlpha c || isDigit c || c `elem` "-_.@"
+isSafeFileChar c = isAlpha c || isDigit c || c `elem` "-_.@:"
 
 
 s2List = reverse . sortBy (compare `on` piDate) . S.toList
