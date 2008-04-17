@@ -247,14 +247,17 @@ userData u d = (ps, sorted)
 	         | otherwise    = S.findMax (S.map (state d p) repos)
 	  where repos = p2pr d !!!! p
 
-userFile u = "user_" ++ md5 (normalizeAuthor u) ++ ".html"
+userFile u = "user_" ++ safeName (normalizeAuthor u) ++ ".html"
 repoFile r = "repo_" ++ md5 r ++ ".html"
 
 normalizeAuthor name | not (null r') && valid = email
-                     | otherwise              = name
+                     | otherwise              = safeName name
   where r' = dropWhile (/='<') name
         (email,r'') = span (/='>') (tail r')
 	valid = not (null email) && not (null r'') && all (isSafeFileChar) email
+
+safeName n = map s n
+  where s c = if isSafeFileChar c then c else '_'
 
 isSafeFileChar c = isAlpha c || isDigit c || c `elem` "-_.@"
 
