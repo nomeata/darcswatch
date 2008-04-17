@@ -247,7 +247,7 @@ userData u d = (ps, sorted)
 	         | otherwise    = S.findMax (S.map (state d p) repos)
 	  where repos = p2pr d !!!! p
 
-userFile u = "user_" ++ safeName u ++ ".html"
+userFile u = "user_" ++ normalizeAuthor u ++ ".html"
 repoFile r = "repo_" ++ safeName r ++ ".html"
 
 normalizeAuthor name | not (null r') && valid = email
