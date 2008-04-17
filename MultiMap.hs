@@ -31,6 +31,8 @@ module MultiMap
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Data.Monoid
+import Data.Foldable
+import Prelude hiding (foldr)
 
 class Monoid (c a) => Singleton c a where
 	singleton :: a -> c a
@@ -43,8 +45,8 @@ instance Ord a => Singleton S.Set a where
 empty :: (Ord k, Singleton c a) => M.Map k (c a) 
 empty = M.empty
 
-extend :: (Ord k, Singleton c a) => k -> c a -> M.Map k (c a) -> M.Map k (c a)
-extend key addValues = M.insertWith mappend key addValues
+extend :: (Ord k, Singleton c a, Foldable c2) => k -> c2 a -> M.Map k (c a) -> M.Map k (c a)
+extend key addValues map = foldr (append key) map addValues
 
 append :: (Ord k, Singleton c a) => k -> a -> M.Map k (c a) -> M.Map k (c a)
 append key addValue = M.insertWith mappend key (singleton addValue)
