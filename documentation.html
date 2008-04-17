@@ -1,0 +1,56 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<title>DarcsWatch documentation</title>
+</head>
+<body>
+<h1>DarcsWatch documentation</h1>
+
+<p>DarcsWatch can be found at <a href="http://darcswatch.nomeata.de/">http://darcswatch.nomeata.de/</a>.</p>
+
+<h2>What is DarcsWatch</h2>
+
+<p>DarcsWatch is a tool to track the state of darcs patches that have been submitted to some project, ususalyl by using the <tt>darcs send</tt> command. It allows both submitters and project maintainers to get an overview of patches that have been submitted but not yet applied. Some notable features are:</p>
+
+<ul>
+<li>Reads both darcs1 and darcs2.0 (hashed) format repositories.</li>
+<li>Displays patch summaries per user and per repositoy.</li>
+<li>Patch diff can be reviewed directly.</li>
+<li>Download link for each patch, to apply without searching for the email.</li>
+<li>Knows about inverse patches and uses them to consider patches obsolete.</li>
+</ul>
+
+<h2>How can i use DarcsWatch?</h2>
+
+<h3>...as a interested user</h3>
+<p>You can check the DarcsWatch website for new, unapplied patches to your favorite projects and directly download them to try them out.</p>
+<p>The easiest way to apply a patch from DarcsWatch is to copy the URL from the download link and paste it into a terminal, to run this command: <tt>GET http:/darcswatch.nomeata.de/...dpatch | darcs apply -i</tt></p>
+
+<h3>...as a patch submitter?</h3>
+<p>To have your patch submissions tracked, you have to send them to <tt>darcswatch@nomeata.de</tt>. The easiest way to achieve this is by adding the line <tt>send cc darcswatch@nomeata.de</tt> to <tt>~/.darcs/defaults</tt>.</p>
+<p>If the repositories you are submitting to are not yet tracked, you have to drop a note to <a href="mailto:mail@joachim-breitner.de">Joachim Breitner</a> with the repositoy URL, and it will be added.</p>
+
+
+<h3>...as a project maintainer with a mailing list?</h3>
+<p>If you receive patches on a mailing list and want to have them tracked by DarcsWatch, just subscribe <tt>darcswatch@nomeata.de</tt> to the list, and drop <a href="mailto:mail@joachim-breitner.de">Joachim Breitner</a> a note with the darcs repositoy URL.</p>
+
+<h3>...as a project maintainer without a mailing list?</h3>
+<p>If you receive patches directly, but want them tracked by DarcsWatch, you should set up an email address somewhere that forwards all mails to both yourself and <tt>darcswatch@nomeata.de</tt>. If you can not do that. get in touch with <a href="mailto:mail@joachim-breitner.de">Joachim Breitner</a>, he might be able to set something up for you.</p>
+
+<h2>Other questions.</h2>
+
+<h3>What happens if the same mail reaches darcsweb multiple times, e.g. directly and via a mailing list?</h3>
+<p>Not much. Patch bundles are stored by their MD5 sum, so if the same hash bundle arrives again, it will just override the olde one.</p>
+
+<h3>I submitted a patch but it should not be used. Can I mark it as obsolete?</h3>
+<p>Yes. Just make sure DarcsWatch has seen the inverse of the patch. You can do so by first running <tt>darcs rollback</tt> and select your patch, and then send it to darcswatch using <tt>darcs send --to=darcswatch@nomeata.de</tt>. If the project is using a mailing list that is being tracked by DarcsWatch, you can send this mail to the list, thus notifying your fellow developers that you consider your patch obsolete. Of course you can do this also to patches other than your own.</p>
+
+<h2>Developing DarcsWatch</h2>
+
+<p>You can find DarcsWatch’s own darcs repository on <a href="http://darcs.nometa.de/darcswatch">http://darcs.nometa.de/darcswatch</a>.</p>
+
+<p style="font-size:80%">darcswatch © Joachim Breitner &lt;<a href="mailto:mail@joachim-breitner.de">mail@joachim-breitner.de</a>&gt;</p>
+
+</body>
+</html>
