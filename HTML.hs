@@ -33,6 +33,7 @@ import Text.XHtml hiding ((!))
 import qualified Text.XHtml ((!))
 import Text.Printf
 import qualified Data.Map as M
+import qualified Data.Set as S
 import Data.Map ((!))
 import qualified MultiMap as MM
 import MultiMap ((!!!!))
@@ -49,13 +50,13 @@ on :: (b -> b -> c) -> (a -> b) -> a -> a -> c
 (*) `on` f = \x y -> f x * f y
 
 data ResultData = ResultData
-	{ p2r ::  M.Map PatchInfo [String]
-	, r2p ::  M.Map String    [PatchInfo]
-	, u2p ::  M.Map String    [PatchInfo]
+	{ p2r ::  M.Map PatchInfo (S.Set String)
+	, r2p ::  M.Map String    (S.Set PatchInfo)
+	, u2p ::  M.Map String    (S.Set PatchInfo)
 	, p2pe::  M.Map PatchInfo PatchExtras
-	, p2pr :: M.Map PatchInfo [String]
-	, r2mp :: M.Map String    [PatchInfo]
-	, unapplicable :: [PatchInfo]
+	, p2pr :: M.Map PatchInfo (S.Set String)
+	, r2mp :: M.Map String    (S.Set PatchInfo)
+	, unapplicable :: (S.Set PatchInfo)
 	, date :: CalendarTime
 	}
 
@@ -154,7 +155,7 @@ patchView d userCentric p =
 	) +++
 	pre << unlines (piLog p) +++
 	(if userCentric
-	 then	(unordList $ flip map (p2pr d !!!! p) $ \r ->
+	 then	(unordList $ flip map (S.toList (p2pr d !!!! p)) $ \r ->
 			hotlink (repoFile r) << r +++ ": "+++ viewState d p r
 		)
 	 else	noHtml
@@ -178,15 +179,15 @@ patchView d userCentric p =
 -- in sevaral repositories
 data PatchState = Unmatched | Applied | NotApplied | Obsolete | Obsoleting deriving (Eq, Ord)
 
-state d p r | p `elem` ps                          = Applied
-            | ip `elem` ps                         = NotApplied
-            | ip `elem` subs && not (piInverted p) = Obsolete
-            | ip `elem` subs &&      piInverted p  = Obsoleting
+state d p r | p `S.member` ps                          = Applied
+            | ip `S.member` ps                         = NotApplied
+            | ip `S.member` subs && not (piInverted p) = Obsolete
+            | ip `S.member` subs &&      piInverted p  = Obsoleting
             | otherwise                            = NotApplied
   where context = peContext (p2pe d ! p)
   	ps = r2p d ! r
         ip = inversePatch p
-	subs = M.keys (p2pe d)
+	subs = M.keysSet (p2pe d)
 
 instance Show PatchState where
 	show Unmatched = "Unmatched"
@@ -221,7 +222,7 @@ userStats u d = " " +++
 	  where ps = (sps !!!! s)
 
 repoStats r d = " " +++
-	show (length (r2p d !!!! r)) +++ 
+	show (S.size (r2p d !!!! r)) +++ 
 	" patches in inventory "+++
 	count Applied "tracked" +++
 	count NotApplied "applicable" +++
@@ -233,18 +234,19 @@ repoStats r d = " " +++
 	  where ps = (sps !!!! s)
 
 repoData r d = (ps, sorted) 
-  where ps = patchSort $ r2mp d !!!! r
+  where ps = s2List $ r2mp d !!!! r
 	sorted = MM.fromList $ map (\p -> (state d p r, p)) ps
 
 userData u d = (ps, sorted)
-  where ps = patchSort $ u2p d !!!! u
+  where ps = patchSort $ S.toList $ u2p d !!!! u
 	sorted = MM.fromList $ map (\p -> (state' p, p)) ps
-	state' p | null repos = Unmatched
-	         | otherwise  = maximum (map (state d p) repos)
+	state' p | S.null repos = Unmatched
+	         | otherwise    = S.findMax (S.map (state d p) repos)
 	  where repos = p2pr d !!!! p
 
 userFile u = "user_" ++ md5 u ++ ".html"
 repoFile r = "repo_" ++ md5 r ++ ".html"
 
 
+s2List = reverse . sortBy (compare `on` piDate) . S.toList
 patchSort = reverse . sortBy (compare `on` piDate)

@@ -25,6 +25,7 @@ import System.Posix.Files
 import System.Time
 
 import qualified Data.Map as M
+import qualified Data.Set as S
 import qualified MultiMap as MM
 
 -- Darcs stuff
@@ -52,7 +53,7 @@ main = do
 		putStrLn $ "Reading " ++ rep ++ " ..." 
 		(ps,thisNew) <- getInventory (cOutput config ++ "/cache/") rep
 		let p2r' = foldr (\p -> MM.append p rep) p2r ps
-		    r2p' = MM.extend rep ps r2p
+		    r2p' = MM.extend rep ps r2p :: M.Map String (S.Set PatchInfo)
 		return (p2r', r2p', new || thisNew)
 	(p2r,r2p, new) <- foldM readInv (MM.empty, MM.empty, patchNew) (cRepositories config)
 
@@ -85,7 +86,7 @@ main = do
 		repo  <- repos
 		pe <- M.lookup patch p2pe
 		present <- M.lookup repo r2p
-		guard $ all (`elem` present) (peContext pe)
+		guard $ all (`S.member` present) (peContext pe)
 		return (patch, repo)
 	-- Patch to possible repos
 	-- Repo to possible patch
@@ -93,7 +94,7 @@ main = do
 	let r2mp = foldr (\(p,r) -> MM.append r p) MM.empty addables
 
 	-- Unapplicable patches
-	let unapplicable = filter (\p -> not (M.member p p2pr)) patches
+	let unapplicable = S.fromList $ filter (\p -> not (M.member p p2pr)) patches
 
 	now <- getClockTime >>= toCalendarTime
 	let resultData = ResultData p2r r2p u2p p2pe p2pr r2mp unapplicable now
