@@ -112,7 +112,10 @@ main = do
 	let patchLink (p,pe) = do
 		let link = cOutput config ++ "/" ++ patchBasename p ++ ".dpatch"
 		ex <- fileExist link
-		unless ex $ createSymbolicLink (peMailFile pe) link
+		unless ex $ do
+			-- There might be a broken symlink here:
+			catch (removeFile link) (const (return ()))
+			createSymbolicLink (peMailFile pe) link
 	mapM_ patchLink $ M.toList p2pe
 
 	return ()
