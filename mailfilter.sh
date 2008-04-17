@@ -61,4 +61,5 @@ then
 
 else
 	echo "No patch contained, it seems"
+	rm "$FILE"
 fi
