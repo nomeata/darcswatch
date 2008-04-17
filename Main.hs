@@ -64,7 +64,7 @@ main = do
 	let readMail (u2p, p2pe) mailFile = do
 		putStrLn $ "Reading mail " ++ mailFile ++ " ..."
 		(new,context) <- parseMail mailFile
-		let u2p' = foldr (\(p,_) -> MM.extend (piAuthor p) [p]) u2p new
+		let u2p' = foldr (\(p,_) -> MM.append (piAuthor p) p) u2p new
 		let p2pe' =  foldr (\(p,d) ->
 			let pe = PatchExtras d context mailFile 
 			-- The patch with the smaller context is the more useful
@@ -89,8 +89,8 @@ main = do
 		return (patch, repo)
 	-- Patch to possible repos
 	-- Repo to possible patch
-	let p2pr = foldr (\(p,r) -> MM.extend p [r]) MM.empty addables
-	let r2mp = foldr (\(p,r) -> MM.extend r [p]) MM.empty addables
+	let p2pr = foldr (\(p,r) -> MM.append p r) MM.empty addables
+	let r2mp = foldr (\(p,r) -> MM.append r p) MM.empty addables
 
 	-- Unapplicable patches
 	let unapplicable = filter (\p -> not (M.member p p2pr)) patches
