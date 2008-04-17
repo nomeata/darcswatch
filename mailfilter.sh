@@ -50,8 +50,8 @@ then
 
 	else
 		echo "Patch ok, adding to patch directory"
-		MD5SUM=$(perl -n -e 'print if (/^New patches:/.../^--=_/)' < "$FILE" |md5sum - |cut -c-32)
-		perl -n -e 'print if (/^New patches:/.../^--=_/)' < "$FILE" > "$DIR/patch_$MD5SUM"
+		MD5SUM=$(grep_dpatch < "$FILE" | md5)
+		grep_dpatch < "$FILE" > "$DIR/patch_$MD5SUM"
 		update
 
 		rm "$FILE"
