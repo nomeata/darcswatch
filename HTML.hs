@@ -19,6 +19,7 @@ Boston, MA 02110-1301, USA.
 
 module HTML 
 	( ResultData(ResultData)
+	, PatchExtras(..)
 	, mainPage
 	, userPage
 	, repoPage
@@ -51,13 +52,19 @@ data ResultData = ResultData
 	{ p2r ::  M.Map PatchInfo [String]
 	, r2p ::  M.Map String    [PatchInfo]
 	, u2p ::  M.Map String    [PatchInfo]
-	, p2c ::  M.Map PatchInfo [PatchInfo]
-	, p2d ::  M.Map PatchInfo String
+	, p2pe::  M.Map PatchInfo PatchExtras
 	, p2pr :: M.Map PatchInfo [String]
 	, r2mp :: M.Map String    [PatchInfo]
 	, unapplicable :: [PatchInfo]
 	, date :: CalendarTime
 	}
+
+data PatchExtras = PatchExtras
+	{ peDiff :: String
+	, peContext :: [PatchInfo]
+	, peMailFile :: String
+	}
+
 
 users d = M.keys (u2p d)
 repos d = M.keys (r2p d)
@@ -73,7 +80,7 @@ mainPage d = showHtml $
 	h2 << "Statistics" +++
 	p << stringToHtml (
 		printf "Tracking %d repositories and %d patches submitted by %d users"
-		(M.size (r2p d)) (M.size (p2d d)) (M.size (u2p d))
+		(M.size (r2p d)) (M.size (p2pe d)) (M.size (u2p d))
 		) +++
 	h2 << "Listing by user" +++ 
 	unordList (map (\u -> hotlink (userFile u) << u +++ userStats u d) (users d)) +++
@@ -154,7 +161,7 @@ patchView d userCentric p =
 	) +++
 	thediv !!! [identifier diffId, thestyle "display:none"] << (
 		actions +++
-		pre << p2d d !!!! p
+		pre << peDiff (p2pe d ! p)
 		) +++
 	actions
   where pid = patchBasename p
@@ -176,10 +183,10 @@ state d p r | p `elem` ps                          = Applied
             | ip `elem` subs && not (piInverted p) = Obsolete
             | ip `elem` subs &&      piInverted p  = Obsoleting
             | otherwise                            = NotApplied
-  where context = p2c d ! p
+  where context = peContext (p2pe d ! p)
   	ps = r2p d ! r
         ip = inversePatch p
-	subs = M.keys (p2d d)
+	subs = M.keys (p2pe d)
 
 instance Show PatchState where
 	show Unmatched = "Unmatched"

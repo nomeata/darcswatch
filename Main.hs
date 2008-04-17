@@ -61,26 +61,31 @@ main = do
 	putStrLn "Reading emails..."
 	mailFiles <- getDirectoryFiles (cMails config)
 
-	let readMail (u2p, p2c, p2d, p2f) mailFile = do
+	let readMail (u2p, p2pe) mailFile = do
 		putStrLn $ "Reading mail " ++ mailFile ++ " ..."
 		(new,context) <- parseMail mailFile
 		let u2p' = foldr (\(p,_) -> MM.extend (piAuthor p) [p]) u2p new
-		    p2c' = foldr (\(p,_) -> M.insert p context) p2c new 
-		    p2d' = foldr (\(p,d) -> M.insert p d) p2d new
-		    p2f' = foldr (\(p,_) -> M.insert p mailFile) p2f new
-		return (u2p', p2c', p2d', p2f')
-	(u2p, p2c, p2d, p2f) <- foldM readMail (MM.empty, M.empty, M.empty, M.empty) mailFiles
+		let p2pe' =  foldr (\(p,d) ->
+			let pe = PatchExtras d context mailFile 
+			-- The patch with the smaller context is the more useful
+			    choosePe pe1 pe2 = 
+				if length (peContext pe1) > length (peContext pe2)
+				then pe2
+				else pe1
+			in  M.insertWith choosePe p pe) p2pe new 
+		return (u2p', p2pe')
+	(u2p, p2pe) <- foldM readMail (MM.empty, M.empty) mailFiles
 
-	let patches = M.keys p2d -- Submitted patches
+	let patches = M.keys p2pe -- Submitted patches
 	let repos   = M.keys r2p -- Repos with patches
 	let users   = M.keys u2p -- Known users
 
 	let addables = do -- List modad
 		patch <- patches
 		repo  <- repos
-		context <- M.lookup patch p2c
+		pe <- M.lookup patch p2pe
 		present <- M.lookup repo r2p
-		guard $ all (`elem` present) context
+		guard $ all (`elem` present) (peContext pe)
 		return (patch, repo)
 	-- Patch to possible repos
 	-- Repo to possible patch
@@ -91,7 +96,7 @@ main = do
 	let unapplicable = filter (\p -> not (M.member p p2pr)) patches
 
 	now <- getClockTime >>= toCalendarTime
-	let resultData = ResultData p2r r2p u2p p2c p2d p2pr r2mp unapplicable now
+	let resultData = ResultData p2r r2p u2p p2pe p2pr r2mp unapplicable now
 	putStrLn "Writing output..."
  	writeFile (cOutput config ++ "/index.html") (mainPage resultData)
  
@@ -102,11 +107,11 @@ main = do
  		writeFile (cOutput config ++ "/" ++ repoFile r) (repoPage resultData r)
 
 	putStrLn "Linking patches"
-	let patchLink p f = do
+	let patchLink (p,pe) = do
 		let link = cOutput config ++ "/" ++ patchBasename p ++ ".dpatch"
 		ex <- fileExist link
-		unless ex $ createSymbolicLink f link
-	M.foldWithKey (\p f -> ( >> patchLink p f)) (return ()) p2f
+		unless ex $ createSymbolicLink (peMailFile pe) link
+	mapM_ patchLink $ M.toList p2pe
 
 	return ()
 
@@ -120,3 +125,8 @@ getDirectoryFiles dir' = getDirectoryContents dir >>=
 
 addSlash filename | last filename == '/' = filename
                   | otherwise            = filename ++ "/"
+
+-- not in ghc6.6
+infixl 0 `on`
+on :: (b -> b -> c) -> (a -> b) -> a -> a -> c
+(*) `on` f = \x y -> f x * f y
