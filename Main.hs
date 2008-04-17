@@ -27,6 +27,7 @@ import System.Time
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified MultiMap as MM
+import Data.Char
 
 -- Darcs stuff
 import Darcs
@@ -62,20 +63,20 @@ main = do
 	putStrLn "Reading emails..."
 	mailFiles <- getDirectoryFiles (cMails config)
 
-	let readMail (u2p, p2pe) mailFile = do
+	let readMail (u2p, u2rn, p2pe) mailFile = do
 		putStrLn $ "Reading mail " ++ mailFile ++ " ..."
 		(new,context) <- parseMail mailFile
-		let u2p' = foldr (\(p,_) -> MM.append (piAuthor p) p) u2p new
+		let u2p' = foldr (\(p,_) -> MM.append (normalizeAuthor (piAuthor p)) p) u2p new
+		let u2rn' = foldr (\(p,_) ->
+			M.insertWith (maxBy length) (normalizeAuthor (piAuthor p)) (piAuthor p)
+			) u2rn new
 		let p2pe' =  foldr (\(p,d) ->
 			let pe = PatchExtras d context mailFile 
 			-- The patch with the smaller context is the more useful
-			    choosePe pe1 pe2 = 
-				if length (peContext pe1) > length (peContext pe2)
-				then pe2
-				else pe1
-			in  M.insertWith choosePe p pe) p2pe new 
-		return (u2p', p2pe')
-	(u2p, p2pe) <- foldM readMail (MM.empty, M.empty) mailFiles
+			in  M.insertWith (minBy (length.peContext)) p pe
+			) p2pe new 
+		return (u2p', u2rn', p2pe')
+	(u2p, u2rn, p2pe) <- foldM readMail (MM.empty, M.empty, M.empty) mailFiles
 
 	let patches = M.keys p2pe -- Submitted patches
 	let repos   = M.keys r2p -- Repos with patches
@@ -97,7 +98,7 @@ main = do
 	let unapplicable = S.fromList $ filter (\p -> not (M.member p p2pr)) patches
 
 	now <- getClockTime >>= toCalendarTime
-	let resultData = ResultData p2r r2p u2p p2pe p2pr r2mp unapplicable now
+	let resultData = ResultData p2r r2p u2p p2pe p2pr r2mp unapplicable now u2rn
 	putStrLn "Writing output..."
  	writeFile (cOutput config ++ "/index.html") (mainPage resultData)
  
@@ -122,7 +123,10 @@ getDirectoryFiles dir' = getDirectoryContents dir >>=
 			filterM doesFileExist  >>=
 			filterM ((readable `fmap`) . getPermissions)
   where	dir = addSlash dir'
-		
+
+maxBy f v1 v2 = if f v1 >= f v2 then v1 else v2
+minBy f v1 v2 = if f v1 <= f v2 then v1 else v2
+
 
 addSlash filename | last filename == '/' = filename
                   | otherwise            = filename ++ "/"

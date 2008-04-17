@@ -25,6 +25,7 @@ module HTML
 	, repoPage
 	, userFile
 	, repoFile
+	, normalizeAuthor
 	) where
 
 import StringCrypto (md5)
@@ -39,6 +40,7 @@ import qualified MultiMap as MM
 import MultiMap ((!!!!))
 import Data.List
 import Data.Ord
+import Data.Char
 import System.Time
 
 import Darcs
@@ -58,6 +60,7 @@ data ResultData = ResultData
 	, r2mp :: M.Map String    (S.Set PatchInfo)
 	, unapplicable :: (S.Set PatchInfo)
 	, date :: CalendarTime
+	, u2rn :: M.Map String    String
 	}
 
 data PatchExtras = PatchExtras
@@ -84,7 +87,7 @@ mainPage d = showHtml $
 		(M.size (r2p d)) (M.size (p2pe d)) (M.size (u2p d))
 		) +++
 	h2 << "Listing by user" +++ 
-	unordList (map (\u -> hotlink (userFile u) << u +++ userStats u d) (users d)) +++
+	unordList (map (\u -> hotlink (userFile u) << u2rn d ! u +++ userStats u d) (users d)) +++
 	h2 << "Listing by repository" +++ 
 	unordList (map (\r -> hotlink (repoFile r) << r +++ repoStats r d) (repos d)) +++
 	footer d
@@ -110,11 +113,11 @@ myHeader d = script !!! [thetype "text/javascript"] << (
 
 userPage d u = showHtml $
    header << (
-   	thetitle << ("DarcsWatch overview for " +++ u) +++
+   	thetitle << ("DarcsWatch overview for " +++ u2rn d ! u) +++
 	myHeader d
 	) +++
    body << (
-	h1 << ("DarcsWatch overview for " +++ u) +++
+	h1 << ("DarcsWatch overview for " +++ u2rn d ! u) +++
 	p << hotlink "." << "Return to main page" +++
 	patchList d (sps !!!! NotApplied) "Unapplied patches" True +++
 	patchList d (sps !!!! Unmatched) "Unmatched patches" True +++
@@ -244,8 +247,16 @@ userData u d = (ps, sorted)
 	         | otherwise    = S.findMax (S.map (state d p) repos)
 	  where repos = p2pr d !!!! p
 
-userFile u = "user_" ++ md5 u ++ ".html"
+userFile u = "user_" ++ md5 (normalizeAuthor u) ++ ".html"
 repoFile r = "repo_" ++ md5 r ++ ".html"
+
+normalizeAuthor name | not (null r') && valid = email
+                     | otherwise              = name
+  where r' = dropWhile (/='<') name
+        (email,r'') = span (/='>') (tail r')
+	valid = not (null email) && not (null r'') && all (isSafeFileChar) email
+
+isSafeFileChar c = isAlpha c || isDigit c || c `elem` "-_.@"
 
 
 s2List = reverse . sortBy (compare `on` piDate) . S.toList
