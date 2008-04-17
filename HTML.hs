@@ -262,5 +262,5 @@ safeName n = map s n
 isSafeFileChar c = isAlpha c || isDigit c || c `elem` "-_.@:"
 
 
-s2List = reverse . sortBy (compare `on` piDate) . S.toList
-patchSort = reverse . sortBy (compare `on` piDate)
+s2List = patchSort . S.toList
+patchSort = sortBy (flip (compare `on` piDate))
