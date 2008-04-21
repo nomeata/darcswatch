@@ -48,7 +48,7 @@ then
 fi
 if fgrep -q -i 'DarcsWatch: obsolete' < "$FILE"
 then
-	STATE=rejected
+	STATE=obsolete
 fi
 echo "Found state $STATE"
 
