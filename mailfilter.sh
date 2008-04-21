@@ -36,28 +36,23 @@ if fgrep -q 'Content-Type: text/x-darcs-patch;' "$FILE" ||
    fgrep -q 'Content-Type: text/x-patch;' "$FILE"
 then
 
-	echo "Looking for gpg frame"
+	echo "Patch ok, adding to patch directory"
+
 	if fgrep -q -- '-----BEGIN PGP SIGNED MESSAGE-----' "$FILE"
 	then
 
-		echo "Patch ok, adding to patch directory"
 		MD5SUM=$(grep_gpg < "$FILE" | md5)
 		grep_gpg < "$FILE" > "$DIR/patch_$MD5SUM"
-		update
-
-		rm "$FILE"
-		exit 0
 
 	else
-		echo "Patch ok, adding to patch directory"
 		MD5SUM=$(grep_dpatch < "$FILE" | md5)
 		grep_dpatch < "$FILE" > "$DIR/patch_$MD5SUM"
-		update
-
-		rm "$FILE"
-		exit 0
-
 	fi
+
+	update
+	rm "$FILE"
+	exit 0
+
 
 else
 	echo "No patch contained, it seems"
