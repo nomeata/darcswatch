@@ -67,7 +67,8 @@ main = do
 
 	let readMail (u2p, u2rn, p2pe) mailFile = do
 		putStrLn $ "Reading mail " ++ mailFile ++ " ..."
-		(new,context) <- parseMail mailFile
+		mail <- readFile mailFile
+		let (new,context) = parseMail mail
 		let u2p' = foldr (\(p,_) -> MM.append (normalizeAuthor (piAuthor p)) p) u2p new
 		let u2rn' = foldr (\(p,_) ->
 			M.insertWith (maxBy length) (normalizeAuthor (piAuthor p)) (piAuthor p)
