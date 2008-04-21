@@ -124,18 +124,12 @@ breakLast c xs = case breakFirst c (reverse xs) of
 index = (!!)
 
 
-parseMail :: FilePath -> IO ([(PatchInfo,String)],[PatchInfo])
-parseMail file = do 
-	content <- readFile file
-	let demime = readMail content
-	-- verify here
-	let eesc = scan_bundle demime
-	case eesc of 
-		Left err -> do putStrLn $ "Parse error: "++ err
-		               return ([],[])
-		Right res -> return res
-
-
+parseMail :: String -> ([(PatchInfo,String)],[PatchInfo])
+parseMail content = do case eesc of 
+			Left err -> ([],[])  -- putStrLn $ "Parse error: "++ err
+			Right res -> res
+  where demime = readMail content
+	eesc = scan_bundle demime
 	
 
 readMail :: String -> String
