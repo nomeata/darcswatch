@@ -27,6 +27,7 @@ import System.Time
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified MultiMap as MM
+import MultiMap ((!!!!))
 import Data.Char
 import Data.List
 
@@ -34,6 +35,8 @@ import Data.List
 import Darcs
 -- Web ouput
 import HTML
+
+import StringCrypto
 
 data DarcsWatchConfig = DarcsWatchConfig {
 	cRepositories :: [String],
@@ -65,9 +68,10 @@ main = do
 	mailFiles' <- getDirectoryFiles (cMails config)
 	let mailFiles = filter ((addSlash (cMails config) ++ "patch") `isPrefixOf`) mailFiles'
 
-	let readMail (u2p, u2rn, p2pe) mailFile = do
+	let readMail (u2p, u2rn, p2pe, md2p) mailFile = do
 		putStrLn $ "Reading mail " ++ mailFile ++ " ..."
 		mail <- readFile mailFile
+		let md5sum = md5 mail
 		let (new,context) = parseMail mail
 		let u2p' = foldr (\(p,_) -> MM.append (normalizeAuthor (piAuthor p)) p) u2p new
 		let u2rn' = foldr (\(p,_) ->
@@ -78,8 +82,22 @@ main = do
 			-- The patch with the smaller context is the more useful
 			in  M.insertWith (minBy (length.peContext)) p pe
 			) p2pe new 
-		return (u2p', u2rn', p2pe')
-	(u2p, u2rn, p2pe) <- foldM readMail (MM.empty, M.empty, M.empty) mailFiles
+		let md2p' = MM.extend md5sum (map fst new) md2p
+		return (u2p', u2rn', p2pe', md2p')
+	(u2p, u2rn, p2pe, md2p) <- foldM readMail (MM.empty, M.empty, M.empty, MM.empty) mailFiles
+
+	putStrLn "Reading bunde states..."
+	states <- readFile (addSlash (cMails config) ++ "states")
+	let readStateLine string =
+		let (md5sum : stateString : _ : rest) = words string
+		    sender = unwords rest
+		    state = case stateString of
+		    		"add" -> Unmatched
+				"obsolete" -> Obsolete
+				"rejected" -> Rejected
+				unknown    -> error $ "Unknown state " ++ show unknown
+		in  flip (foldr (\p -> M.insert p state)) (md2p !!!! md5sum)
+	    p2s = foldr readStateLine M.empty (lines states)
 
 	let patches = M.keys p2pe -- Submitted patches
 	let repos   = M.keys r2p -- Repos with patches
@@ -101,7 +119,7 @@ main = do
 	let unapplicable = S.fromList $ filter (\p -> not (M.member p p2pr)) patches
 
 	now <- getClockTime >>= toCalendarTime
-	let resultData = ResultData p2r r2p u2p p2pe p2pr r2mp unapplicable now u2rn
+	let resultData = ResultData p2r r2p u2p p2pe p2pr r2mp p2s unapplicable now u2rn
 	putStrLn "Writing output..."
  	writeFile (cOutput config ++ "/index.html") (mainPage resultData)
  

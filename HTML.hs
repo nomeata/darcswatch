@@ -26,6 +26,7 @@ module HTML
 	, userFile
 	, repoFile
 	, normalizeAuthor
+	, PatchState(..)
 	) where
 
 import StringCrypto (md5)
@@ -58,6 +59,7 @@ data ResultData = ResultData
 	, p2pe::  M.Map PatchInfo PatchExtras
 	, p2pr :: M.Map PatchInfo (S.Set String)
 	, r2mp :: M.Map String    (S.Set PatchInfo)
+	, p2s  :: M.Map PatchInfo (PatchState)
 	, unapplicable :: (S.Set PatchInfo)
 	, date :: CalendarTime
 	, u2rn :: M.Map String    String
@@ -180,7 +182,7 @@ patchView d userCentric p =
 		
 -- The order defines what state a patch should be considered if it is
 -- in sevaral repositories
-data PatchState = Unmatched | Applied | NotApplied | Obsolete | Obsoleting deriving (Eq, Ord)
+data PatchState = Unmatched | Applied | NotApplied | Rejected |  Obsolete | Obsoleting deriving (Eq, Ord)
 
 state d p r | p `S.member` ps                          = Applied
             | ip `S.member` ps                         = NotApplied
