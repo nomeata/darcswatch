@@ -123,6 +123,7 @@ userPage d u = showHtml $
 	p << hotlink "." << "Return to main page" +++
 	patchList d (sps !!!! NotApplied) "Unapplied patches" True +++
 	patchList d (sps !!!! Unmatched) "Unmatched patches" True +++
+	patchList d (sps !!!! Rejected) "Rejected patches" True +++
 	patchList d (sps !!!! Obsolete) "Obsolete patches" True +++
 	patchList d (sps !!!! Applied) "Applied patches" True +++
 	footer d
@@ -140,6 +141,7 @@ repoPage d r = showHtml $
 	patchList d (sps !!!! NotApplied) "Unapplied patches" False +++
 	patchList d (sps !!!! Applied) "Applied patches" False +++
 	patchList d (sps !!!! Obsolete) "Obsolete patches" False +++
+	patchList d (sps !!!! Rejected) "Rejected patches" True +++
 	footer d
 	)
   where (ps, sps) = repoData r d
@@ -185,25 +187,28 @@ patchView d userCentric p =
 data PatchState = Unmatched | Applied | NotApplied | Rejected |  Obsolete | Obsoleting deriving (Eq, Ord)
 
 state d p r | p `S.member` ps                          = Applied
-            | ip `S.member` ps                         = NotApplied
+            | ip `S.member` ps                         = explicit_state
             | ip `S.member` subs && not (piInverted p) = Obsolete
             | ip `S.member` subs &&      piInverted p  = Obsoleting
-            | otherwise                            = NotApplied
+            | otherwise                                = explicit_state
   where context = peContext (p2pe d ! p)
   	ps = r2p d ! r
         ip = inversePatch p
 	subs = M.keysSet (p2pe d)
+	explicit_state = max NotApplied (M.findWithDefault Unmatched p (p2s d))
 
 instance Show PatchState where
 	show Unmatched = "Unmatched"
 	show Applied = "Applied"
 	show NotApplied = "Not yet applied"
+	show Rejected = "Marked rejected"
 	show Obsolete = "Marked obsolete"
 	show Obsoleting = "Marking patch as obsolete"
 
 stateColor Applied = "green"
 stateColor NotApplied = "red"
 stateColor Obsolete = "gray"
+stateColor Rejected = "brown"
 stateColor Obsoleting = "gray"
 stateColor Unmatched = "black"
 
@@ -219,7 +224,8 @@ userStats u d = " " +++
 	show (length ps) +++ 
 	" tracked patches, "+++
 	count NotApplied "unapplied" +++
-	count Obsolete "obsolete"
+	count Obsolete "obsolete" +++
+	count Rejected "rejected"
   where (ps, sps) = userData u d
   	count s t = case sps !!!! s of
 	              [] -> noHtml
@@ -231,7 +237,8 @@ repoStats r d = " " +++
 	" patches in inventory "+++
 	count Applied "tracked" +++
 	count NotApplied "applicable" +++
-	count Obsolete "obsolete"
+	count Obsolete "obsolete" +++
+	count Rejected "rejected"
   where (ps, sps) = repoData r d
   	count s t = case sps !!!! s of
 	              [] -> noHtml
