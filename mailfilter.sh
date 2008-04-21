@@ -52,7 +52,8 @@ MSGID="$(formail -z -x "Message-ID:" < "$FILE")"
 echo "Looking for a patch"
 
 if fgrep -q 'Content-Type: text/x-darcs-patch;' "$FILE" ||
-   fgrep -q 'Content-Type: text/x-patch;' "$FILE"
+   fgrep -q 'Content-Type: text/x-patch;' "$FILE" ||
+   fgrep -q 'New patches:' "$FILE" 
 then
 
 	echo "Patch ok, adding to patch directory"
