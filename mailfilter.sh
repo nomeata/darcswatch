@@ -41,6 +41,15 @@ if formail -z -x "Subject:" < "$FILE" | fgrep -q '[REJECTED]'
 then
 	STATE=rejected
 fi
+# More polite style, for xmonad :-)
+if fgrep -q -i 'DarcsWatch: rejected' < "$FILE"
+then
+	STATE=rejected
+fi
+if fgrep -q -i 'DarcsWatch: obsolete' < "$FILE"
+then
+	STATE=rejected
+fi
 echo "Found state $STATE"
 
 echo "Looking for the sender"
