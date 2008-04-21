@@ -43,8 +43,15 @@
 <h3>What happens if the same mail reaches darcsweb multiple times, e.g. directly and via a mailing list?</h3>
 <p>Not much. Patch bundles are stored by their MD5 sum, so if the same hash bundle arrives again, it will just override the olde one.</p>
 
-<h3>I submitted a patch but it should not be used. Can I mark it as obsolete?</h3>
-<p>Yes. Just make sure DarcsWatch has seen the inverse of the patch. You can do so by first running <tt>darcs rollback</tt> and select your patch, and then send it to darcswatch using <tt>darcs send --to=darcswatch@nomeata.de</tt>. If the project is using a mailing list that is being tracked by DarcsWatch, you can send this mail to the list, thus notifying your fellow developers that you consider your patch obsolete. Of course you can do this also to patches other than your own.</p>
+<h3>I submitted a patch but it should not be used. Can I mark it as obsolete or rejected?</h3>
+<p>Yes. There are two ways, the latter just for reference, as the first one is easier: </p>
+
+<p> <strong>Via tagged mails</strong> DarcsWatch remembers the message-ids of the mails that submitted a particular patch bundle, so if it sees a direct reply to such a mail, it look in the Subject for the text <tt>[OBSOLETE]</tt> or <tt>[REJECTED]</tt> and mark a patch as such. If the bundle (or parts of it) are later re-submitted, these flags are removed again.</p>
+
+<p>If you don’t have the original message around to reply to it, you can also attach the patch bundle to the mail with the tag in the subject – just download it from the DarcsWatch site. Also, when patch bundles are added to DarcsWatch manually, there might not be a message-id attached and this will be the only way.
+</p>
+
+<p> <strong>Via inverse patches.</strong> Make sure DarcsWatch has seen the inverse of the patch. You can do so by first running <tt>darcs rollback</tt> and select your patch, and then send it to darcswatch using <tt>darcs send --to=darcswatch@nomeata.de</tt>. If the project is using a mailing list that is being tracked by DarcsWatch, you can send this mail to the list, thus notifying your fellow developers that you consider your patch obsolete. Of course you can do this also to patches other than your own.</p>
 
 <h2>Developing DarcsWatch</h2>
 
