@@ -30,6 +30,25 @@ function update {
 FILE=$(tempfile --prefix patch)
 mimedecode > "$FILE"
 
+echo "Looking for a state"
+
+STATE=add
+if formail -z -x "Subject:" < "$FILE" | fgrep -q '[OBSOLETE]'
+then
+	STATE=obsolete
+fi
+if formail -z -x "Subject:" < "$FILE" | fgrep -q '[REJECTED]'
+then
+	STATE=rejected
+fi
+echo "Found state $STATE"
+
+echo "Looking for the sender"
+FROM=$(formail -z -x "From:" < "$FILE")
+
+
+MSGID="$(formail -z -x "Message-ID:" < "$FILE")"
+
 echo "Looking for a patch"
 
 if fgrep -q 'Content-Type: text/x-darcs-patch;' "$FILE" ||
@@ -49,12 +68,49 @@ then
 		grep_dpatch < "$FILE" > "$DIR/patch_$MD5SUM"
 	fi
 
-	update
-	rm "$FILE"
-	exit 0
-
+	if [ -n "$MSGID" ]
+	then
+		if test -e "$DIR/mid-mapping" && fgrep -q "$MSGID" "$DIR/mid-mapping"
+		then
+			echo "Seen this mail before"
+		else
+			echo "$MSGID $MD5SUM" >> "$DIR/mid-mapping"
+		fi
+	fi
 
 else
 	echo "No patch contained, it seems"
-	rm "$FILE"
 fi
+
+if [ -n "$MSGID" ]
+then
+	if [ -z "$MD5SUM" ]
+	then
+		# No referred bundle yet
+		REPLY=$(formail -z -x "In-Reply-To:" < "$FILE") 	
+		if [ -n "$REPLY" ] && test -e "$DIR/mid-mapping"
+		then
+			MD5SUM=$(fgrep "$REPLY" "$DIR/mid-mapping" | cut -f2 -d\ )
+		fi
+	fi
+
+	if [ -n "$MD5SUM" ]
+	then
+		# Got something to mark
+		if test -e "$DIR/states" && fgrep -q "$MSGID" "$DIR/states"
+		then
+			echo "Seen this mail before"
+		else
+			echo "Marking patch $MD5SUM as $STATE"
+			echo "$MD5SUM $STATE $MSGID $FROM" >> "$DIR/states"
+		fi
+	fi
+fi
+
+if [ -n "$MD5SUM" ]
+then
+	update
+fi
+
+rm "$FILE"
+exit 0
