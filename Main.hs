@@ -28,6 +28,7 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified MultiMap as MM
 import Data.Char
+import Data.List
 
 -- Darcs stuff
 import Darcs
@@ -61,7 +62,8 @@ main = do
 	if not new then putStrLn "Nothing new, exiting" else do
 	
 	putStrLn "Reading emails..."
-	mailFiles <- getDirectoryFiles (cMails config)
+	mailFiles' <- getDirectoryFiles (cMails config)
+	let mailFiles = filter ((addSlash (cMails config) ++ "patch") `isPrefixOf`) mailFiles'
 
 	let readMail (u2p, u2rn, p2pe) mailFile = do
 		putStrLn $ "Reading mail " ++ mailFile ++ " ..."
