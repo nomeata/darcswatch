@@ -97,7 +97,7 @@ main = do
 				"rejected" -> Rejected
 				unknown    -> error $ "Unknown state " ++ show unknown
 		in  flip (foldr (\p -> M.insert p state)) (md2p !!!! md5sum)
-	    p2s = foldr readStateLine M.empty (lines states)
+	    p2s = foldl (flip readStateLine) M.empty (lines states)
 
 	let patches = M.keys p2pe -- Submitted patches
 	let repos   = M.keys r2p -- Repos with patches
