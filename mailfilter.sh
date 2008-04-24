@@ -32,7 +32,7 @@ mimedecode > "$FILE"
 
 echo "Looking for a state"
 
-STATE=add
+STATE=none
 if formail -z -x "Subject:" < "$FILE" | fgrep -q '[OBSOLETE]'
 then
 	STATE=obsolete
@@ -88,11 +88,13 @@ then
 		fi
 	fi
 
+	STATE=add
+
 else
 	echo "No patch contained, it seems"
 fi
 
-if [ -n "$MSGID" ]
+if [ -n "$MSGID" -a "$STATE" != "none"]
 then
 	if [ -z "$MD5SUM" ]
 	then
