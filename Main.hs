@@ -86,7 +86,7 @@ main = do
 		return (u2p', u2rn', p2pe', md2p')
 	(u2p, u2rn, p2pe, md2p) <- foldM readMail (MM.empty, M.empty, M.empty, MM.empty) mailFiles
 
-	putStrLn "Reading bunde states..."
+	putStrLn "Reading bundle states..."
 	states <- readFile (addSlash (cMails config) ++ "states")
 	let readStateLine string =
 		let (md5sum : stateString : _ : rest) = words string
