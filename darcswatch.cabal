@@ -36,7 +36,12 @@ Build-Depends:   haskell98
                 , directory
 
 extra-source-files: mailfilter.sh
-data-files:     documentation.html, README
+data-files:     documentation.html, README, example/config
+                example/output, example/keyring, example/mails/patchInvTest,
+                example/mails/patch_1f03d40fbe9d0593a9eb7fbefc3bfa85,
+                example/mails/patchsmaJcF, example/mails/patchBEbWYh,
+                example/mails/patchOKsIKA,
+                example/mails/patch_a963212153b4f5e3f1777daa562dd989
 
 Build-Type:     Simple
 Executable:     darcswatch
