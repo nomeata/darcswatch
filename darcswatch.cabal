@@ -22,7 +22,7 @@ Description:     DarcsWatch is a tool to track the state of darcs patches
                  * Knows about inverse patches and uses them to consider patches obsolete.
 Homepage:        http://darcswatch.nomeata.de/
 License:         GPL
-License-File:	 COPYING
+License-File:	 LICENSE
 Build-Depends:   haskell98
                  ,base
                 , network
