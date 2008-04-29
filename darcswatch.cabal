@@ -41,3 +41,4 @@ data-files:     documentation.html, README
 Build-Type:     Simple
 Executable:     darcswatch
 Main-Is:        Main.hs
+hs-source-dirs: src
