@@ -2,8 +2,25 @@ Name:            darcswatch
 version:         0.0.1.0
 Category:        Distribution
 name:            darcswatch
-author:          Joachim Breitner <mail@joachim-breitner.de>
-Synopsis:        track application of darcs patches
+author:          Joachim Breitner
+maintainer:      Joachim Breitner <mail@joachim-breitner.de>
+Synopsis:        Track application of Darcs patches
+Description:     DarcsWatch is a tool to track the state of darcs patches
+                 that have been submitted to some project, usually by
+                 using the "darcs send" command. It allows both submitters
+                 and project maintainers to get an overview of patches that
+                 have been submitted but not yet applied. Some notable features are:
+                 .
+                 * Reads both darcs1 and darcs2.0 (hashed) format repositories.
+                 .
+                 * Displays patch summaries per user and per repository.
+                 .
+                 * Patch diff can be reviewed directly.
+                 .
+                 * Download link for each patch, to apply without searching for the email.
+                 .
+                 * Knows about inverse patches and uses them to consider patches obsolete.
+Homepage:        http://darcswatch.nomeata.de/
 License:         GPL
 License-File:	 COPYING
 Build-Depends:   haskell98
