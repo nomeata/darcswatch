@@ -17,5 +17,6 @@ Build-Depends:   haskell98
                 , xhtml
                 , unix
                 , directory
+Build-Type:     Simple
 Executable:     darcswatch
 Main-Is:        Main.hs
