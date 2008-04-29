@@ -94,7 +94,7 @@ else
 	echo "No patch contained, it seems"
 fi
 
-if [ -n "$MSGID" -a "$STATE" != "none"]
+if [ -n "$MSGID" -a "$STATE" != "none" ]
 then
 	if [ -z "$MD5SUM" ]
 	then
