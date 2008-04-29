@@ -19,7 +19,7 @@ Boston, MA 02110-1301, USA.
 
 
 import Control.Monad
-import System
+import System.Environment (getArgs)
 import System.Directory
 import System.Posix.Files
 import System.Time
@@ -39,114 +39,114 @@ import HTML
 import StringCrypto
 
 data DarcsWatchConfig = DarcsWatchConfig {
-	cRepositories :: [String],
-	cOutput :: String,
-	cMails :: String
-	} deriving (Show, Read)
+        cRepositories :: [String],
+        cOutput :: String,
+        cMails :: String
+        } deriving (Show, Read)
 
 
 main = do
-	args <- getArgs
-	let (confdir, patchNew) = case args of
-			[confdir] -> (addSlash confdir, False)
-			[confdir, "new"] -> (addSlash confdir, True)
-			_         -> error "Use darcswatch confdir/"
-	putStrLn "Reading configuration..."
-	config <- read `fmap` readFile (confdir ++ "config")
-	putStrLn "Reading repositories..."
-	let readInv (p2r,r2p,new) rep = do 
-		putStrLn $ "Reading " ++ rep ++ " ..." 
-		(ps,thisNew) <- getInventory (cOutput config ++ "/cache/") rep
-		let p2r' = foldr (\p -> MM.append p rep) p2r ps
-		    r2p' = MM.extend rep ps r2p :: M.Map String (S.Set PatchInfo)
-		return (p2r', r2p', new || thisNew)
-	(p2r,r2p, new) <- foldM readInv (MM.empty, MM.empty, patchNew) (cRepositories config)
+        args <- getArgs
+        let (confdir, patchNew) = case args of
+                        [confdir] -> (addSlash confdir, False)
+                        [confdir, "new"] -> (addSlash confdir, True)
+                        _         -> error "Use darcswatch confdir/"
+        putStrLn "Reading configuration..."
+        config <- read `fmap` readFile (confdir ++ "config")
+        putStrLn "Reading repositories..."
+        let readInv (p2r,r2p,new) rep = do
+                putStrLn $ "Reading " ++ rep ++ " ..."
+                (ps,thisNew) <- getInventory (cOutput config ++ "/cache/") rep
+                let p2r' = foldr (\p -> MM.append p rep) p2r ps
+                    r2p' = MM.extend rep ps r2p :: M.Map String (S.Set PatchInfo)
+                return (p2r', r2p', new || thisNew)
+        (p2r,r2p, new) <- foldM readInv (MM.empty, MM.empty, patchNew) (cRepositories config)
 
-	if not new then putStrLn "Nothing new, exiting" else do
-	
-	putStrLn "Reading emails..."
-	mailFiles' <- getDirectoryFiles (cMails config)
-	let mailFiles = filter ((addSlash (cMails config) ++ "patch") `isPrefixOf`) mailFiles'
+        if not new then putStrLn "Nothing new, exiting" else do
 
-	let readMail (u2p, u2rn, p2pe, md2p) mailFile = do
-		putStrLn $ "Reading mail " ++ mailFile ++ " ..."
-		mail <- readFile mailFile
-		let md5sum = md5 mail
-		let (new,context) = parseMail mail
-		let u2p' = foldr (\(p,_) -> MM.append (normalizeAuthor (piAuthor p)) p) u2p new
-		let u2rn' = foldr (\(p,_) ->
-			M.insertWith (maxBy length) (normalizeAuthor (piAuthor p)) (piAuthor p)
-			) u2rn new
-		let p2pe' =  foldr (\(p,d) ->
-			let pe = PatchExtras d context mailFile 
-			-- The patch with the smaller context is the more useful
-			in  M.insertWith (minBy (length.peContext)) p pe
-			) p2pe new 
-		let md2p' = MM.extend md5sum (map fst new) md2p
-		return (u2p', u2rn', p2pe', md2p')
-	(u2p, u2rn, p2pe, md2p) <- foldM readMail (MM.empty, M.empty, M.empty, MM.empty) mailFiles
+        putStrLn "Reading emails..."
+        mailFiles' <- getDirectoryFiles (cMails config)
+        let mailFiles = filter ((addSlash (cMails config) ++ "patch") `isPrefixOf`) mailFiles'
 
-	putStrLn "Reading bundle states..."
-	states <- readFile (addSlash (cMails config) ++ "states")
-	let readStateLine string =
-		let (md5sum : stateString : _ : rest) = words string
-		    sender = unwords rest
-		    state = case stateString of
-		    		"add" -> Unmatched
-				"obsolete" -> Obsolete
-				"rejected" -> Rejected
-				unknown    -> error $ "Unknown state " ++ show unknown
-		in  flip (foldr (\p -> M.insert p state)) (md2p !!!! md5sum)
-	    p2s = foldl (flip readStateLine) M.empty (lines states)
+        let readMail (u2p, u2rn, p2pe, md2p) mailFile = do
+                putStrLn $ "Reading mail " ++ mailFile ++ " ..."
+                mail <- readFile mailFile
+                let md5sum = md5 mail
+                let (new,context) = parseMail mail
+                let u2p' = foldr (\(p,_) -> MM.append (normalizeAuthor (piAuthor p)) p) u2p new
+                let u2rn' = foldr (\(p,_) ->
+                        M.insertWith (maxBy length) (normalizeAuthor (piAuthor p)) (piAuthor p)
+                        ) u2rn new
+                let p2pe' =  foldr (\(p,d) ->
+                        let pe = PatchExtras d context mailFile
+                        -- The patch with the smaller context is the more useful
+                        in  M.insertWith (minBy (length.peContext)) p pe
+                        ) p2pe new
+                let md2p' = MM.extend md5sum (map fst new) md2p
+                return (u2p', u2rn', p2pe', md2p')
+        (u2p, u2rn, p2pe, md2p) <- foldM readMail (MM.empty, M.empty, M.empty, MM.empty) mailFiles
 
-	let patches = M.keys p2pe -- Submitted patches
-	let repos   = M.keys r2p -- Repos with patches
-	let users   = M.keys u2p -- Known users
+        putStrLn "Reading bundle states..."
+        states <- readFile (addSlash (cMails config) ++ "states")
+        let readStateLine string =
+                let (md5sum : stateString : _ : rest) = words string
+                    sender = unwords rest
+                    state = case stateString of
+                                "add" -> Unmatched
+                                "obsolete" -> Obsolete
+                                "rejected" -> Rejected
+                                unknown    -> error $ "Unknown state " ++ show unknown
+                in  flip (foldr (\p -> M.insert p state)) (md2p !!!! md5sum)
+            p2s = foldl (flip readStateLine) M.empty (lines states)
 
-	let addables = do -- List modad
-		patch <- patches
-		repo  <- repos
-		pe <- M.lookup patch p2pe
-		present <- M.lookup repo r2p
-		guard $ all (`S.member` present) (peContext pe)
-		return (patch, repo)
-	-- Patch to possible repos
-	-- Repo to possible patch
-	let p2pr = foldr (\(p,r) -> MM.append p r) MM.empty addables
-	let r2mp = foldr (\(p,r) -> MM.append r p) MM.empty addables
+        let patches = M.keys p2pe -- Submitted patches
+        let repos   = M.keys r2p -- Repos with patches
+        let users   = M.keys u2p -- Known users
 
-	-- Unapplicable patches
-	let unapplicable = S.fromList $ filter (\p -> not (M.member p p2pr)) patches
+        let addables = do -- List modad
+                patch <- patches
+                repo  <- repos
+                pe <- M.lookup patch p2pe
+                present <- M.lookup repo r2p
+                guard $ all (`S.member` present) (peContext pe)
+                return (patch, repo)
+        -- Patch to possible repos
+        -- Repo to possible patch
+        let p2pr = foldr (\(p,r) -> MM.append p r) MM.empty addables
+        let r2mp = foldr (\(p,r) -> MM.append r p) MM.empty addables
 
-	now <- getClockTime >>= toCalendarTime
-	let resultData = ResultData p2r r2p u2p p2pe p2pr r2mp p2s unapplicable now u2rn
-	putStrLn "Writing output..."
- 	writeFile (cOutput config ++ "/index.html") (mainPage resultData)
- 
- 	forM_ users $ \u ->
- 		writeFile (cOutput config ++ "/" ++ userFile u) (userPage resultData u)
- 
- 	forM_ repos $ \r ->
- 		writeFile (cOutput config ++ "/" ++ repoFile r) (repoPage resultData r)
+        -- Unapplicable patches
+        let unapplicable = S.fromList $ filter (\p -> not (M.member p p2pr)) patches
 
-	putStrLn "Linking patches"
-	let patchLink (p,pe) = do
-		let link = cOutput config ++ "/" ++ patchBasename p ++ ".dpatch"
-		ex <- fileExist link
-		unless ex $ do
-			-- There might be a broken symlink here:
-			catch (removeFile link) (const (return ()))
-			createSymbolicLink (peMailFile pe) link
-	mapM_ patchLink $ M.toList p2pe
+        now <- getClockTime >>= toCalendarTime
+        let resultData = ResultData p2r r2p u2p p2pe p2pr r2mp p2s unapplicable now u2rn
+        putStrLn "Writing output..."
+        writeFile (cOutput config ++ "/index.html") (mainPage resultData)
 
-	return ()
+        forM_ users $ \u ->
+                writeFile (cOutput config ++ "/" ++ userFile u) (userPage resultData u)
+
+        forM_ repos $ \r ->
+                writeFile (cOutput config ++ "/" ++ repoFile r) (repoPage resultData r)
+
+        putStrLn "Linking patches"
+        let patchLink (p,pe) = do
+                let link = cOutput config ++ "/" ++ patchBasename p ++ ".dpatch"
+                ex <- fileExist link
+                unless ex $ do
+                        -- There might be a broken symlink here:
+                        catch (removeFile link) (const (return ()))
+                        createSymbolicLink (peMailFile pe) link
+        mapM_ patchLink $ M.toList p2pe
+
+        return ()
 
 getDirectoryFiles dir' = getDirectoryContents dir >>=
-			return . (map (dir++)) >>=
-			return . filter ((/= '.') . head) >>=
-			filterM doesFileExist  >>=
-			filterM ((readable `fmap`) . getPermissions)
-  where	dir = addSlash dir'
+                        return . (map (dir++)) >>=
+                        return . filter ((/= '.') . head) >>=
+                        filterM doesFileExist  >>=
+                        filterM ((readable `fmap`) . getPermissions)
+  where dir = addSlash dir'
 
 maxBy f v1 v2 = if f v1 >= f v2 then v1 else v2
 minBy f v1 v2 = if f v1 <= f v2 then v1 else v2

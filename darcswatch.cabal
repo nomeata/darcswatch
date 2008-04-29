@@ -23,8 +23,7 @@ Description:     DarcsWatch is a tool to track the state of darcs patches
 Homepage:        http://darcswatch.nomeata.de/
 License:         GPL
 License-File:	 LICENSE
-Build-Depends:   haskell98
-                 ,base
+Build-Depends:  base
                 , network
                 , HTTP
                 , old-time
