@@ -13,7 +13,7 @@ and compares the mailed patches against the repository. It
 summaries their status per submitter and per repository.
 
 The program expects a directory as a parameter and will read
-the config file therin for configuration. An example
+the config file therein for configuration. An example
 configuration is included.
 
 darcsweb uses modules from these non-standard packages:
@@ -24,20 +24,20 @@ darcsweb uses modules from these non-standard packages:
  * parsec
 
 There are a lot of open issues, and help is very
-appreciated. A non exlusive list of TODO items is:
+appreciated. A non exclusive list of TODO items is:
 
  * Support for tagged repositories (fetching older
    inventories)
  * Nicer output (CSS magic!)
- * (Maybe) Add repositores per gpg signed command
+ * (Maybe) Add repositories per GnuPG signed command
 
-When commiting patches, please make sure that they work with
-the version of ghc in the latest debian stable release, at
+When committing patches, please make sure that they work with
+the version of GHC in the latest Debian stable release, at
 the moment ghc6.6, and compatible libraries.
 
 BTW, the simple darcs repository parsing code might be useful for
 other projects as well. I try to keep the patches for the Darcs.hs
 related stuff separate from the rest, so you can select them when
-darcs pull’ing. If you also follow this procedure, we can share the
+"darcs pull"ing. If you also follow this procedure, we can share the
 Darcs.hs code between projects, by making sure our patches to these
 files can be shared without dragging in the rest of the project.
