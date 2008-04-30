@@ -188,6 +188,7 @@ data PatchState = Unmatched | Applied | NotApplied | Rejected |  Obsolete | Obso
 
 state d p r | p `S.member` ps                          = Applied
             | ip `S.member` ps                         = explicit_state
+	    | amend_obsoleted                          = Obsolete
             | ip `S.member` subs && not (piInverted p) = Obsolete
             | ip `S.member` subs &&      piInverted p  = Obsoleting
             | otherwise                                = explicit_state
@@ -196,6 +197,13 @@ state d p r | p `S.member` ps                          = Applied
         ip = inversePatch p
 	subs = M.keysSet (p2pe d)
 	explicit_state = max NotApplied (M.findWithDefault Unmatched p (p2s d))
+	amend_obsoleted = any (`laterThan` p) $ S.toList (u2p d ! (normalizeAuthor (piAuthor p)))
+
+p1 `laterThan` p2 =    piAuthor p1 == piAuthor p2
+                    && piName p1   == piName p2
+		    && piLog p1    == piLog p2
+		    && piInverted p1 == piInverted p2
+		    && piDate p1   > piDate p2
 
 instance Show PatchState where
 	show Unmatched = "Unmatched"
