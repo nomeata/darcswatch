@@ -28,8 +28,7 @@ import System.Time
 import Data.Char ( toUpper, isDigit )
 import Control.Monad ( liftM, liftM2 )
 
--- | Read/interpret a date string, assuming UTC if timezone
---   is not specified in the string
+-- | Read\/interpret a date string, assuming UTC if timezone is not specified in the string
 readUTCDate :: String -> CalendarTime
 readUTCDate = readDate 0
 
