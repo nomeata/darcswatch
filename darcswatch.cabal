@@ -19,7 +19,8 @@ Description:     DarcsWatch is a tool to track the state of darcs patches
                  .
                  * Download link for each patch, to apply without searching for the email.
                  .
-                 * Knows about inverse patches and uses them to consider patches obsolete.
+                 * Knows about inverse and amend-recorded patches and uses them to consider
+		 patches obsolete.
 Homepage:        http://darcswatch.nomeata.de/
 License:         GPL
 License-File:    LICENSE
