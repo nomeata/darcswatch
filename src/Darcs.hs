@@ -31,6 +31,7 @@ import StringCrypto
 import System.Time
 import CachedGet
 
+-- | The defining informtion of a Darcs patch.
 data PatchInfo = PatchInfo
 	{ piDate :: String
 	, piName    :: String
@@ -40,8 +41,13 @@ data PatchInfo = PatchInfo
    } deriving (Eq,Ord,Show)
 
 
+-- | Toggles the 'piInverted' flag of a 'PatchInfo'
+inversePatch :: PatchInfo -> PatchInfo
 inversePatch p@(PatchInfo {piInverted = i}) = p {piInverted = not i}
 
+-- | Given a directory used for caching, and an URL of a Darcs repository,
+--   it will return the list of patches in the repository, and whether the
+--   repository as changed since the last run.
 getInventory :: FilePath -> String -> IO ([PatchInfo], Bool)
 getInventory cDir repo = do
 		old_inv <- get cDir old_inventory
@@ -119,6 +125,8 @@ breakLast c xs = case breakFirst c (reverse xs) of
 index = (!!)
 
 
+-- | Given the content of a patch bundle, it returns a list of submitted patches with
+--   their diff, and the list of patches in the context.
 parseMail :: String -> ([(PatchInfo,String)],[PatchInfo])
 parseMail content = do case eesc of 
 			Left err -> ([],[])  -- putStrLn $ "Parse error: "++ err
@@ -216,6 +224,8 @@ readPatch s = if null r then Nothing else Just (unlines p,unlines r)
 patchFilename :: PatchInfo -> String
 patchFilename pi = patchBasename pi ++ ".gz"
 
+-- | Given a patch, it calculates the name of the file that darcs usually
+--   stores it in, without the ".gz" suffix.
 patchBasename :: PatchInfo -> String
 patchBasename pi = showIsoDateTime d++"-"++sha1_a++"-"++sha1 sha1_me
         where b2ps True = "t"
