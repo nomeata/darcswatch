@@ -18,10 +18,9 @@ Boston, MA 02110-1301, USA.
 -}
 
 module Darcs
-	( getInventory
-	, parseInventory
+	( PatchInfo(..)
+	, getInventory
 	, parseMail
-	, PatchInfo(..)
 	, patchBasename
 	, inversePatch
 	) where
@@ -57,11 +56,7 @@ getInventory cDir repo = do
   where	old_inventory = addSlash repo ++ "_darcs/inventory"
         hashed_inventory = addSlash repo ++ "_darcs/hashed_inventory"
 	maybe' m f d = maybe d f m
-	parseReturn (body, updated) = return (parseInventory body, updated)
-
-
-parseInventory :: String -> [PatchInfo]
-parseInventory content = readPatchInfos content
+	parseReturn (body, updated) = return (readPatchInfos body, updated)
 
 readPatchInfos :: String -> [PatchInfo]
 readPatchInfos inv | null inv = []
