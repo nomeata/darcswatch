@@ -28,6 +28,10 @@ import Network.HTTP.Headers
 import System.Directory
 import Control.Monad
 
+-- | Given a directory to be used for caching the result, and
+--   an URL to download, it will return the content of the URL.
+--   The boolean return value is true when the file was updated, 
+--   and False if it is the same as in the cache.
 get :: FilePath -> String -> IO (Maybe (String, Bool))
 get dir' uri = flip catch (\e -> putStrLn ("Error downloading uri: " ++ show e) >> return Nothing) $ do
 	e_cache <- doesFileExist cacheFile
