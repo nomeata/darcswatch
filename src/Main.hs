@@ -115,11 +115,11 @@ main = do
         let p2pr = foldr (\(p,r) -> MM.append p r) MM.empty addables
         let r2mp = foldr (\(p,r) -> MM.append r p) MM.empty addables
 
-        -- Unapplicable patches
-        let unapplicable = S.fromList $ filter (\p -> not (M.member p p2pr)) patches
+        -- Unmatched patches
+        let unmatched = S.fromList $ filter (\p -> not (M.member p p2pr)) patches
 
         now <- getClockTime >>= toCalendarTime
-        let resultData = ResultData p2r r2p u2p p2pe p2pr r2mp p2s unapplicable now u2rn
+        let resultData = ResultData p2r r2p u2p p2pe p2pr r2mp p2s unmatched now u2rn
         putStrLn "Writing output..."
         writeFile (cOutput config ++ "/index.html") (mainPage resultData)
 
@@ -128,6 +128,8 @@ main = do
 
         forM_ repos $ \r ->
                 writeFile (cOutput config ++ "/" ++ repoFile r) (repoPage resultData r)
+
+	writeFile (cOutput config ++ "/" ++ "unmatched.html") (unmatchedPage resultData)
 
         putStrLn "Linking patches"
         let patchLink (p,pe) = do

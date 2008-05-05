@@ -23,6 +23,7 @@ module HTML
 	, mainPage
 	, userPage
 	, repoPage
+	, unmatchedPage
 	, userFile
 	, repoFile
 	, normalizeAuthor
@@ -60,7 +61,7 @@ data ResultData = ResultData
 	, p2pr :: M.Map PatchInfo (S.Set String)
 	, r2mp :: M.Map String    (S.Set PatchInfo)
 	, p2s  :: M.Map PatchInfo (PatchState)
-	, unapplicable :: (S.Set PatchInfo)
+	, unmatched :: (S.Set PatchInfo)
 	, date :: CalendarTime
 	, u2rn :: M.Map String    String
 	}
@@ -91,7 +92,10 @@ mainPage d = showHtml $
 	h2 << "Listing by user" +++ 
 	unordList (map (\u -> hotlink (userFile u) << u2rn d ! u +++ userStats u d) (users d)) +++
 	h2 << "Listing by repository" +++ 
-	unordList (map (\r -> hotlink (repoFile r) << r +++ repoStats r d) (repos d)) +++
+	unordList ( map (\r -> hotlink (repoFile r) << r +++ repoStats r d) (repos d)
+			++ [hotlink "unmatched.html" << "Unmatched matches"
+			    +++ " "+++  show (S.size (unmatched d)) +++ " patches" ]
+		  ) +++
 	footer d
 	)
 
@@ -146,6 +150,18 @@ repoPage d r = showHtml $
 	)
   where (ps, sps) = repoData r d
  
+unmatchedPage d = showHtml $
+   header << (
+   	thetitle << ("DarcsWatch overview, unmatched patches") +++
+	myHeader d
+	) +++
+   body << (
+	h1 << ("DarcsWatch overview, unmatched Patches") +++
+	p << hotlink "." << "Return to main page" +++
+	patchList d (S.toList (unmatched d)) "Unmatched patches" True +++
+	footer d
+	)
+
 patchList d [] title userCentric = h5 << ("No "++title)
 patchList d ps title userCentric = 
 	h2 << title +++ (unordList $ map (patchView d userCentric) ps)
