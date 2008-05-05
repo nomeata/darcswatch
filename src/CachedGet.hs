@@ -29,7 +29,7 @@ import System.Directory
 import Control.Monad
 
 get :: FilePath -> String -> IO (Maybe (String, Bool))
-get dir' uri = do
+get dir' uri = flip catch (\e -> putStrLn ("Error downloading uri: " ++ show e) >> return Nothing) $ do
 	e_cache <- doesFileExist cacheFile
 	e_tag   <- doesFileExist tagFile
 	let update = do
