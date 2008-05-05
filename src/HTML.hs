@@ -158,7 +158,7 @@ unmatchedPage d = showHtml $
    body << (
 	h1 << ("DarcsWatch overview, unmatched Patches") +++
 	p << hotlink "." << "Return to main page" +++
-	patchList d (S.toList (unmatched d)) "Unmatched patches" True +++
+	patchList d (S.toList (unmatched d)) "Unmatched patches" False +++
 	footer d
 	)
 
