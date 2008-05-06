@@ -49,7 +49,7 @@ extend :: (Ord k, Singleton c a, Foldable c2) => k -> c2 a -> M.Map k (c a) -> M
 extend key addValues map = foldr (append key) map addValues
 
 append :: (Ord k, Singleton c a) => k -> a -> M.Map k (c a) -> M.Map k (c a)
-append key addValue = M.insertWith mappend key (singleton addValue)
+append key addValue = M.insertWith (flip mappend) key (singleton addValue)
 
 fromList :: (Ord k, Singleton c a) => [(k,a)] -> M.Map k (c a)
 fromList = foldr (uncurry append) empty
