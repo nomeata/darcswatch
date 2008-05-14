@@ -75,8 +75,8 @@ head' uri' = do
 		{ rqURI = uri
 		, rqMethod = HEAD
 		, rqHeaders =
-			[ Header HdrUserAgent "DarcsWatch http://darcswatch.nomeata.de/"
-			] 
+			[ uaHeader
+			]
 		, rqBody = ""
 		}
 	result <- simpleHTTP req
@@ -92,8 +92,8 @@ get' uri' = do
 		{ rqURI = uri
 		, rqMethod = GET
 		, rqHeaders =
-			[ Header HdrUserAgent "DarcsWatch http://darcswatch.nomeata.de/"
-			] 
+			[ uaHeader
+			]
 		, rqBody = ""
 		}
 	result <- simpleHTTP req
@@ -102,6 +102,8 @@ get' uri' = do
 		Right response -> case rspCode response of 
 			(2,_,_) -> Just $ (rspBody response, lookupHeader HdrLastModified (rspHeaders response))
 			_       -> Nothing
+
+uaHeader = Header HdrUserAgent "DarcsWatch http://darcswatch.nomeata.de/"
 
 slurpFile file = do
 	c <- readFile file
