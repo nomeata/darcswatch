@@ -88,7 +88,10 @@ then
 		fi
 	fi
 
-	STATE=add
+	if [ "STATE" = "none" ]
+	then
+		STATE=add
+	fi
 
 else
 	echo "No patch contained, it seems"
