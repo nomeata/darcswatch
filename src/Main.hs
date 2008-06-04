@@ -39,7 +39,8 @@ import Darcs
 -- Web ouput
 import HTML
 
-import StringCrypto
+--import StringCrypto
+import Data.Digest.OpenSSL.MD5 (md5sum)
 
 data DarcsWatchConfig = DarcsWatchConfig {
         cRepositories :: [String],
@@ -74,7 +75,7 @@ main = do
         let readMail (u2p, u2rn, p2pe, md2p) mailFile = do
                 putStrLn $ "Reading mail " ++ mailFile ++ " ..."
                 mail <- B.readFile mailFile
-                let md5sum = md5 (B.unpack mail)
+                let checksum = md5sum mail
                 let (new,context) = parseMail mail
                 let u2p' = foldr (\(p,_) -> MM.append (normalizeAuthor (piAuthor p)) p) u2p new
                 let u2rn' = foldr (\(p,_) ->
@@ -85,21 +86,21 @@ main = do
                         -- The patch with the smaller context is the more useful
                         in  M.insertWith (minBy (length.peContext)) p pe
                         ) p2pe new
-                let md2p' = MM.extend md5sum (map fst new) md2p
+                let md2p' = MM.extend checksum (map fst new) md2p
                 return (u2p', u2rn', p2pe', md2p')
         (u2p, u2rn, p2pe, md2p) <- foldM readMail (MM.empty, M.empty, M.empty, MM.empty) mailFiles
 
         putStrLn "Reading bundle states..."
         states <- readFile (addSlash (cMails config) ++ "states")
         let readStateLine string =
-                let (md5sum : stateString : _ : rest) = words string
+                let (checksum: stateString : _ : rest) = words string
                     sender = unwords rest
                     state = case stateString of
                                 "add" -> Unmatched
                                 "obsolete" -> Obsolete
                                 "rejected" -> Rejected
                                 unknown    -> error $ "Unknown state " ++ show unknown
-                in  flip (foldr (\p -> M.insert p state)) (md2p !!!! md5sum)
+                in  flip (foldr (\p -> M.insert p state)) (md2p !!!! checksum)
             p2s = foldl (flip readStateLine) M.empty (lines states)
 
         let patches = M.keys p2pe -- Submitted patches
