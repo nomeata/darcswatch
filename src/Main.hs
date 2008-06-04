@@ -31,6 +31,9 @@ import MultiMap ((!!!!))
 import Data.Char
 import Data.List
 
+import qualified Data.ByteString.Char8 as B
+import Data.ByteString.Char8 (ByteString)
+
 -- Darcs stuff
 import Darcs
 -- Web ouput
@@ -70,8 +73,8 @@ main = do
 
         let readMail (u2p, u2rn, p2pe, md2p) mailFile = do
                 putStrLn $ "Reading mail " ++ mailFile ++ " ..."
-                mail <- readFile mailFile
-                let md5sum = md5 mail
+                mail <- B.readFile mailFile
+                let md5sum = md5 (B.unpack mail)
                 let (new,context) = parseMail mail
                 let u2p' = foldr (\(p,_) -> MM.append (normalizeAuthor (piAuthor p)) p) u2p new
                 let u2rn' = foldr (\(p,_) ->
