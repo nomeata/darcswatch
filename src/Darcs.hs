@@ -67,25 +67,25 @@ getInventory cDir repo = do
 	maybe' m f d = maybe d f m
 	parseReturn (body, updated) = return (readPatchInfos body, updated)
 
-readPatchInfos :: String -> [PatchInfo]
-readPatchInfos inv | null inv = []
+readPatchInfos :: ByteString -> [PatchInfo]
+readPatchInfos inv | B.null inv = []
 readPatchInfos inv = case breakOn '[' inv of
 			(_,r) -> case readPatchInfo r of
 			     Just (pinfo,r) -> pinfo : readPatchInfos r
 			     Nothing -> []
 
-readPatchInfoB :: ByteString -> Maybe (PatchInfo, ByteString)
-readPatchInfoB s | B.null (dropWhiteB s) = Nothing
-readPatchInfoB s =
-    if B.head (dropWhiteB s) /= '[' -- ]
+readPatchInfo :: ByteString -> Maybe (PatchInfo, ByteString)
+readPatchInfo s | B.null (dropWhite s) = Nothing
+readPatchInfo s =
+    if B.head (dropWhite s) /= '[' -- ]
     then Nothing
-    else case breakOnB '\n' $ B.tail $ dropWhiteB s of
+    else case breakOn '\n' $ B.tail $ dropWhite s of
          (name,s') ->
-             case breakOnB '*' $ B.tail s' of
+             case breakOn '*' $ B.tail s' of
              (author,s2) ->
                  case B.break (\c->c==']'||c=='\n') $ B.drop 2 s2 of
                  (ct,s''') ->
-                     do (log, s4) <- lines_starting_with_ending_withB ' ' ']' $ dn s'''
+                     do (log, s4) <- lines_starting_with_ending_with ' ' ']' $ dn s'''
                         let not_star = B.index s2 1 /= '*'
                         return $ (PatchInfo { piDate = B.unpack ct
                                             , piName = B.unpack name
@@ -95,47 +95,8 @@ readPatchInfoB s =
                                             }, s4)
     where dn x = if B.null x || B.head x /= '\n' then x else B.tail x
 
-readPatchInfo :: String -> Maybe (PatchInfo, String)
-readPatchInfo s | null (dropWhite s) = Nothing
-readPatchInfo s =
-    if head (dropWhite s) /= '[' -- ]
-    then Nothing
-    else case breakOn '\n' $ tail $ dropWhite s of
-         (name,s') ->
-             case breakOn '*' $ tail s' of
-             (author,s2) ->
-                 case break (\c->c==']'||c=='\n') $ drop 2 s2 of
-                 (ct,s''') ->
-                     do (log, s4) <- lines_starting_with_ending_with ' ' ']' $ dn s'''
-                        let not_star = index s2 1 /= '*'
-                        return $ (PatchInfo { piDate = ct
-                                            , piName = name
-                                            , piAuthor = author
-                                            , piLog = log
-                                            , piInverted = not_star
-                                            }, s4)
-    where dn x = if null x || head x /= '\n' then x else tail x
-
-lines_starting_with_ending_with :: Char -> Char -> String -> Maybe ([String],String)
+lines_starting_with_ending_with :: Char -> Char -> ByteString -> Maybe ([ByteString],ByteString)
 lines_starting_with_ending_with st en s = lswew s
-    where
-  lswew x | null x = Nothing
-  lswew x =
-    if head x == en
-    then Just ([], tail x)
-    else if head x /= st
-         then Nothing
-         else case breakOn '\n' $ tail x of
-              (l,r) -> case lswew $ tail r of
-                       Just (ls,r') -> Just (l:ls,r')
-                       Nothing ->
-                           case breakLast en l of
-                           Just (l2,_) ->
-                               Just ([l2], drop (length l2+2) x)
-                           Nothing -> Nothing
-
-lines_starting_with_ending_withB :: Char -> Char -> ByteString -> Maybe ([ByteString],ByteString)
-lines_starting_with_ending_withB st en s = lswew s
     where
   lswew x | B.null x = Nothing
   lswew x =
@@ -143,34 +104,22 @@ lines_starting_with_ending_withB st en s = lswew s
     then Just ([], B.tail x)
     else if B.head x /= st
          then Nothing
-         else case breakOnB '\n' $ B.tail x of
+         else case breakOn '\n' $ B.tail x of
               (l,r) -> case lswew $ B.tail r of
                        Just (ls,r') -> Just (l:ls,r')
                        Nothing ->
-                           case breakLastB en l of
+                           case breakLast en l of
                            Just (l2,_) ->
                                Just ([l2],  B.drop (B.length l2+2) x)
                            Nothing -> Nothing
 
 
-dropWhite = dropWhile (`elem` " \n\t\r")
-dropWhiteB = B.dropWhile (`elem` " \n\t\r")
-breakOn c = break (c ==)
-breakOnB c = B.break (c ==)
-breakFirst c xs = case breakOn c xs of
-		      (ys, zs)
-		       | null zs -> Nothing
-		       | otherwise -> Just (ys, tail zs)
+dropWhite = B.dropWhile (`elem` " \n\t\r")
+breakOn c = B.break (c ==)
 
-breakLast c xs = case breakFirst c (reverse xs) of
-		     Nothing -> Nothing
-		     Just (ys, zs) ->
-                                 Just (reverse zs, reverse ys)
---breakLastB :: Word8 -> ByteString -> Maybe (ByteString,ByteString)
-breakLastB c p = case B.elemIndexEnd c p of
+breakLast c p = case B.elemIndexEnd c p of
     Nothing -> Nothing
     Just n -> Just (B.take n p, B.drop (n+1) p)
-index = (!!)
 
 
 -- | Given the content of a patch bundle, it returns a list of submitted patches with
@@ -192,18 +141,18 @@ readMail s = s
 --          ("--=_--") s of
 --     Nothing -> s -- if it wasn't an email in the first place, just pass along.
 --     Just s' -> qpdecode s'
-
-qpdecode :: String -> String
-qpdecode s = s -- FIXME
-
-betweenLines :: String -> String -> String -> Maybe (String)
-betweenLines start end s
- = case break (start ==) (lines s) of
-	(_, _:rest) ->
-       		case break (end ==) (reverse rest) of
-			(_,_:rres) -> Just (unlines (reverse rres))
-			_ -> Nothing
-	_ -> Nothing
+--
+--qpdecode :: String -> String
+--qpdecode s = s -- FIXME
+--
+--betweenLines :: String -> String -> String -> Maybe (String)
+--betweenLines start end s
+-- = case break (start ==) (lines s) of
+--	(_, _:rest) ->
+--       		case break (end ==) (reverse rest) of
+--			(_,_:rres) -> Just (unlines (reverse rres))
+--			_ -> Nothing
+--	_ -> Nothing
 
 scan_bundle :: ByteString -> Either String ([(PatchInfo,String)],[PatchInfo])
 scan_bundle ps
@@ -234,7 +183,7 @@ scan_bundle ps
 
 get_patches :: ByteString -> ([(PatchInfo,String)], ByteString)
 get_patches ps = 
-    case readPatchInfoB ps of
+    case readPatchInfo ps of
     Nothing -> ([], ps)
     Just (pinfo,ps) ->
          case readPatch ps of
@@ -243,12 +192,12 @@ get_patches ps =
 
 
 silly_lex :: ByteString -> (String, ByteString)
-silly_lex ps = (B.unpack $ B.takeWhile (/='\n') $ dropWhiteB ps,
-                           B.dropWhile (/='\n') $ dropWhiteB ps)
+silly_lex ps = (B.unpack $ B.takeWhile (/='\n') $ dropWhite ps,
+                           B.dropWhile (/='\n') $ dropWhite ps)
 
 get_context :: ByteString -> ([PatchInfo],ByteString)
 get_context ps =
-    case readPatchInfoB ps of
+    case readPatchInfo ps of
     Just (pinfo,r') -> pinfo -:- get_context r'
     Nothing -> ([],ps)
 
@@ -265,7 +214,7 @@ filter_gpg_dashes ps =
                                         (s /= B.pack "New patches:")
 
 readPatch :: ByteString -> Maybe (String, ByteString)
-readPatch s | B.null (dropWhiteB s) = Nothing
+readPatch s | B.null (dropWhite s) = Nothing
 readPatch s = if null r then Nothing else Just (B.unpack $ B.unlines p,B.unlines r)
   where (p,r) = break (\l -> B.null l || B.head l == '[') (B.lines s)
 
