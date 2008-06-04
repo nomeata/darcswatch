@@ -36,10 +36,10 @@ import Data.ByteString.Char8 (ByteString)
 
 -- | The defining informtion of a Darcs patch.
 data PatchInfo = PatchInfo
-	{ piDate :: String
-	, piName    :: String
-	, piAuthor  :: String
-	, piLog     :: [String]
+	{ piDate    :: ByteString
+	, piName    :: ByteString
+	, piAuthor  :: ByteString
+	, piLog     :: [ByteString]
 	, piInverted :: Bool
    } deriving (Eq,Ord,Show)
 
@@ -87,10 +87,10 @@ readPatchInfo s =
                  (ct,s''') ->
                      do (log, s4) <- lines_starting_with_ending_with ' ' ']' $ dn s'''
                         let not_star = B.index s2 1 /= '*'
-                        return $ (PatchInfo { piDate = B.unpack ct
-                                            , piName = B.unpack name
-                                            , piAuthor = B.unpack author
-                                            , piLog = map B.unpack log
+                        return $ (PatchInfo { piDate = ct
+                                            , piName = name
+                                            , piAuthor = author
+                                            , piLog = log
                                             , piInverted = not_star
                                             }, s4)
     where dn x = if B.null x || B.head x /= '\n' then x else B.tail x
@@ -124,7 +124,7 @@ breakLast c p = case B.elemIndexEnd c p of
 
 -- | Given the content of a patch bundle, it returns a list of submitted patches with
 --   their diff, and the list of patches in the context.
-parseMail :: ByteString -> ([(PatchInfo,String)],[PatchInfo])
+parseMail :: ByteString -> ([(PatchInfo,ByteString)],[PatchInfo])
 parseMail content = do case eesc of 
 			Left err -> ([],[])  -- putStrLn $ "Parse error: "++ err
 			Right res -> if res == res then res else res
@@ -154,7 +154,7 @@ readMail s = s
 --			_ -> Nothing
 --	_ -> Nothing
 
-scan_bundle :: ByteString -> Either String ([(PatchInfo,String)],[PatchInfo])
+scan_bundle :: ByteString -> Either String ([(PatchInfo,ByteString)],[PatchInfo])
 scan_bundle ps
   | B.null ps = Left "Bad patch bundle!"
   | otherwise =
@@ -181,14 +181,14 @@ scan_bundle ps
             scan_bundle $ filter_gpg_dashes rest
     (_,rest) -> scan_bundle rest
 
-get_patches :: ByteString -> ([(PatchInfo,String)], ByteString)
+get_patches :: ByteString -> ([(PatchInfo,ByteString)], ByteString)
 get_patches ps = 
     case readPatchInfo ps of
     Nothing -> ([], ps)
     Just (pinfo,ps) ->
-         case readPatch ps of
+         case readDiff ps of
          Nothing -> ([], ps)
-         Just (patch, r) -> (pinfo, patch) -:- get_patches r
+         Just (diff, r) -> (pinfo, diff) -:- get_patches r
 
 
 silly_lex :: ByteString -> (String, ByteString)
@@ -213,9 +213,9 @@ filter_gpg_dashes ps =
           not_context_or_newpatches s = (s /= B.pack "Context:") &&
                                         (s /= B.pack "New patches:")
 
-readPatch :: ByteString -> Maybe (String, ByteString)
-readPatch s | B.null (dropWhite s) = Nothing
-readPatch s = if null r then Nothing else Just (B.unpack $ B.unlines p,B.unlines r)
+readDiff :: ByteString -> Maybe (ByteString, ByteString)
+readDiff s | B.null (dropWhite s) = Nothing
+readDiff s = if null r then Nothing else Just (B.unlines p,B.unlines r)
   where (p,r) = break (\l -> B.null l || B.head l == '[') (B.lines s)
 
 patchFilename :: PatchInfo -> String
@@ -224,16 +224,16 @@ patchFilename pi = patchBasename pi ++ ".gz"
 -- | Given a patch, it calculates the name of the file that darcs usually
 --   stores it in, without the ".gz" suffix.
 patchBasename :: PatchInfo -> String
-patchBasename pi = showIsoDateTime d++"-"++sha1_a++"-"++sha1 sha1_me
-        where b2ps True = "t"
-              b2ps False = "f"
-              sha1_me = concat   [piName pi,
+patchBasename pi = showIsoDateTime d++"-"++sha1_a++"-"++sha1 (B.unpack sha1_me)
+        where b2ps True = B.pack "t"
+              b2ps False = B.pack "f"
+              sha1_me = B.concat [piName pi,
                                   piAuthor pi,
                                   piDate pi,
-                                  concat $ piLog pi,
+                                  B.concat $ piLog pi,
                                   b2ps $ piInverted pi]
-              d = readPatchDate $ piDate pi
-              sha1_a = take 5 $ sha1 $ piAuthor pi
+              d = readPatchDate $ B.unpack $ piDate pi
+              sha1_a = take 5 $ sha1 $ B.unpack $ piAuthor pi
 
 readPatchDate :: String -> CalendarTime
 readPatchDate = ignoreTz . readUTCDate
