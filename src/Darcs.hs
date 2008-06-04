@@ -31,6 +31,9 @@ import StringCrypto
 import System.Time
 import CachedGet
 
+import qualified Data.ByteString.Char8 as B
+import Data.ByteString.Char8 (ByteString)
+
 -- | The defining informtion of a Darcs patch.
 data PatchInfo = PatchInfo
 	{ piDate :: String
@@ -71,6 +74,27 @@ readPatchInfos inv = case breakOn '[' inv of
 			     Just (pinfo,r) -> pinfo : readPatchInfos r
 			     Nothing -> []
 
+readPatchInfoB :: ByteString -> Maybe (PatchInfo, ByteString)
+readPatchInfoB s | B.null (dropWhiteB s) = Nothing
+readPatchInfoB s =
+    if B.head (dropWhiteB s) /= '[' -- ]
+    then Nothing
+    else case breakOnB '\n' $ B.tail $ dropWhiteB s of
+         (name,s') ->
+             case breakOnB '*' $ B.tail s' of
+             (author,s2) ->
+                 case B.break (\c->c==']'||c=='\n') $ B.drop 2 s2 of
+                 (ct,s''') ->
+                     do (log, s4) <- lines_starting_with_ending_withB ' ' ']' $ dn s'''
+                        let not_star = B.index s2 1 /= '*'
+                        return $ (PatchInfo { piDate = B.unpack ct
+                                            , piName = B.unpack name
+                                            , piAuthor = B.unpack author
+                                            , piLog = map B.unpack log
+                                            , piInverted = not_star
+                                            }, s4)
+    where dn x = if B.null x || B.head x /= '\n' then x else B.tail x
+
 readPatchInfo :: String -> Maybe (PatchInfo, String)
 readPatchInfo s | null (dropWhite s) = Nothing
 readPatchInfo s =
@@ -110,9 +134,29 @@ lines_starting_with_ending_with st en s = lswew s
                                Just ([l2], drop (length l2+2) x)
                            Nothing -> Nothing
 
+lines_starting_with_ending_withB :: Char -> Char -> ByteString -> Maybe ([ByteString],ByteString)
+lines_starting_with_ending_withB st en s = lswew s
+    where
+  lswew x | B.null x = Nothing
+  lswew x =
+    if B.head x == en
+    then Just ([], B.tail x)
+    else if B.head x /= st
+         then Nothing
+         else case breakOnB '\n' $ B.tail x of
+              (l,r) -> case lswew $ B.tail r of
+                       Just (ls,r') -> Just (l:ls,r')
+                       Nothing ->
+                           case breakLastB en l of
+                           Just (l2,_) ->
+                               Just ([l2],  B.drop (B.length l2+2) x)
+                           Nothing -> Nothing
+
 
 dropWhite = dropWhile (`elem` " \n\t\r")
+dropWhiteB = B.dropWhile (`elem` " \n\t\r")
 breakOn c = break (c ==)
+breakOnB c = B.break (c ==)
 breakFirst c xs = case breakOn c xs of
 		      (ys, zs)
 		       | null zs -> Nothing
@@ -122,12 +166,16 @@ breakLast c xs = case breakFirst c (reverse xs) of
 		     Nothing -> Nothing
 		     Just (ys, zs) ->
                                  Just (reverse zs, reverse ys)
+--breakLastB :: Word8 -> ByteString -> Maybe (ByteString,ByteString)
+breakLastB c p = case B.elemIndexEnd c p of
+    Nothing -> Nothing
+    Just n -> Just (B.take n p, B.drop (n+1) p)
 index = (!!)
 
 
 -- | Given the content of a patch bundle, it returns a list of submitted patches with
 --   their diff, and the list of patches in the context.
-parseMail :: String -> ([(PatchInfo,String)],[PatchInfo])
+parseMail :: ByteString -> ([(PatchInfo,String)],[PatchInfo])
 parseMail content = do case eesc of 
 			Left err -> ([],[])  -- putStrLn $ "Parse error: "++ err
 			Right res -> if res == res then res else res
@@ -135,7 +183,7 @@ parseMail content = do case eesc of
 	eesc = scan_bundle demime
 	
 
-readMail :: String -> String
+readMail :: ByteString -> ByteString
 readMail s = s
 --     We already strip the relevant part in the mail filter
 --
@@ -157,9 +205,9 @@ betweenLines start end s
 			_ -> Nothing
 	_ -> Nothing
 
-scan_bundle :: String -> Either String ([(PatchInfo,String)],[PatchInfo])
+scan_bundle :: ByteString -> Either String ([(PatchInfo,String)],[PatchInfo])
 scan_bundle ps
-  | null ps = Left "Bad patch bundle!"
+  | B.null ps = Left "Bad patch bundle!"
   | otherwise =
     case silly_lex ps of
     ("New patches:",rest) ->
@@ -171,7 +219,7 @@ scan_bundle ps
                 (context,maybe_hash) -> -- FIXME verify patch bundle hash
                     Right (submitted, context)
             (a,r) -> Left $ "Malformed patch bundle: '"++a++"' is not 'Context:'"
-                     ++ "\n" ++  r
+                     ++ "\n" ++  B.unpack r
     ("Context:",rest) ->
         case get_context rest of
         (context, rest') ->
@@ -184,9 +232,9 @@ scan_bundle ps
             scan_bundle $ filter_gpg_dashes rest
     (_,rest) -> scan_bundle rest
 
-get_patches :: String -> ([(PatchInfo,String)], String)
+get_patches :: ByteString -> ([(PatchInfo,String)], ByteString)
 get_patches ps = 
-    case readPatchInfo ps of
+    case readPatchInfoB ps of
     Nothing -> ([], ps)
     Just (pinfo,ps) ->
          case readPatch ps of
@@ -194,32 +242,32 @@ get_patches ps =
          Just (patch, r) -> (pinfo, patch) -:- get_patches r
 
 
-silly_lex :: String -> (String, String)
-silly_lex ps = (takeWhile (/='\n') $ dropWhite ps,
-                dropWhile (/='\n') $ dropWhite ps)
+silly_lex :: ByteString -> (String, ByteString)
+silly_lex ps = (B.unpack $ B.takeWhile (/='\n') $ dropWhiteB ps,
+                           B.dropWhile (/='\n') $ dropWhiteB ps)
 
-get_context :: String -> ([PatchInfo],String)
+get_context :: ByteString -> ([PatchInfo],ByteString)
 get_context ps =
-    case readPatchInfo ps of
+    case readPatchInfoB ps of
     Just (pinfo,r') -> pinfo -:- get_context r'
     Nothing -> ([],ps)
 
-filter_gpg_dashes :: String -> String
+filter_gpg_dashes :: ByteString -> ByteString
 filter_gpg_dashes ps =
-    unlines $ map drop_dashes $
-    takeWhile (/= "-----END PGP SIGNED MESSAGE-----") $
-    dropWhile not_context_or_newpatches $ lines ps
-    where drop_dashes x = if length x < 2 then x
-                          else if take 2 x == "- "
-                               then drop 2 x
+    B.unlines $ map drop_dashes $
+    takeWhile (/= B.pack "-----END PGP SIGNED MESSAGE-----") $
+    dropWhile not_context_or_newpatches $ B.lines ps
+    where drop_dashes x = if B.length x < 2 then x
+                          else if B.take 2 x == B.pack "- "
+                               then B.drop 2 x
                                else x
-          not_context_or_newpatches s = (s /= "Context:") &&
-                                        (s /= "New patches:")
+          not_context_or_newpatches s = (s /= B.pack "Context:") &&
+                                        (s /= B.pack "New patches:")
 
-readPatch :: String -> Maybe (String, String)
-readPatch s | null (dropWhite s) = Nothing
-readPatch s = if null r then Nothing else Just (unlines p,unlines r)
-  where (p,r) = break (\l -> null l || head l == '[') (lines s)
+readPatch :: ByteString -> Maybe (String, ByteString)
+readPatch s | B.null (dropWhiteB s) = Nothing
+readPatch s = if null r then Nothing else Just (B.unpack $ B.unlines p,B.unlines r)
+  where (p,r) = break (\l -> B.null l || B.head l == '[') (B.lines s)
 
 patchFilename :: PatchInfo -> String
 patchFilename pi = patchBasename pi ++ ".gz"
