@@ -30,8 +30,6 @@ module HTML
 	, PatchState(..)
 	) where
 
-import StringCrypto (md5)
-
 import Text.XHtml hiding ((!))
 import qualified Text.XHtml ((!))
 import Text.Printf

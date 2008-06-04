@@ -39,7 +39,6 @@ import Darcs
 -- Web ouput
 import HTML
 
---import StringCrypto
 import Data.Digest.OpenSSL.MD5 (md5sum)
 
 data DarcsWatchConfig = DarcsWatchConfig {
