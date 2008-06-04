@@ -78,7 +78,7 @@ main = do
                 let (new,context) = parseMail mail
                 let u2p' = foldr (\(p,_) -> MM.append (normalizeAuthor (piAuthor p)) p) u2p new
                 let u2rn' = foldr (\(p,_) ->
-                        M.insertWith (maxBy length) (normalizeAuthor (piAuthor p)) (B.unpack (piAuthor p))
+                        M.insertWith (maxBy B.length) (normalizeAuthor (piAuthor p)) (piAuthor p)
                         ) u2rn new
                 let p2pe' =  foldr (\(p,d) ->
                         let pe = PatchExtras d context mailFile

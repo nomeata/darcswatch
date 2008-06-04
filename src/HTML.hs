@@ -66,7 +66,7 @@ data ResultData = ResultData
 	, p2s  :: M.Map PatchInfo  (PatchState)
 	, unmatched :: (S.Set PatchInfo)
 	, date :: CalendarTime
-	, u2rn :: M.Map ByteString  String
+	, u2rn :: M.Map ByteString  ByteString
 	}
 
 data PatchExtras = PatchExtras
