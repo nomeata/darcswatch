@@ -28,11 +28,14 @@ import Network.HTTP.Headers
 import System.Directory
 import Control.Monad
 
+import qualified Data.ByteString.Char8 as B
+import Data.ByteString.Char8 (ByteString)
+
 -- | Given a directory to be used for caching the result, and
 --   an URL to download, it will return the content of the URL.
 --   The boolean return value is true when the file was updated,
 --   and False if it is the same as in the cache.
-get :: FilePath -> String -> IO (Maybe (String, Bool))
+get :: FilePath -> String -> IO (Maybe (ByteString, Bool))
 get dir' uri = flip catch (\e -> putStrLn ("Error downloading uri: " ++ show e) >> return Nothing) $ do
 	e_cache <- doesFileExist cacheFile
 	e_tag   <- doesFileExist tagFile
@@ -42,11 +45,11 @@ get dir' uri = flip catch (\e -> putStrLn ("Error downloading uri: " ++ show e) 
 		  Nothing -> do
 			return Nothing
 		  Just (newFile, Nothing) -> do
-			return $ Just (newFile, True)
+			return $ Just (B.pack newFile, True)
 		  Just (newFile, Just newTag) -> do
 			writeFile cacheFile newFile
 			writeFile tagFile newTag
-			return $ Just (newFile, True)
+			return $ Just (B.pack newFile, True)
 
 	if e_cache && e_tag
 	   then do
@@ -55,7 +58,7 @@ get dir' uri = flip catch (\e -> putStrLn ("Error downloading uri: " ++ show e) 
 		maybe'' mbNewTag (return Nothing) $ \newTag -> do
 			if oldTag == newTag
 			   then do
-				oldFile <- readFile cacheFile
+				oldFile <- B.readFile cacheFile
 				return $ Just (oldFile, False)
 			   else do
 			   	update
