@@ -130,7 +130,7 @@ index = (!!)
 parseMail :: String -> ([(PatchInfo,String)],[PatchInfo])
 parseMail content = do case eesc of 
 			Left err -> ([],[])  -- putStrLn $ "Parse error: "++ err
-			Right res -> res
+			Right res -> if res == res then res else res
   where demime = readMail content
 	eesc = scan_bundle demime
 	
