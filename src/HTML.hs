@@ -45,6 +45,9 @@ import Data.Ord
 import Data.Char
 import System.Time
 
+import qualified Data.ByteString.Char8 as B
+import Data.ByteString.Char8 (ByteString)
+
 import Darcs
 
 
@@ -54,20 +57,20 @@ on :: (b -> b -> c) -> (a -> b) -> a -> a -> c
 (*) `on` f = \x y -> f x * f y
 
 data ResultData = ResultData
-	{ p2r ::  M.Map PatchInfo (S.Set String)
-	, r2p ::  M.Map String    (S.Set PatchInfo)
-	, u2p ::  M.Map String    (S.Set PatchInfo)
-	, p2pe::  M.Map PatchInfo PatchExtras
-	, p2pr :: M.Map PatchInfo (S.Set String)
-	, r2mp :: M.Map String    (S.Set PatchInfo)
-	, p2s  :: M.Map PatchInfo (PatchState)
+	{ p2r ::  M.Map PatchInfo  (S.Set String)
+	, r2p ::  M.Map String     (S.Set PatchInfo)
+	, u2p ::  M.Map ByteString (S.Set PatchInfo)
+	, p2pe::  M.Map PatchInfo   PatchExtras
+	, p2pr :: M.Map PatchInfo  (S.Set String)
+	, r2mp :: M.Map String     (S.Set PatchInfo)
+	, p2s  :: M.Map PatchInfo  (PatchState)
 	, unmatched :: (S.Set PatchInfo)
 	, date :: CalendarTime
-	, u2rn :: M.Map String    String
+	, u2rn :: M.Map ByteString  String
 	}
 
 data PatchExtras = PatchExtras
-	{ peDiff :: String
+	{ peDiff :: ByteString
 	, peContext :: [PatchInfo]
 	, peMailFile :: String
 	}
@@ -173,10 +176,12 @@ patchView d userCentric p =
 		) +++
 	(if userCentric
 	 then	noHtml
-	 else   (	" " +++ small << (" by " +++ hotlink (userFile (piAuthor p)) << piAuthor p)
+	 else   (	" " +++ small << (
+	 	      " by " +++ hotlink (userFile (piAuthor p)) << piAuthor p
+		      )
 	 	)
 	) +++
-	pre << unlines (piLog p) +++
+	pre << B.unlines (piLog p) +++
 	(if userCentric
 	 then	(unordList $ flip map (S.toList (p2pr d !!!! p)) $ \r ->
 			hotlink (repoFile r) << r +++ ": "+++ viewState d p r
@@ -280,14 +285,17 @@ userData u d = (ps, sorted)
 	         | otherwise    = S.findMax (S.map (state d p) repos)
 	  where repos = p2pr d !!!! p
 
-userFile u = "user_" ++ normalizeAuthor u ++ ".html"
+userFile u = "user_" ++ B.unpack (normalizeAuthor u) ++ ".html"
 repoFile r = "repo_" ++ safeName r ++ ".html"
 
-normalizeAuthor name | not (null r') && valid = email
-                     | otherwise              = safeName name
-  where r' = dropWhile (/='<') name
-        (email,r'') = span (/='>') (tail r')
-	valid = not (null email) && not (null r'') && all (isSafeFileChar) email
+normalizeAuthor name | not (B.null r') && valid = email
+                     | otherwise                = safeNameB name
+  where r' = B.dropWhile (/='<') name
+        (email,r'') = B.span (/='>') (B.tail r')
+	valid = not (B.null email) && not (B.null r'') && B.all (isSafeFileChar) email
+
+safeNameB n = B.map s n
+  where s c = if isSafeFileChar c then c else '_'
 
 safeName n = map s n
   where s c = if isSafeFileChar c then c else '_'
@@ -297,3 +305,6 @@ isSafeFileChar c = isAlpha c || isDigit c || c `elem` "-_.@:"
 
 s2List = patchSort . S.toList
 patchSort = sortBy (flip (compare `on` piDate))
+
+instance HTML ByteString where
+	toHtml = toHtml . B.unpack
