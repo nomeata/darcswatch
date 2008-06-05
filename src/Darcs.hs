@@ -30,6 +30,7 @@ import StringCrypto
 
 import System.Time
 import CachedGet
+import Zip
 
 import qualified Data.ByteString.Char8 as B
 import Data.ByteString.Char8 (ByteString)
@@ -53,19 +54,61 @@ inversePatch p@(PatchInfo {piInverted = i}) = p {piInverted = not i}
 --   repository as changed since the last run.
 getInventory :: FilePath -> String -> IO ([PatchInfo], Bool)
 getInventory cDir repo = do
-		old_inv <- get cDir old_inventory
-		maybe' old_inv parseReturn $ do
+	format <- get cDir formatUrl
+	case format of
+		Nothing                                     -> getInventory1 cDir repo
+		Just (f,_) | f == B.pack "hashed\ndarcs-2\n" -> getInventory2 cDir repo
+		           | f == B.pack "darcs-1.0\n"      -> getInventory1 cDir repo
+		           | otherwise                      -> error $ "Unkown repository format: " ++ B.unpack f
+  where	formatUrl = addSlash repo ++ "_darcs/format"
 
-			new_inv <- get cDir hashed_inventory
-			maybe' new_inv parseReturn $ do
+-- | Gets called when old style format was detected
+getInventory1 :: FilePath -> String -> IO ([PatchInfo],Bool)
+getInventory1 cDir repo = getInventoryFile (addSlash repo ++ "_darcs/inventory")
+  where maybe' m f d = maybe d f m
+	getInventoryFile url = do
+	        putStrLn $ "Getting file " ++ url
+		inv <- get cDir url
+		maybe' inv parseBody $ do
+			putStrLn $ "Repository " ++ repo ++ " not found."
+			return ([],False)
+	parseBody (body, updated) = do
+	   let unzipped = maybeUnzipB body
+	   let patches = readPatchInfos unzipped
+	   case breakOn '\n' unzipped of
+	     (l1,r) | l1 == B.pack "Starting with tag:" -> do
+	     	let p = head patches
+		let filename = addSlash repo ++ "_darcs/inventories/" ++  patchBasename p ++ ".gz"
+                (prev_p,prev_u) <- getInventoryFile filename
+		return (prev_p ++ patches, prev_u || updated)
+	     _ -> return (patches, updated)
 
-				putStrLn $ "Repository " ++ repo ++ " not found."
-				return ([],False)
+-- | Gets called when new style format was detected
+getInventory2 :: FilePath -> String -> IO ([PatchInfo],Bool)
+getInventory2 cDir repo = getInventoryFile (addSlash repo ++ "_darcs/hashed_inventory")
+  where maybe' m f d = maybe d f m
+	getInventoryFile url = do
+		inv <- get cDir url
+		maybe' inv parseBody $ do
+			putStrLn $ "Repository " ++ repo ++ " not found."
+			return ([],False)
+	skip_pristine s = case breakOn '\n' s of
+	                    (l1,r) | B.pack "pristine" `B.isPrefixOf` l1 -> B.tail r
+			    _                                            -> s
+	parseStart body = do 
+	   case breakOn '\n' (skip_pristine body) of
+	     (l,r) | l == B.pack "Starting with inventory:" -> do
+	     	 case breakOn '\n' $ B.tail r of
+		   (h,r'') -> do prev <- getInventoryFile (addSlash repo ++ "_darcs/inventories/" ++ B.unpack h)
+		                 return (prev,B.tail r'')
+	           _ -> putStrLn "Broken inventory start line" >> return (([],False),body)
+             _ -> return (([],False),body)
+	parseBody (body, updated) = do
+	   let unzipped = maybeUnzipB body
+	   ((prev_patches, prev_updated),body') <- parseStart unzipped
+           return (prev_patches ++ readPatchInfos unzipped, prev_updated || updated)
+	  
 
-  where	old_inventory = addSlash repo ++ "_darcs/inventory"
-        hashed_inventory = addSlash repo ++ "_darcs/hashed_inventory"
-	maybe' m f d = maybe d f m
-	parseReturn (body, updated) = return (readPatchInfos body, updated)
 
 readPatchInfos :: ByteString -> [PatchInfo]
 readPatchInfos inv | B.null inv = []
