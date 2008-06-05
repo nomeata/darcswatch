@@ -35,6 +35,7 @@ Build-Depends:  base>3
                 , unix
                 , directory
 		, nano-md5
+		, zlib
 
 extra-source-files: mailfilter.sh
 data-files:     documentation.html, README, example/config

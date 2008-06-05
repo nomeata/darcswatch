@@ -22,12 +22,12 @@ darcsweb uses modules from these non-standard packages:
  * HTTP
  * Crypto
  * parsec
+ * nano-md5
+ * zlib
 
 There are a lot of open issues, and help is very
 appreciated. A non exclusive list of TODO items is:
 
- * Support for tagged repositories (fetching older
-   inventories)
  * Nicer output (CSS magic!)
  * (Maybe) Add repositories per GnuPG signed command
 
