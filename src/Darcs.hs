@@ -123,9 +123,11 @@ readPatchInfo s =
     if B.head (dropWhite s) /= '[' -- ]
     then Nothing
     else case breakOn '\n' $ B.tail $ dropWhite s of
-         (name,s') ->
+         (name,s') | B.null s' -> error $ "Broken file (1) " ++ show (B.unpack s)
+         (name,s') | otherwise -> 
              case breakOn '*' $ B.tail s' of
-             (author,s2) ->
+             (author,s2) | B.null s2 -> error "Broken file (2)"
+	                 | otherwise -> 
                  case B.break (\c->c==']'||c=='\n') $ B.drop 2 s2 of
                  (ct,s''') ->
                      do (log, s4) <- lines_starting_with_ending_with ' ' ']' $ dn s'''
