@@ -49,4 +49,10 @@ Build-Type:     Simple
 Executable:     darcswatch
 Main-Is:        Main.hs
 hs-source-dirs: src
-Other-modules:  HTML, MultiMap, Darcs, OldDate, StringCrypto, CachedGet
+Other-modules:  HTML
+		, MultiMap
+		, Darcs
+		, OldDate
+		, StringCrypto
+		, CachedGet
+		, LockRestart
