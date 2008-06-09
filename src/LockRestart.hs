@@ -19,6 +19,7 @@ Boston, MA 02110-1301, USA.
 module LockRestart
 	( lockOrMark
 	, releaseLock
+	, lockRestart
 	) where
 
 import System.FilePath
@@ -69,3 +70,38 @@ releaseLock dir = do
 	interesting _ = True
 	pickFiles = map (lockDir </>) . filter interesting
         lockDir = dir </> ".lock"
+
+
+-- | Convenience function combining the two functions above.
+--
+--   Runs the fifth argument repeatedly, locked using the directory in the 
+--   first argument, passed the current event the first time, and using the
+--   combination function the other times.
+--
+--   If the forth argument is true, this function will tell the user whats
+--   happening (using putStrLn)
+lockRestart :: (Show a, Read a) =>
+		   FilePath
+                -> a
+		-> ([a] -> a)
+		-> Bool
+		-> (a -> IO ())
+		-> IO ()
+lockRestart dir event combine verbose action = do
+	when verbose $ putStrLn "Trying to get lock..."
+	l <- lockOrMark dir event
+	if l then do
+	    when verbose $ putStrLn "Got the lock, going to work..."
+	    workAndCheck event
+	  else
+	    when verbose $ putStrLn "Could not get locked, signaled restart"
+  where workAndCheck event = do
+        action event
+	when verbose $ putStrLn "Trying to release the lock..."
+	msgs <- releaseLock dir
+	if null msgs then do
+	    when verbose $ putStrLn "Successfully released lock."
+	  else do
+	    when verbose $ putStrLn "New work to do..."
+	    workAndCheck (combine msgs)
+
