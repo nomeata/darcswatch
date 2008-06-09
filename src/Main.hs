@@ -58,24 +58,7 @@ main = do
         putStrLn "Reading configuration..."
         config <- read `fmap` readFile (confdir ++ "config")
 
-	putStrLn "Trying to get lock..."
-	l <- lockOrMark (cOutput config) patchNew
-	if l then do
-	    putStrLn "Got the lock, going to work..."
-	    do_work config patchNew
-	    checkAndWork config
-	  else
-	    putStrLn "Could not get locked, signaled restart"
-
-checkAndWork config = do
-	putStrLn "Trying to release the lock..."
-	msgs <- releaseLock (cOutput config)
-	if null msgs then do
-	    putStrLn "Successfully released lock."
-	  else do
-	    putStrLn "New work to do..."
-	    do_work config (or msgs)
-	    checkAndWork config
+	lockRestart (cOutput config) patchNew or True (do_work config)
 
 do_work config patchNew = do
         putStrLn "Reading repositories..."
