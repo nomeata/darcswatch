@@ -54,7 +54,7 @@
 
 <p> <strong>Via inverse patches.</strong> Make sure DarcsWatch has seen the inverse of the patch. You can do so by first running <tt>darcs rollback</tt> and select your patch, and then send it to DarcsWatch using <tt>darcs send --to=darcswatch@nomeata.de</tt>. If the project is using a mailing list that is being tracked by DarcsWatch, you can send this mail to the list, thus notifying your fellow developers that you consider your patch obsolete. Of course you can do this also to patches other than your own.</p>
 
-<p> Additionally, if the same author submits a patch with the same name and description as a previous patch, but with a later date, DarcsWatch assumes that <tt>darcs amend-record</tt> was used and that the earlier patch is obsolete.</p>
+<p> <strong>Via updated patches.</strong> Additionally, if the same author submits a patch with the same name and description as a previous patch, but with a later date, DarcsWatch assumes that <tt>darcs amend-record</tt> was used and that the earlier patch is obsolete.</p>
 
 <h2>Developing DarcsWatch</h2>
 
