@@ -62,6 +62,7 @@ data ResultData = ResultData
 	, p2pr :: M.Map PatchInfo  (S.Set String)
 	, r2mp :: M.Map String     (S.Set PatchInfo)
 	, p2s  :: M.Map PatchInfo  (PatchState)
+	, p2mid:: M.Map PatchInfo  (String)
 	, unmatched :: (S.Set PatchInfo)
 	, date :: CalendarTime
 	, u2rn :: M.Map ByteString  ByteString

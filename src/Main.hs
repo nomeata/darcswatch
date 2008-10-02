@@ -131,7 +131,7 @@ do_work config patchNew = do
         let unmatched = S.fromList $ filter (\p -> not (M.member p p2pr)) patches
 
         now <- getClockTime >>= toCalendarTime
-        let resultData = ResultData p2r r2p u2p p2pe p2pr r2mp p2s unmatched now u2rn
+        let resultData = ResultData p2r r2p u2p p2pe p2pr r2mp p2s p2mid unmatched now u2rn
         putStrLn "Writing output..."
         writeFile (cOutput config ++ "/index.html") (mainPage resultData)
 
