@@ -199,7 +199,12 @@ patchView d userCentric p =
 			hotlink (pid ++ ".dpatch") << "Download .dpatch" +++
 			" "+++ 
 			anchor !!! [href $ "javascript:toggle_diff('"++diffId++"')"]
-				<< "Show/Hide diff"
+				<< "Show/Hide diff" +++
+			case p `M.lookup` p2mid d of
+                          Nothing -> noHtml
+                          Just mid -> " " +++
+                             anchor !!! [href $ "http://mid.gmane.org/" ++ mid ]
+				<< "Search submitting mail"
 			)
 		
 -- The order defines what state a patch should be considered if it is
