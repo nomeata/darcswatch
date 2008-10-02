@@ -96,16 +96,20 @@ do_work config patchNew = do
 
         putStrLn "Reading bundle states..."
         states <- readFile (addSlash (cMails config) ++ "states")
-        let readStateLine string =
-                let (checksum: stateString : _ : rest) = words string
+        let readStateLine (p2s, p2mid) string =
+                let (checksum: stateString : mid : rest) = words string
                     sender = unwords rest
                     state = case stateString of
                                 "add" -> Unmatched
                                 "obsolete" -> Obsolete
                                 "rejected" -> Rejected
                                 unknown    -> error $ "Unknown state " ++ show unknown
-                in  flip (foldr (\p -> M.insert p state)) (md2p !!!! checksum)
-            p2s = foldl (flip readStateLine) M.empty (lines states)
+		    p2s'   = foldr (\p -> M.insert p state) p2s (md2p !!!! checksum)
+		    p2mid' = if stateString == "add"
+                             then foldr (\p -> M.insert p mid) p2mid (md2p !!!! checksum)
+                             else p2mid
+                in  (p2s', p2mid')
+        let (p2s, p2mid) = foldl readStateLine (M.empty, M.empty) (lines states)
 
         let patches = M.keys p2pe -- Submitted patches
         let repos   = M.keys r2p -- Repos with patches
