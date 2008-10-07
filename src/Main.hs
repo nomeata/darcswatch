@@ -107,6 +107,13 @@ do_work config patchNew = do
                 in  flip (foldr (\p -> M.insert p state)) (md2p !!!! checksum)
             p2s = foldl (flip readStateLine) M.empty (lines states)
 
+	putStrLn "Reading mid to patch mapping..."
+        midmappings <- readFile (addSlash (cMails config) ++ "mid-mapping")
+        let readMidLine string =
+                let [mid,checksum] = words string
+                in  flip (foldr (\p -> M.insert p mid)) (md2p !!!! checksum)
+            p2mid = foldl (flip readMidLine) M.empty (lines midmappings)
+
         let patches = M.keys p2pe -- Submitted patches
         let repos   = M.keys r2p -- Repos with patches
         let users   = M.keys u2p -- Known users
