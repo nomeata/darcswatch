@@ -95,7 +95,7 @@ mainPage d = showHtml $
 	unordList (map (\u -> hotlink (userFile u) << u2rn d ! u +++ userStats u d) (users d)) +++
 	h2 << "Listing by repository" +++ 
 	unordList ( map (\r -> hotlink (repoFile r) << r +++ repoStats r d) (repos d)
-			++ [hotlink "unmatched.html" << "Unmatched matches"
+			++ [hotlink "unmatched.html" << "Unmatched patches"
 			    +++ " "+++  show (S.size (unmatched d)) +++ " patches" ]
 		  ) +++
 	footer d
