@@ -26,7 +26,7 @@ License:         GPL
 License-File:    LICENSE
 Build-Depends:  base>3
                 , network
-                , HTTP
+                , HTTP (>= 4000)
                 , old-time
                 , Crypto
                 , parsec

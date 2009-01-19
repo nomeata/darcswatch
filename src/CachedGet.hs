@@ -45,11 +45,11 @@ get dir' uri = flip catch (\e -> putStrLn ("Error downloading uri: " ++ show e) 
 		  Nothing -> do
 			return Nothing
 		  Just (newFile, Nothing) -> do
-			return $ Just (B.pack newFile, True)
+			return $ Just (newFile, True)
 		  Just (newFile, Just newTag) -> do
-			writeFile cacheFile newFile
+			B.writeFile cacheFile newFile
 			writeFile tagFile newTag
-			return $ Just (B.pack newFile, True)
+			return $ Just (newFile, True)
 
 	if e_cache && e_tag
 	   then do
@@ -97,7 +97,7 @@ get' uri' = do
 		, rqHeaders =
 			[ uaHeader
 			]
-		, rqBody = ""
+		, rqBody = B.empty
 		}
 	result <- simpleHTTP req
 	return $ case result of
