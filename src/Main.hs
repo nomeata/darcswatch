@@ -19,6 +19,7 @@ Boston, MA 02110-1301, USA.
 
 
 import Control.Monad
+import Control.Concurrent
 import System.Environment (getArgs)
 import System.Directory
 import System.Posix.Files
@@ -64,14 +65,17 @@ main = do
 
 do_work config patchNew = do
         putStrLn "Reading repositories..."
-        let readInv (p2r,r2p,new) rep = do
+	let loadInv rep = do
                 putStrLn $ "Reading " ++ rep ++ ":"
                 (ps,thisNew) <- getInventory (cOutput config ++ "/cache/") rep
 		putStrLn (if thisNew then "Repostory is new." else "Repository is cached.")
+		return (rep, ps, thisNew)
+            readInv (p2r,r2p,new) (rep, ps,thisNew) = do
                 let p2r' = foldr (\p -> MM.append p rep) p2r ps
                     r2p' = MM.extend rep ps r2p :: M.Map String (S.Set PatchInfo)
                 return (p2r', r2p', new || thisNew)
-        (p2r,r2p, new) <- foldM readInv (MM.empty, MM.empty, patchNew) (cRepositories config)
+        (p2r,r2p, new) <- foldM readInv (MM.empty, MM.empty, patchNew) =<<
+                          forkSequence (map loadInv (cRepositories config))
 
         if not new then putStrLn "Nothing new, exiting" else do
 
@@ -185,3 +189,8 @@ addSlash filename | last filename == '/' = filename
 infixl 0 `on`
 on :: (b -> b -> c) -> (a -> b) -> a -> a -> c
 (*) `on` f = \x y -> f x * f y
+
+forkSequence = sequence
+{- Enable for parallel downloads
+forkSequence acts = mapM (\act -> newEmptyMVar >>= \mvar -> forkIO (act >>= putMVar mvar) >> return mvar) acts >>= mapM takeMVar
+-}
