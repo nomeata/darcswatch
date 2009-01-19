@@ -32,8 +32,8 @@ import System.Time
 import CachedGet
 import Zip
 
-import qualified Data.ByteString.Lazy.Char8 as B
-import Data.ByteString.Lazy.Char8 (ByteString)
+import qualified Data.ByteString.Char8 as B
+import Data.ByteString.Char8 (ByteString)
 import Data.List
 
 -- | The defining informtion of a Darcs patch.
@@ -73,7 +73,7 @@ getInventory1 cDir repo = getInventoryFile (addSlash repo ++ "_darcs/inventory")
 			putStrLn $ "Repository " ++ repo ++ " not found."
 			return ([],False)
 	parseBody (body, updated) = do
-	   let unzipped = maybeUnzipLB body
+	   let unzipped = maybeUnzipB body
 	   let patches = readPatchInfos unzipped
 	   case breakOn '\n' unzipped of
 	     (l1,r) | l1 == B.pack "Starting with tag:" -> do
@@ -104,7 +104,7 @@ getInventory2 cDir repo = getInventoryFile (addSlash repo ++ "_darcs/hashed_inve
 	           _ -> putStrLn "Broken inventory start line" >> return (([],False),body)
              _ -> return (([],False),body)
 	parseBody (body, updated) = do
-	   let unzipped = maybeUnzipLB body
+	   let unzipped = maybeUnzipB body
 	   ((prev_patches, prev_updated),body') <- parseStart unzipped
            return (prev_patches ++ readPatchInfos unzipped, prev_updated || updated)
 	  
@@ -162,14 +162,9 @@ lines_starting_with_ending_with st en s = lswew s
 dropWhite = B.dropWhile (`elem` " \n\t\r")
 breakOn c = B.break (c ==)
 
-{- better for strict byte strings
 breakLast c p = case B.elemIndexEnd c p of
     Nothing -> Nothing
     Just n -> Just (B.take n p, B.drop (n+1) p)
--}
-breakLast c p = case B.elemIndices c p of
-    [] -> Nothing
-    is -> let n = last is in Just (B.take n p, B.drop (n+1) p)
 
 
 -- | Given the content of a patch bundle, it returns a list of submitted patches with

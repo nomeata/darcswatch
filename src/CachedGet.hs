@@ -28,8 +28,8 @@ import Network.HTTP.Headers
 import System.Directory
 import Control.Monad
 
-import qualified Data.ByteString.Lazy.Char8 as B
-import Data.ByteString.Lazy.Char8 (ByteString)
+import qualified Data.ByteString.Char8 as B
+import Data.ByteString.Char8 (ByteString)
 
 -- | Given a directory to be used for caching the result, and
 --   an URL to download, it will return the content of the URL.
