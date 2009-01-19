@@ -32,8 +32,9 @@ import MultiMap ((!!!!))
 import Data.Char
 import Data.List
 
-import qualified Data.ByteString.Char8 as B
-import Data.ByteString.Char8 (ByteString)
+import qualified Data.ByteString.Char8 as BS
+import qualified Data.ByteString.Lazy.Char8 as B
+import Data.ByteString.Lazy.Char8 (ByteString)
 
 -- Darcs stuff
 import Darcs
@@ -82,7 +83,7 @@ do_work config patchNew = do
         let readMail (u2p, u2rn, p2pe, md2p) mailFile = do
                 putStrLn $ "Reading mail " ++ mailFile ++ " ..."
                 mail <- B.readFile mailFile
-                let checksum = md5sum mail
+                let checksum = md5sum $ BS.concat $ B.toChunks $ mail
                 let (new,context) = parseMail mail
                 let u2p' = foldr (\(p,_) -> MM.append (normalizeAuthor (piAuthor p)) p) u2p new
                 let u2rn' = foldr (\(p,_) ->
