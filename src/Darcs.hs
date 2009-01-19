@@ -68,7 +68,6 @@ getInventory1 :: FilePath -> String -> IO ([PatchInfo],Bool)
 getInventory1 cDir repo = getInventoryFile (addSlash repo ++ "_darcs/inventory")
   where maybe' m f d = maybe d f m
 	getInventoryFile url = do
-	        putStrLn $ "Getting file " ++ url
 		inv <- get cDir url
 		maybe' inv parseBody $ do
 			putStrLn $ "Repository " ++ repo ++ " not found."

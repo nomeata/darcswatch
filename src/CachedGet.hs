@@ -37,16 +37,20 @@ import Data.ByteString.Char8 (ByteString)
 --   and False if it is the same as in the cache.
 get :: FilePath -> String -> IO (Maybe (ByteString, Bool))
 get dir' uri = flip catch (\e -> putStrLn ("Error downloading uri: " ++ show e) >> return Nothing) $ do
+	putStr $ "Getting URL " ++ uri ++ " ... "
 	e_cache <- doesFileExist cacheFile
 	e_tag   <- doesFileExist tagFile
 	let update = do
 		newFile <- get' uri
 		case newFile of
 		  Nothing -> do
+			putStrLn "not found."
 			return Nothing
 		  Just (newFile, Nothing) -> do
+			putStrLn "downloaded."
 			return $ Just (newFile, True)
 		  Just (newFile, Just newTag) -> do
+			putStrLn "downloaded."
 			B.writeFile cacheFile newFile
 			writeFile tagFile newTag
 			return $ Just (newFile, True)
@@ -62,6 +66,7 @@ get dir' uri = flip catch (\e -> putStrLn ("Error downloading uri: " ++ show e) 
 			maybe'' mbNewTag (return Nothing) $ \newTag -> do
 				if  oldTag == newTag
 				   then do
+					putStrLn "cached."
 					oldFile <- B.readFile cacheFile
 					return $ Just (oldFile, False)
 				   else do

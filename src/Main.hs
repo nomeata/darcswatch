@@ -23,6 +23,7 @@ import System.Environment (getArgs)
 import System.Directory
 import System.Posix.Files
 import System.Time
+import System.IO
 
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -50,6 +51,7 @@ data DarcsWatchConfig = DarcsWatchConfig {
 
 
 main = do
+	hSetBuffering stdout NoBuffering
         args <- getArgs
         let (confdir, patchNew) = case args of
                         [confdir] -> (addSlash confdir, False)
@@ -63,8 +65,9 @@ main = do
 do_work config patchNew = do
         putStrLn "Reading repositories..."
         let readInv (p2r,r2p,new) rep = do
-                putStrLn $ "Reading " ++ rep ++ " ..."
+                putStrLn $ "Reading " ++ rep ++ ":"
                 (ps,thisNew) <- getInventory (cOutput config ++ "/cache/") rep
+		putStrLn (if thisNew then "Repostory is new." else "Repository is cached.")
                 let p2r' = foldr (\p -> MM.append p rep) p2r ps
                     r2p' = MM.extend rep ps r2p :: M.Map String (S.Set PatchInfo)
                 return (p2r', r2p', new || thisNew)
