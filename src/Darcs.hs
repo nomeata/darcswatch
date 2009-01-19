@@ -34,6 +34,7 @@ import Zip
 
 import qualified Data.ByteString.Char8 as B
 import Data.ByteString.Char8 (ByteString)
+import Data.List
 
 -- | The defining informtion of a Darcs patch.
 data PatchInfo = PatchInfo
@@ -260,8 +261,8 @@ filter_gpg_dashes ps =
 
 readDiff :: ByteString -> Maybe (ByteString, ByteString)
 readDiff s | B.null (dropWhite s) = Nothing
-readDiff s = if null r then Nothing else Just (B.unlines p,B.unlines r)
-  where (p,r) = break (\l -> B.null l || B.head l == '[') (B.lines s)
+readDiff s = find (\(p,r) -> B.pack "\n\n" `B.isPrefixOf` r || B.pack "\n[" `B.isPrefixOf` r)
+                  (zip (B.inits s) (B.tails s))
 
 patchFilename :: PatchInfo -> String
 patchFilename pi = patchBasename pi ++ ".gz"
