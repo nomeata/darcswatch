@@ -51,19 +51,23 @@ get dir' uri = flip catch (\e -> putStrLn ("Error downloading uri: " ++ show e) 
 			writeFile tagFile newTag
 			return $ Just (newFile, True)
 
-	if e_cache && e_tag
-	   then do
-		oldTag <- slurpFile tagFile
-		mbNewTag <- head' uri
-		maybe'' mbNewTag (return Nothing) $ \newTag -> do
-			if oldTag == newTag
-			   then do
-				oldFile <- B.readFile cacheFile
-				return $ Just (oldFile, False)
-			   else do
-			   	update
-	   else do
-	  	update
+	if False -- Debugging
+	  then do
+		oldFile <- B.readFile cacheFile
+		return $ Just (oldFile, False)
+           else if e_cache && e_tag
+		   then do
+			oldTag <- slurpFile tagFile
+			mbNewTag <- head' uri
+			maybe'' mbNewTag (return Nothing) $ \newTag -> do
+				if  oldTag == newTag
+				   then do
+					oldFile <- B.readFile cacheFile
+					return $ Just (oldFile, False)
+				   else do
+					update
+		   else do
+			update
 	
   where hash = md5 uri
  	cacheFile = dir ++ hash ++ ".cache"
