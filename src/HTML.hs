@@ -66,13 +66,13 @@ data ResultData = ResultData
 	, unmatched :: (S.Set PatchInfo)
 	, date :: CalendarTime
 	, u2rn :: M.Map ByteString  ByteString
-	}
+	} deriving (Show)
 
 data PatchExtras = PatchExtras
 	{ peDiff :: ByteString
 	, peContext :: [PatchInfo]
 	, peMailFile :: String
-	}
+	} deriving (Show)
 
 
 users d = M.keys (u2p d)
