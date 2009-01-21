@@ -67,3 +67,8 @@ Executable darcswatch
 source-repository head
   type:     darcs
   location: http://darcs.nomeata.de/darcswatch/
+
+source-repository this
+  type:     darcs
+  location: http://darcs.nomeata.de/darcswatch/
+  tag:      v0.1
