@@ -101,7 +101,7 @@ getInventory2 cDir repo = getInventoryFile (addSlash repo ++ "_darcs/hashed_inve
 	     	 case breakOn '\n' $ B.tail r of
 		   (h,r'') -> do prev <- getInventoryFile (addSlash repo ++ "_darcs/inventories/" ++ B.unpack h)
 		                 return (prev,B.tail r'')
-	           _ -> putStrLn "Broken inventory start line" >> return (([],False),body)
+	           --_ -> putStrLn "Broken inventory start line" >> return (([],False),body)
              _ -> return (([],False),body)
 	parseBody (body, updated) = do
 	   let unzipped = maybeUnzipB body
