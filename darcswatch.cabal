@@ -22,7 +22,7 @@ Description:     DarcsWatch is a tool to track the state of darcs patches
                  * Knows about inverse and amend-recorded patches and uses them to consider
                  patches obsolete.
 Homepage:        http://darcswatch.nomeata.de/
-Cabal-Version:   >= 1.2
+Cabal-Version:   >= 1.6
 License:         GPL
 License-File:    LICENSE
 extra-source-files: mailfilter.sh
