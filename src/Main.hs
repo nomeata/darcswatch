@@ -25,6 +25,7 @@ import System.Directory
 import System.Posix.Files
 import System.Time
 import System.IO
+import System.Terminal.Concurrent
 
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -64,11 +65,13 @@ main = do
 	lockRestart (cOutput config) patchNew or True (do_work config)
 
 do_work config patchNew = do
+	writeC <- getConcurrentOutputter
+
         putStrLn "Reading repositories..."
 	let loadInv rep = do
-                putStrLn $ "Reading " ++ rep ++ ":"
-                (ps,thisNew) <- getInventory (cOutput config ++ "/cache/") rep
-		putStrLn (if thisNew then "Repostory is new." else "Repository is cached.")
+                writeC $ "Reading " ++ rep ++ ":\n"
+                (ps,thisNew) <- getInventory writeC (cOutput config ++ "/cache/") rep
+		writeC (if thisNew then "Repostory is new.\n" else "Repository is cached.\n")
 		return (rep, ps, thisNew)
             readInv (p2r,r2p,new) (rep, ps,thisNew) = do
                 let p2r' = foldr (\p -> MM.append p rep) p2r ps
@@ -190,7 +193,6 @@ infixl 0 `on`
 on :: (b -> b -> c) -> (a -> b) -> a -> a -> c
 (*) `on` f = \x y -> f x * f y
 
-forkSequence = sequence
-{- Enable for parallel downloads
+{- forkSequence = sequence -}
+-- Enable for parallel downloads
 forkSequence acts = mapM (\act -> newEmptyMVar >>= \mvar -> forkIO (act >>= putMVar mvar) >> return mvar) acts >>= mapM takeMVar
--}

@@ -1,5 +1,5 @@
 Name:            darcswatch
-version:         0.1
+version:         0.2
 Category:        Distribution
 name:            darcswatch
 author:          Joachim Breitner
@@ -63,6 +63,7 @@ Executable darcswatch
                         , zlib
                         , filepath
                         , bytestring
+                        , concurrentoutput
 
 source-repository head
   type:     darcs
@@ -71,4 +72,4 @@ source-repository head
 source-repository this
   type:     darcs
   location: http://darcs.nomeata.de/darcswatch/
-  tag:      v0.1
+  tag:      v0.2

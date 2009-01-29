@@ -53,24 +53,24 @@ inversePatch p@(PatchInfo {piInverted = i}) = p {piInverted = not i}
 -- | Given a directory used for caching, and an URL of a Darcs repository,
 --   it will return the list of patches in the repository, and whether the
 --   repository as changed since the last run.
-getInventory :: FilePath -> String -> IO ([PatchInfo], Bool)
-getInventory cDir repo = do
-	format <- get cDir formatUrl
+getInventory :: (String -> IO ()) -> FilePath -> String -> IO ([PatchInfo], Bool)
+getInventory write cDir repo = do
+	format <- get write cDir formatUrl
 	case format of
-		Nothing                                     -> getInventory1 cDir repo
-		Just (f,_) | f == B.pack "hashed\ndarcs-2\n" -> getInventory2 cDir repo
-		           | f == B.pack "darcs-1.0\n"      -> getInventory1 cDir repo
+		Nothing                                     -> getInventory1 write cDir repo
+		Just (f,_) | f == B.pack "hashed\ndarcs-2\n" -> getInventory2 write cDir repo
+		           | f == B.pack "darcs-1.0\n"      -> getInventory1 write cDir repo
 		           | otherwise                      -> error $ "Unkown repository format: " ++ B.unpack f
   where	formatUrl = addSlash repo ++ "_darcs/format"
 
 -- | Gets called when old style format was detected
-getInventory1 :: FilePath -> String -> IO ([PatchInfo],Bool)
-getInventory1 cDir repo = getInventoryFile (addSlash repo ++ "_darcs/inventory")
+getInventory1 :: (String -> IO ()) -> FilePath -> String -> IO ([PatchInfo],Bool)
+getInventory1 write cDir repo = getInventoryFile (addSlash repo ++ "_darcs/inventory")
   where maybe' m f d = maybe d f m
 	getInventoryFile url = do
-		inv <- get cDir url
+		inv <- get write cDir url
 		maybe' inv parseBody $ do
-			putStrLn $ "Repository " ++ repo ++ " not found."
+			write $ "Repository " ++ repo ++ " not found.\n"
 			return ([],False)
 	parseBody (body, updated) = do
 	   let unzipped = maybeUnzipB body
@@ -84,13 +84,13 @@ getInventory1 cDir repo = getInventoryFile (addSlash repo ++ "_darcs/inventory")
 	     _ -> return (patches, updated)
 
 -- | Gets called when new style format was detected
-getInventory2 :: FilePath -> String -> IO ([PatchInfo],Bool)
-getInventory2 cDir repo = getInventoryFile (addSlash repo ++ "_darcs/hashed_inventory")
+getInventory2 :: (String -> IO ()) -> FilePath -> String -> IO ([PatchInfo],Bool)
+getInventory2 write cDir repo = getInventoryFile (addSlash repo ++ "_darcs/hashed_inventory")
   where maybe' m f d = maybe d f m
 	getInventoryFile url = do
-		inv <- get cDir url
+		inv <- get write cDir url
 		maybe' inv parseBody $ do
-			putStrLn $ "Repository " ++ repo ++ " not found."
+			write $ "Repository " ++ repo ++ " not found.\n"
 			return ([],False)
 	skip_pristine s = case breakOn '\n' s of
 	                    (l1,r) | B.pack "pristine" `B.isPrefixOf` l1 -> B.tail r

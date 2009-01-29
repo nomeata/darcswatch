@@ -35,22 +35,23 @@ import Data.ByteString.Char8 (ByteString)
 --   an URL to download, it will return the content of the URL.
 --   The boolean return value is true when the file was updated,
 --   and False if it is the same as in the cache.
-get :: FilePath -> String -> IO (Maybe (ByteString, Bool))
-get dir' uri = flip catch (\e -> putStrLn ("Error downloading uri: " ++ show e) >> return Nothing) $ do
-	putStr $ "Getting URL " ++ uri ++ " ... "
+get :: (String -> IO ()) -> FilePath -> String -> IO (Maybe (ByteString, Bool))
+get write dir' uri = flip catch (\e -> write ("Error downloading uri: " ++ show e++ "\n")
+                                       >> return Nothing) $ do
+	write $ "Getting URL " ++ uri ++ " ... "
 	e_cache <- doesFileExist cacheFile
 	e_tag   <- doesFileExist tagFile
 	let update = do
 		newFile <- get' uri
 		case newFile of
 		  Nothing -> do
-			putStrLn "not found."
+			write "not found.\n"
 			return Nothing
 		  Just (newFile, Nothing) -> do
-			putStrLn "downloaded."
+			write "downloaded.\n"
 			return $ Just (newFile, True)
 		  Just (newFile, Just newTag) -> do
-			putStrLn "downloaded."
+			write "downloaded.\n"
 			B.writeFile cacheFile newFile
 			writeFile tagFile newTag
 			return $ Just (newFile, True)
@@ -66,7 +67,7 @@ get dir' uri = flip catch (\e -> putStrLn ("Error downloading uri: " ++ show e) 
 			maybe'' mbNewTag (return Nothing) $ \newTag -> do
 				if  oldTag == newTag
 				   then do
-					putStrLn "cached."
+					write "cached.\n"
 					oldFile <- B.readFile cacheFile
 					return $ Just (oldFile, False)
 				   else do
