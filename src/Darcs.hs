@@ -60,6 +60,7 @@ getInventory write cDir repo = do
 		Nothing                                     -> getInventory1 write cDir repo
 		Just (f,_) | f == B.pack "hashed\ndarcs-2\n" -> getInventory2 write cDir repo
 		           | f == B.pack "darcs-1.0\n"      -> getInventory1 write cDir repo
+		           | f == B.pack "hashed\n"         -> getInventory2 write cDir repo
 		           | otherwise                      -> error $ "Unkown repository format: " ++ B.unpack f ++ " in repo " ++ repo
   where	formatUrl = addSlash repo ++ "_darcs/format"
 
