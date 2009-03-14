@@ -111,12 +111,17 @@ footer d =
 		calendarTimeToString (date d) +++
 		"."
 		)
-myHeader d = script !!! [thetype "text/javascript"] << (
-		" function toggle_diff(id) {  "++
-		"    elem = document.getElementById(id); "++
-		"    if (elem) {if (elem.style.display == 'none') {elem.style.display = 'block';} else {elem.style.display = 'none'} }"++ 
-		" }"
-		)
+
+myHeader d = script !!! [thetype "text/javascript", src "/javascript/jquery/jquery.js"] << noHtml
+             +++
+             script !!! [thetype "text/javascript"] << "\
+		\$(document).ready(function () {                                   	\
+                \   $('.diffshower').click(function () { 				\
+                \      	var nowid = '#' + this.id.replace(/^diffshower_/,'diff_'); 	\
+                \      	$(nowid).toggle();					\
+                \   })})								\
+		\"
+
 
 
 userPage d u = showHtml $
@@ -187,18 +192,18 @@ patchView d userCentric p =
 		)
 	 else	noHtml
 	) +++
+	actions +++
 	thediv !!! [identifier diffId, thestyle "display:none"] << (
-		actions +++
 		pre << peDiff (p2pe d ! p)
-		) +++
-	actions
+		)
   where pid = patchBasename p
+	diffShowerId = "diffshower_"++pid
 	diffId = "diff_"++pid
 	actions = paragraph << (
 			strong << "Actions: " +++
 			hotlink (pid ++ ".dpatch") << "Download .dpatch" +++
 			" "+++ 
-			anchor !!! [href $ "javascript:toggle_diff('"++diffId++"')"]
+			anchor !!! [identifier diffShowerId, theclass "diffshower", href "#"]
 				<< "Show/Hide diff" +++
 			case p `M.lookup` p2mid d of
                           Nothing -> noHtml
