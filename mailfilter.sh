@@ -23,8 +23,8 @@ function grep_gpg {
 	}
 function md5 { md5sum - |cut -c-32 ; }
 function update {
-	echo "Updateing darcswatch web view"
-	$DARCSWATCH $CONFIG new ;
+	echo "Updateing darcswatch web view (displaying last 20 lines)"
+	$DARCSWATCH $CONFIG new 2>&1 | tee /tmp/darcswatch-mail-output | tail -n 20;
 	}
 
 FILE=$(tempfile --prefix patch)
