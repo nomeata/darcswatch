@@ -118,9 +118,14 @@ myHeader d = script !!! [thetype "text/javascript", src "/javascript/jquery/jque
              script !!! [thetype "text/javascript"] << "\
 		\$(document).ready(function () {                                   	\
                 \   $('.diffshower').click(function () { 				\
-                \      	var nowid = '#' + this.id.replace(/^diffshower_/,'diff_'); 	\
-                \      	$(nowid).toggle();					\
-                \   })})								\
+                \      	var diffid = this.id.replace(/^diffshower_/,''); 	\
+                \      	$('#diff_' + diffid).toggle();					\
+		\	$('#diff_' + diffid + ' pre:visible').each(function () {\
+		\		if (!($(this).text())) {\
+		\			$(this).append('Diff is being loaded...');\
+		\			$(this).load('diff_' + diffid + '.txt');\
+		\	}});\
+                \   })})\
 		\"
 
 
@@ -194,9 +199,7 @@ patchView d userCentric p =
 	 else	noHtml
 	) +++
 	actions +++
-	thediv !!! [identifier diffId, thestyle "display:none"] << (
-		pre << peDiff (p2pe d ! p)
-		)
+	thediv !!! [identifier diffId, thestyle "display:none"] << pre noHtml
   where pid = patchBasename p
 	diffShowerId = "diffshower_"++pid
 	diffId = "diff_"++pid
@@ -204,7 +207,7 @@ patchView d userCentric p =
 			strong << "Actions: " +++
 			hotlink (pid ++ ".dpatch") << "Download .dpatch" +++
 			" "+++ 
-			anchor !!! [identifier diffShowerId, theclass "diffshower", href "#"]
+			anchor !!! [identifier diffShowerId, theclass "diffshower", href "javascript:"]
 				<< "Show/Hide diff" +++
 			case p `M.lookup` p2mid d of
                           Nothing -> noHtml
@@ -297,7 +300,7 @@ userData u d = (ps, sorted)
 
 userFile u = "user_" ++ B.unpack (normalizeAuthor u) ++ ".html"
 repoFile r = "repo_" ++ safeName r ++ ".html"
-patchDiffFile p = "patch_" ++ patchBasename p ++ ".txt"
+patchDiffFile p = "diff_" ++ patchBasename p ++ ".txt"
 
 normalizeAuthor name | not (B.null r') && valid = email
                      | otherwise                = safeNameB name
