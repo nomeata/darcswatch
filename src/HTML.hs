@@ -26,6 +26,7 @@ module HTML
 	, unmatchedPage
 	, userFile
 	, repoFile
+	, patchDiffFile
 	, normalizeAuthor
 	, PatchState(..)
 	) where
@@ -296,6 +297,7 @@ userData u d = (ps, sorted)
 
 userFile u = "user_" ++ B.unpack (normalizeAuthor u) ++ ".html"
 repoFile r = "repo_" ++ safeName r ++ ".html"
+patchDiffFile p = "patch_" ++ patchBasename p ++ ".txt"
 
 normalizeAuthor name | not (B.null r') && valid = email
                      | otherwise                = safeNameB name

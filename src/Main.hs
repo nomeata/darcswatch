@@ -160,6 +160,9 @@ do_work config patchNew = do
         forM_ repos $ \r ->
                 writeFile (cOutput config ++ "/" ++ repoFile r) (repoPage resultData r)
 
+        forM_ patches $ \p ->
+                B.writeFile (cOutput config ++ "/" ++ patchDiffFile p) (peDiff (p2pe M.! p))
+
 	writeFile (cOutput config ++ "/" ++ "unmatched.html") (unmatchedPage resultData)
 
         putStrLn "Linking patches"
