@@ -116,19 +116,17 @@ footer d =
 myHeader d = script !!! [thetype "text/javascript", src "/javascript/jquery/jquery.js"] << noHtml
              +++
              script !!! [thetype "text/javascript"] << "\
-		\$(document).ready(function () {                                   	\
-                \   $('.diffshower').click(function () { 				\
-                \      	var diffid = this.id.replace(/^diffshower_/,''); 	\
-                \      	$('#diff_' + diffid).toggle();					\
-		\	$('#diff_' + diffid + ' pre:visible').each(function () {\
-		\		if (!($(this).text())) {\
-		\			$(this).append('Diff is being loaded...');\
-		\			$(this).load('diff_' + diffid + '.txt');\
-		\	}});\
+		\$(document).ready(function () { \
+                \   $('.diffshower').click(function () { \
+                \       var diffid = this.id.replace(/^diffshower_/,''); \
+                \       $('#diff_' + diffid).toggle(); \
+		\       $('#diff_' + diffid + ' pre:visible').each(function () {\
+		\           if (!($(this).text())) {\
+		\               $(this).append('Diff is being loaded...');\
+		\               $(this).load('diff_' + diffid + '.txt');\
+		\           }});\
                 \   })})\
 		\"
-
-
 
 userPage d u = showHtml $
    header << (
