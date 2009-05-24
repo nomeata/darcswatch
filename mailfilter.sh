@@ -33,11 +33,11 @@ mimedecode > "$FILE"
 echo "Looking for a state"
 
 STATE=none
-if formail -z -x "Subject:" < "$FILE" | fgrep -q '[OBSOLETE]'
+if formail -z -x "Subject:" < "$FILE" | fgrep -q 'OBSOLETE'
 then
 	STATE=obsolete
 fi
-if formail -z -x "Subject:" < "$FILE" | fgrep -q '[REJECTED]'
+if formail -z -x "Subject:" < "$FILE" | fgrep -q 'REJECTED'
 then
 	STATE=rejected
 fi
