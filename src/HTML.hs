@@ -121,9 +121,14 @@ myHeader d = script !!! [thetype "text/javascript", src "/javascript/jquery/jque
                 \       var diffid = this.id.replace(/^diffshower_/,''); \
                 \       $('#diff_' + diffid).toggle(); \
 		\       $('#diff_' + diffid + ' pre:visible').each(function () {\
-		\           if (!($(this).text())) {\
-		\               $(this).append('Diff is being loaded...');\
-		\               $(this).load('diff_' + diffid + '.txt');\
+		\           diffelem = this;\
+		\           if (!($(diffelem).text())) {\
+		\               $(diffelem).text('Diff is being loaded...');\
+		\               jQuery.get('diff_' + diffid + '.txt',\
+		\                       callback=function(text) {\
+		\                              $(diffelem).text(text);\
+        	\                       }\
+		\                       ,type='text');\
 		\           }});\
                 \   })})\
 		\"
