@@ -31,13 +31,15 @@ import Control.Monad
 import qualified Data.ByteString.Char8 as B
 import Data.ByteString.Char8 (ByteString)
 
--- | Given a directory to be used for caching the result, and
---   an URL to download, it will return the content of the URL.
---   The boolean return value is true when the file was updated,
---   and False if it is the same as in the cache.
-get :: (String -> IO ()) -> FilePath -> String -> IO (Maybe (ByteString, Bool))
-get write dir' uri = flip catch (\e -> write ("Error downloading uri: " ++ show e++ "\n")
-                                       >> return Nothing) $ do
+-- | Given a output message function, a boolean indicate whether the presence
+--   of the cached file is sufficient (i.e. for hash-based urls), a directory to be
+--   used for caching the result, and an URL to download, it will return the
+--   content of the URL. The boolean return value is true when the file was
+--   updated, and False if it is the same as in the cache.
+get :: (String -> IO ()) -> Bool -> FilePath -> String -> IO (Maybe (ByteString, Bool))
+get write trustCache dir' uri =
+	flip catch (\e -> write ("Error downloading uri: " ++ show e++ "\n")
+                          >> return Nothing) $ do
 	write $ "Getting URL " ++ uri ++ " ... "
 	e_cache <- doesFileExist cacheFile
 	e_tag   <- doesFileExist tagFile
@@ -60,20 +62,25 @@ get write dir' uri = flip catch (\e -> write ("Error downloading uri: " ++ show 
 	  then do
 		oldFile <- B.readFile cacheFile
 		return $ Just (oldFile, False)
-           else if e_cache && e_tag
-		   then do
-			oldTag <- slurpFile tagFile
-			mbNewTag <- head' uri
-			maybe'' mbNewTag (return Nothing) $ \newTag -> do
+          else  if e_cache && trustCache
+                  then do 
+			write "cached (unchecked).\n"
+			oldFile <- B.readFile cacheFile
+			return $ Just (oldFile, False)
+		  else  if e_cache && e_tag
+		          then do
+				oldTag <- slurpFile tagFile
+				mbNewTag <- head' uri
+				maybe'' mbNewTag (return Nothing) $ \newTag -> do
 				if  oldTag == newTag
-				   then do
+				  then do
 					write "cached.\n"
 					oldFile <- B.readFile cacheFile
 					return $ Just (oldFile, False)
-				   else do
+				  else do
 					update
-		   else do
-			update
+		  	  else do
+				update
 	
   where hash = md5 uri
  	cacheFile = dir ++ hash ++ ".cache"

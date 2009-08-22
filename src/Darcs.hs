@@ -55,7 +55,7 @@ inversePatch p@(PatchInfo {piInverted = i}) = p {piInverted = not i}
 --   repository as changed since the last run.
 getInventory :: (String -> IO ()) -> FilePath -> String -> IO ([PatchInfo], Bool)
 getInventory write cDir repo = do
-	format <- get write cDir formatUrl
+	format <- get write False cDir formatUrl
 	case format of
 		Nothing                                     -> getInventory1 write cDir repo
 		Just (f,_) | f == B.pack "hashed\ndarcs-2\n" -> getInventory2 write cDir repo
@@ -66,10 +66,10 @@ getInventory write cDir repo = do
 
 -- | Gets called when old style format was detected
 getInventory1 :: (String -> IO ()) -> FilePath -> String -> IO ([PatchInfo],Bool)
-getInventory1 write cDir repo = getInventoryFile (addSlash repo ++ "_darcs/inventory")
+getInventory1 write cDir repo = getInventoryFile False (addSlash repo ++ "_darcs/inventory")
   where maybe' m f d = maybe d f m
-	getInventoryFile url = do
-		inv <- get write cDir url
+	getInventoryFile trustCache url = do
+		inv <- get write trustCache cDir url
 		maybe' inv parseBody $ do
 			write $ "Repository " ++ repo ++ " not found.\n"
 			return ([],False)
@@ -80,16 +80,16 @@ getInventory1 write cDir repo = getInventoryFile (addSlash repo ++ "_darcs/inven
 	     (l1,r) | l1 == B.pack "Starting with tag:" -> do
 	     	let p = head patches
 		let filename = addSlash repo ++ "_darcs/inventories/" ++  patchBasename p ++ ".gz"
-                (prev_p,prev_u) <- getInventoryFile filename
+                (prev_p,prev_u) <- getInventoryFile True filename
 		return (prev_p ++ patches, prev_u || updated)
 	     _ -> return (patches, updated)
 
 -- | Gets called when new style format was detected
 getInventory2 :: (String -> IO ()) -> FilePath -> String -> IO ([PatchInfo],Bool)
-getInventory2 write cDir repo = getInventoryFile (addSlash repo ++ "_darcs/hashed_inventory")
+getInventory2 write cDir repo = getInventoryFile False (addSlash repo ++ "_darcs/hashed_inventory")
   where maybe' m f d = maybe d f m
-	getInventoryFile url = do
-		inv <- get write cDir url
+	getInventoryFile trustCache url = do
+		inv <- get write trustCache cDir url
 		maybe' inv parseBody $ do
 			write $ "Repository " ++ repo ++ " not found.\n"
 			return ([],False)
@@ -100,7 +100,7 @@ getInventory2 write cDir repo = getInventoryFile (addSlash repo ++ "_darcs/hashe
 	   case breakOn '\n' (skip_pristine body) of
 	     (l,r) | l == B.pack "Starting with inventory:" -> do
 	     	 case breakOn '\n' $ B.tail r of
-		   (h,r'') -> do prev <- getInventoryFile (addSlash repo ++ "_darcs/inventories/" ++ B.unpack h)
+		   (h,r'') -> do prev <- getInventoryFile True (addSlash repo ++ "_darcs/inventories/" ++ B.unpack h)
 		                 return (prev,B.tail r'')
 	           --_ -> putStrLn "Broken inventory start line" >> return (([],False),body)
              _ -> return (([],False),body)
