@@ -151,7 +151,9 @@ do_work config patchNew = do
         let r2mp = foldr (\(p,r) -> MM.append r p) MM.empty addables
 
         -- Unmatched patches
-        let unmatched = S.fromList $ filter (\p -> not (M.member p p2pr)) patches
+        let unmatched = S.fromList $
+			filter (\p -> M.findWithDefault Unmatched p p2s == Unmatched) $
+                        filter (\p -> not (M.member p p2pr)) patches
 
         now <- getClockTime >>= toCalendarTime
         let resultData = ResultData p2r r2p u2p p2pe p2pr r2mp p2s p2mid unmatched now u2rn
