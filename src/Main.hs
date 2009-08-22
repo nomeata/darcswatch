@@ -131,10 +131,13 @@ do_work config patchNew = do
         let addables = do -- List modad
                 patch <- patches
                 repo  <- repos
-                pe <- M.lookup patch p2pe
                 present <- M.lookup repo r2p
-                guard $ all (`S.member` present) (peContext pe)
-                return (patch, repo)
+		if patch `S.member` present
+                  then return (patch,repo)
+		  else do
+			pe <- M.lookup patch p2pe
+			guard $ all (`S.member` present) (peContext pe)
+			return (patch, repo)
         -- Patch to possible repos
         -- Repo to possible patch
         let p2pr = foldr (\(p,r) -> MM.append p r) MM.empty addables
