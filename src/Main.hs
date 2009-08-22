@@ -128,7 +128,11 @@ do_work config patchNew = do
         let repos   = M.keys r2p -- Repos with patches
         let users   = M.keys u2p -- Known users
 
-        let addables = do -- List modad
+	-- Clonsider patches as belonging to a repository when either
+	--  * it is already applied
+	--  * all its context is in the repository
+	--  * at least 10 patches of the context are in the repository
+        let addables = do -- List monad
                 patch <- patches
                 repo  <- repos
                 present <- M.lookup repo r2p
@@ -136,8 +140,11 @@ do_work config patchNew = do
                   then return (patch,repo)
 		  else do
 			pe <- M.lookup patch p2pe
-			guard $ all (`S.member` present) (peContext pe)
-			return (patch, repo)
+			case partition (`S.member` present) (peContext pe) of
+				(_,[]) -> return (patch,repo)	
+				(m,_) | length m >= 10 -> return (patch,repo)	
+				_ -> []
+
         -- Patch to possible repos
         -- Repo to possible patch
         let p2pr = foldr (\(p,r) -> MM.append p r) MM.empty addables
