@@ -27,6 +27,8 @@ module Darcs
 	, make_bundle
 	, scan_bundle
 	, hash_bundle
+	, make_context
+	, scan_context
 	) where
 
 import OldDate
@@ -258,6 +260,13 @@ get_patches ps =
 silly_lex :: ByteString -> (String, ByteString)
 silly_lex ps = (B.unpack $ B.takeWhile (/='\n') $ dropWhite ps,
                            B.dropWhile (/='\n') $ dropWhite ps)
+
+make_context :: [PatchInfo] -> ByteString
+make_context = renderPS . vcat . map showPatchInfo
+
+
+scan_context :: ByteString -> [PatchInfo]
+scan_context = fst . get_context
 
 get_context :: ByteString -> ([PatchInfo],ByteString)
 get_context ps =
