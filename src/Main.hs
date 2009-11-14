@@ -20,6 +20,7 @@ Boston, MA 02110-1301, USA.
 
 import Control.Monad
 import Control.Concurrent
+import Control.Applicative
 import System.Environment (getArgs)
 import System.Directory
 import System.Posix.Files
@@ -33,6 +34,8 @@ import qualified MultiMap as MM
 import MultiMap ((!!!!))
 import Data.Char
 import Data.List
+import Data.Time
+import System.FilePath
 
 import qualified Data.ByteString.Char8 as B
 import Data.ByteString.Char8 (ByteString)
@@ -64,10 +67,18 @@ main = do
 do_work config patchNew = do
 	writeC <- getConcurrentOutputter
 
+	nowStamp <- getCurrentTime
+	let outputStampFile = cData config </> "output.stamp"
+	ex <- doesFileExist outputStampFile
+	lastStamp <- if ex then read . B.unpack <$> B.readFile outputStampFile
+	                   else return $ UTCTime (ModifiedJulianDay 0) 0
+
         putStrLn "Reading repositories..."
 	let loadInv rep = do
                 writeC $ "Reading " ++ rep ++ ":\n"
-                (ps,thisNew) <- getInventory writeC (cOutput config ++ "/cache/") rep
+		ps <- readRepository (cData config) rep
+		repoInfo <- getRepositoryInfo (cData config) rep
+		let thisNew = maybe True (>= lastStamp) (lastUpdate repoInfo)
 		writeC (if thisNew then "Repostory is new.\n" else "Repository is cached.\n")
 		return (rep, ps, thisNew)
             readInv (p2r,r2p,new) (rep, ps,thisNew) = do
@@ -162,7 +173,7 @@ do_work config patchNew = do
                         createSymbolicLink (peMailFile pe) link
         mapM_ patchLink $ M.toList p2pe
 
-        return ()
+	B.writeFile outputStampFile (B.pack (show nowStamp))
 
 getDirectoryFiles dir' = getDirectoryContents dir >>=
                         return . (map (dir++)) >>=
