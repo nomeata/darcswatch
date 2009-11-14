@@ -59,7 +59,7 @@ addBundle path bundle = do
 	let hash = hash_bundle bundle
 	let dataFile = bundleDir path </> hash <.> "data"
 	ex <- doesFileExist dataFile
-	unless ex $ writeFile dataFile "[]"
+	unless ex $ B.writeFile dataFile (B.pack "[]")
 	B.writeFile (bundleDir path </> hash <.> "bundle")
 	            (make_bundle bundle)
 	return hash
@@ -73,14 +73,14 @@ getBundle path hash =
 -- | Retrieves the meta information for the handle
 getBundleHistory :: StorageConf -> BundleHash -> IO [BundleHistory]
 getBundleHistory path hash =
-	read <$> readFile (bundleDir path </> hash <.> "data")
+	read <$> B.unpack <$> B.readFile (bundleDir path </> hash <.> "data")
 
 -- | Adds a new entry to the bundle history (stamped with the current time)
 changeBundleState :: StorageConf -> BundleHash -> Source -> BundleState -> IO ()
 changeBundleState path hash source state = do
 	history <- getBundleHistory path hash
 	now <- getCurrentTime
-	writeFile (bundleDir path </> hash <.> "data") $ show $
+	B.writeFile (bundleDir path </> hash <.> "data") $ B.pack $ show $
 		(now, source, state) : history
 		
 
