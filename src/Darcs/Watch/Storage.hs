@@ -107,6 +107,9 @@ getRepositoryInfo path repo = do
 bundleDir :: StorageConf -> FilePath
 bundleDir path = path </> "bundles"
 
+getBundleFileName :: StorageConf -> BundleHash -> FilePath
+getBundleFileName path hash  = bundleDir path </> hash <.> "bundle"
+
 repoDir :: StorageConf -> FilePath
 repoDir path = path </> "repos"
 

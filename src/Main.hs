@@ -97,6 +97,7 @@ do_work config patchNew = do
         let sortInBundle (u2p, u2rn, p2pe) bundleHash = do
                 putStrLn $ "Reading mail " ++ bundleHash ++ " ..."
 		bundle <- getBundle (cData config) bundleHash
+		let bundleFileName = getBundleFileName (cData config) bundleHash
 		history <- getBundleHistory (cData config) bundleHash
 
                 let (new,context) = bundle
@@ -105,7 +106,7 @@ do_work config patchNew = do
                         M.insertWith (maxBy B.length) (normalizeAuthor (piAuthor p)) (piAuthor p)
                         ) u2rn new
                 let p2pe' = foldr (\(p,d) ->
-                        let pe = PatchExtras d context bundleHash history
+                        let pe = PatchExtras d context bundleFileName history
                         -- The patch with the smaller context is the more useful
                         in  M.insertWith (minBy (length.peContext)) p pe
                         ) p2pe new
@@ -171,7 +172,7 @@ do_work config patchNew = do
                 unless ex $ do
                         -- There might be a broken symlink here:
                         catch (removeFile link) (const (return ()))
-                        createSymbolicLink (peMailFile pe) link
+                        createSymbolicLink (peBundleFile pe) link
         mapM_ patchLink $ M.toList p2pe
 
 	B.writeFile outputStampFile (B.pack (show nowStamp))

@@ -71,7 +71,7 @@ data ResultData = ResultData
 data PatchExtras = PatchExtras
 	{ peDiff :: ByteString
 	, peContext :: [PatchInfo]
-	, peMailFile :: String
+	, peBundleFile :: FilePath
 	, peStateHistory :: [BundleHistory]
 	} deriving (Show)
 
