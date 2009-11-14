@@ -20,6 +20,8 @@ Boston, MA 02110-1301, USA.
 module Darcs.Watch.Storage where
 
 import Darcs
+import Darcs.Watch.Data
+
 import Data.Time
 import qualified Data.ByteString.Char8 as B
 import Data.ByteString.Char8 (ByteString)
@@ -30,28 +32,6 @@ import Control.Applicative
 import System.Directory
 import Control.Monad
 
-type BundleHash = String
-
--- | the path to the storage directory
-type StorageConf = String
-
--- | A history entry is a state change
-type BundleHistory = (UTCTime, Source, BundleState)
-
-data BundleState
-	= New
-	| Rejected
-	| Obsoleted
-	| Applied -- ^ Repository URL
-	deriving (Read, Show)
-	
-data Source
-	= ManualImport
-	| ViaEMail String String String String -- ^ From, To, Subject, Message-Id 
-	| ViaBugtracker String -- ^ URL
---	| ViaWeb String -- ^ OpenID Username
-	| ViaRepository String -- ^ Repository-URL
-	deriving (Read, Show)
 
 -- | Adds a new patch bundle to the stogare
 addBundle :: StorageConf -> PatchBundle -> IO BundleHash
@@ -84,8 +64,8 @@ changeBundleState path hash source state = do
 		(now, source, state) : history
 		
 
-listPatches :: StorageConf -> IO [BundleHash]
-listPatches path = do
+listBundles :: StorageConf -> IO [BundleHash]
+listBundles path = do
 	items <- getDirectoryContents (bundleDir path)
 	return $ map dropExtension
 	       $ filter ( (".bundle" == ) .takeExtension )
