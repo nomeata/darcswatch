@@ -46,7 +46,8 @@ data BundleState
 	deriving (Read, Show)
 	
 data Source
-	= ViaEMail String String String String -- ^ From, To, Subject, Message-Id 
+	= ManualImport
+	| ViaEMail String String String String -- ^ From, To, Subject, Message-Id 
 	| ViaBugtracker String -- ^ URL
 --	| ViaWeb String -- ^ OpenID Username
 	| ViaRepository String -- ^ Repository-URL
