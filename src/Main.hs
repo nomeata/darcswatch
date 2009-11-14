@@ -110,8 +110,6 @@ do_work config patchNew = do
 		let p2s' = foldr (\(p,_) -> M.insert p state) p2s new
                 return (u2p', u2rn', p2pe', p2s)
         (u2p, u2rn, p2pe, p2s) <- foldM sortInBundle (MM.empty, M.empty, M.empty, M.empty) bundleHashes
-        let p2mid = M.empty
-
         let patches = M.keys p2pe -- Submitted patches
         let repos   = M.keys r2p -- Repos with patches
         let users   = M.keys u2p -- Known users
@@ -144,7 +142,7 @@ do_work config patchNew = do
                         filter (\p -> not (M.member p p2pr)) patches
 
         now <- getClockTime >>= toCalendarTime
-        let resultData = ResultData p2r r2p u2p p2pe p2pr r2mp p2s p2mid unmatched now u2rn
+        let resultData = ResultData p2r r2p u2p p2pe p2pr r2mp p2s unmatched now u2rn
 	
 	{-
 	putStrLn "Evalutating data"

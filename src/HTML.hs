@@ -63,7 +63,6 @@ data ResultData = ResultData
 	, p2pr :: M.Map PatchInfo  (S.Set String)
 	, r2mp :: M.Map String     (S.Set PatchInfo)
 	, p2s  :: M.Map PatchInfo  (PatchState)
-	, p2mid:: M.Map PatchInfo  (String)
 	, unmatched :: (S.Set PatchInfo)
 	, date :: CalendarTime
 	, u2rn :: M.Map ByteString  ByteString
@@ -212,7 +211,7 @@ patchView d userCentric p =
 			" "+++ 
 			anchor !!! [identifier diffShowerId, theclass "diffshower", href "javascript:"]
 				<< "Show/Hide diff" +++
-			case p `M.lookup` p2mid d of
+			case Nothing of
                           Nothing -> noHtml
                           Just mid -> " " +++
                              anchor !!! [href $ "http://mid.gmane.org/" ++ mid ]
