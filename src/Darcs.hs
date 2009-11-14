@@ -43,6 +43,8 @@ import qualified Data.ByteString.Char8 as B
 import Data.ByteString.Char8 (ByteString)
 import Data.List
 
+import Darcs.Watch.Data
+
 
 -- | The defining informtion of a Darcs patch.
 data PatchInfo = PatchInfo
@@ -63,7 +65,7 @@ inversePatch p@(PatchInfo {piInverted = i}) = p {piInverted = not i}
 -- | Given a directory used for caching, and an URL of a Darcs repository,
 --   it will return the list of patches in the repository, and whether the
 --   repository as changed since the last run.
-getInventory :: (String -> IO ()) -> FilePath -> String -> IO ([PatchInfo], Bool)
+getInventory :: (String -> IO ()) -> FilePath -> RepositoryURL -> IO ([PatchInfo], Bool)
 getInventory write cDir repo = do
 	format <- get write False cDir formatUrl
 	case format of
@@ -75,7 +77,7 @@ getInventory write cDir repo = do
   where	formatUrl = addSlash repo ++ "_darcs/format"
 
 -- | Gets called when old style format was detected
-getInventory1 :: (String -> IO ()) -> FilePath -> String -> IO ([PatchInfo],Bool)
+getInventory1 :: (String -> IO ()) -> FilePath -> RepositoryURL -> IO ([PatchInfo],Bool)
 getInventory1 write cDir repo = getInventoryFile False (addSlash repo ++ "_darcs/inventory")
   where maybe' m f d = maybe d f m
 	getInventoryFile trustCache url = do
@@ -95,7 +97,7 @@ getInventory1 write cDir repo = getInventoryFile False (addSlash repo ++ "_darcs
 	     _ -> return (patches, updated)
 
 -- | Gets called when new style format was detected
-getInventory2 :: (String -> IO ()) -> FilePath -> String -> IO ([PatchInfo],Bool)
+getInventory2 :: (String -> IO ()) -> FilePath -> RepositoryURL -> IO ([PatchInfo],Bool)
 getInventory2 write cDir repo = getInventoryFile False (addSlash repo ++ "_darcs/hashed_inventory")
   where maybe' m f d = maybe d f m
 	getInventoryFile trustCache url = do
