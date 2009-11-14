@@ -55,7 +55,7 @@ main = do
                 let (checksum: stateString : _ : rest) = words string
                     sender = unwords rest
                     state = case stateString of
-                                "add" -> Unmatched
+                                "add" -> New
                                 "obsolete" -> Obsoleted
                                 "rejected" -> Rejected
                                 unknown    -> error $ "Unknown state " ++ show unknown
@@ -68,7 +68,7 @@ main = do
 		let bundle = parseMail mail
 		let hash = md5sum mail
 		putStrLn $ "State is " ++ show (M.lookup hash p2s)
-		let state = fromMaybe Unmatched (M.lookup hash p2s)
+		let state = fromMaybe New (M.lookup hash p2s)
 		bhash <- addBundle (cData config) bundle
 		changeBundleState (cData config) bhash ManualImport state
 

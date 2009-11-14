@@ -30,7 +30,7 @@ type StorageConf = String
 type BundleHistory = (UTCTime, Source, BundleState)
 
 data BundleState
-	= Unmatched
+	= New
 	| Applicable
 	| Rejected
 	| Obsoleted

@@ -142,7 +142,7 @@ userPage d u = showHtml $
 	h1 << ("DarcsWatch overview for " +++ u2rn d ! u) +++
 	p << hotlink "." << "Return to main page" +++
 	patchList d (sps !!!! Applicable) "Unapplied patches" True +++
-	patchList d (sps !!!! Unmatched) "Unmatched patches" True +++
+	patchList d (sps !!!! New) "Unmatched patches" True +++
 	patchList d (sps !!!! Rejected) "Rejected patches" True +++
 	patchList d (sps !!!! Obsoleted) "Obsoleted patches" True +++
 	patchList d (sps !!!! Applied) "Applied patches" True +++
@@ -228,7 +228,7 @@ state d p r | p `S.member` ps                          = Applied
   	ps = r2p d ! r
         ip = inversePatch p
 	subs = M.keysSet (p2pe d)
-	explicit_state = maybe Unmatched (\(_,_,s) -> s) (listToMaybe history)
+	explicit_state = maybe New (\(_,_,s) -> s) (listToMaybe history)
 	amend_obsoleted = any (`laterThan` p) $ S.toList (u2p d ! (normalizeAuthor (piAuthor p)))
 
 p1 `laterThan` p2 =    piAuthor p1 == piAuthor p2
@@ -237,13 +237,13 @@ p1 `laterThan` p2 =    piAuthor p1 == piAuthor p2
 		    && piInverted p1 == piInverted p2
 		    && piDate p1   > piDate p2
 
-showState Unmatched = "Unmatched"
+showState New = "Newly submitted patch"
 showState Applicable = "Not yet applied"
 showState Rejected = "Marked rejected"
 showState Obsoleted = "Marked obsolete"
 showState Applied = "Applied"
 
-stateColor Unmatched = "black"
+stateColor New = "black"
 stateColor Applicable = "red"
 stateColor Obsoleted = "gray"
 stateColor Rejected = "brown"
@@ -289,7 +289,7 @@ repoData r d = (ps, sorted)
 userData u d = (ps, sorted)
   where ps = patchSort $ S.toList $ u2p d !!!! u
 	sorted = MM.fromList $ map (\p -> (state' p, p)) ps
-	state' p | S.null repos = Unmatched
+	state' p | S.null repos = New
 	         | otherwise    = S.findMax (S.map (state d p) repos)
 	  where repos = p2pr d !!!! p
 
