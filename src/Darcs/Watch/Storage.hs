@@ -31,6 +31,7 @@ import Data.List
 import Control.Applicative
 import System.Directory
 import Control.Monad
+import Data.Char
 
 
 -- | Adds a new patch bundle to the stogare
@@ -71,5 +72,47 @@ listBundles path = do
 	       $ filter ( (".bundle" == ) .takeExtension )
 	       $ items
 
+
+
+updateRepository :: StorageConf -> (String -> IO ()) -> RepositoryURL -> IO ()
+updateRepository path write repo = do
+	let infoFile = repoDir path </> safeName repo <.> "data"
+	let repoFile = repoDir path </> safeName repo <.> "inventory"
+	ex <- doesFileExist infoFile
+	info <- if ex then read . B.unpack <$> B.readFile infoFile
+                      else return (RepositoryInfo Nothing Nothing)
+	now <- getCurrentTime
+	(ps,changed) <- getInventory write (cacheDir path) repo
+	when changed $ B.writeFile repoFile (make_context ps)
+	B.writeFile infoFile $ B.pack $ show $ RepositoryInfo
+		{ lastCheck  = Just now
+		, lastUpdate = if changed then Just now else lastUpdate info
+		}
+
+readRepository :: StorageConf -> RepositoryURL -> IO [PatchInfo]
+readRepository path repo = do
+	let repoFile = repoDir path </> safeName repo <.> "inventory"
+	ex <- doesFileExist repoFile
+	if ex then scan_context `fmap` B.readFile repoFile
+	      else return []
+
+getRepositoryInfo :: StorageConf -> RepositoryURL -> IO RepositoryInfo
+getRepositoryInfo path repo = do
+	let infoFile = repoDir path </> safeName repo <.> "data"
+	ex <- doesFileExist infoFile
+	if ex then read `fmap` B.readFile repoFile
+	      else return (RepositoryInfo Nothing Nothing)
+
 bundleDir :: StorageConf -> FilePath
 bundleDir path = path </> "bundles"
+
+repoDir :: StorageConf -> FilePath
+repoDir path = path </> "repos"
+
+cacheDir :: StorageConf -> FilePath
+cacheDir path = path </> "cache"
+
+safeName n = map s n
+  where s c = if isSafeFileChar c then c else '_'
+
+isSafeFileChar c = isAlpha c || isDigit c || c `elem` "-_.@:"

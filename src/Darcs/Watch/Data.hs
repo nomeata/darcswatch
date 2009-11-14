@@ -46,3 +46,9 @@ data Source
 	deriving (Read, Show)
 
 type RepositoryURL = String
+
+data RepositoryInfo = RepositoryInfo 
+	{ lastCheck :: Maybe UTCTime
+	, lastUpdate :: Maybe UTCTime
+	}
+	deriving (Read, Show)
