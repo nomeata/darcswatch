@@ -16,11 +16,31 @@
 --
 
 module ByteStringUtils (
+	unsafeWithInternals,
         linesPS
     ) where
 
 import qualified Data.ByteString            as B
 import qualified Data.ByteString.Char8      as BC
+import qualified Data.ByteString.Internal   as BI
+
+
+import Data.Word                ( Word8 )
+
+import Foreign.Ptr              ( plusPtr, Ptr )
+import Foreign.ForeignPtr       ( withForeignPtr )
+
+
+-- -----------------------------------------------------------------------------
+-- unsafeWithInternals
+
+-- | Do something with the internals of a PackedString. Beware of
+-- altering the contents!
+unsafeWithInternals :: B.ByteString -> (Ptr Word8 -> Int -> IO a) -> IO a
+unsafeWithInternals ps f
+ = case BI.toForeignPtr ps of
+   (fp,s,l) -> withForeignPtr fp $ \p -> f (p `plusPtr` s) l
+
 
 -- TODO: rename
 {-# INLINE linesPS #-}
