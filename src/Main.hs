@@ -89,7 +89,7 @@ do_work config patchNew = do
         putStrLn "Reading emails..."
 	bundleHashes <- listBundles (cData config)
 
-        let sortInBundle (u2p, u2rn, p2pe, p2s) bundleHash = do
+        let sortInBundle (u2p, u2rn, p2pe) bundleHash = do
                 putStrLn $ "Reading mail " ++ bundleHash ++ " ..."
 		bundle <- getBundle (cData config) bundleHash
 		history <- getBundleHistory (cData config) bundleHash
@@ -100,16 +100,12 @@ do_work config patchNew = do
                         M.insertWith (maxBy B.length) (normalizeAuthor (piAuthor p)) (piAuthor p)
                         ) u2rn new
                 let p2pe' = foldr (\(p,d) ->
-                        let pe = PatchExtras d context bundleHash
+                        let pe = PatchExtras d context bundleHash history
                         -- The patch with the smaller context is the more useful
                         in  M.insertWith (minBy (length.peContext)) p pe
                         ) p2pe new
-		let state = bundleState2patchState $ case history of
-			[] -> New
-			(_,_,s):_ -> s
-		let p2s' = foldr (\(p,_) -> M.insert p state) p2s new
-                return (u2p', u2rn', p2pe', p2s)
-        (u2p, u2rn, p2pe, p2s) <- foldM sortInBundle (MM.empty, M.empty, M.empty, M.empty) bundleHashes
+                return (u2p', u2rn', p2pe')
+        (u2p, u2rn, p2pe) <- foldM sortInBundle (MM.empty, M.empty, M.empty) bundleHashes
         let patches = M.keys p2pe -- Submitted patches
         let repos   = M.keys r2p -- Repos with patches
         let users   = M.keys u2p -- Known users
@@ -142,7 +138,7 @@ do_work config patchNew = do
                         filter (\p -> not (M.member p p2pr)) patches
 
         now <- getClockTime >>= toCalendarTime
-        let resultData = ResultData p2r r2p u2p p2pe p2pr r2mp p2s unmatched now u2rn
+        let resultData = ResultData p2r r2p u2p p2pe p2pr r2mp unmatched now u2rn
 	
 	{-
 	putStrLn "Evalutating data"
@@ -197,7 +193,3 @@ on :: (b -> b -> c) -> (a -> b) -> a -> a -> c
 {- forkSequence = sequence -}
 -- Enable for parallel downloads
 forkSequence acts = mapM (\act -> newEmptyMVar >>= \mvar -> forkIO (act >>= putMVar mvar) >> return mvar) acts >>= mapM takeMVar
-
-bundleState2patchState Darcs.Watch.Data.New = Unmatched
-bundleState2patchState Darcs.Watch.Data.Obsoleted = Obsolete
-bundleState2patchState Darcs.Watch.Data.Rejected = HTML.Rejected

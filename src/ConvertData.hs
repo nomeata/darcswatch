@@ -26,20 +26,22 @@ import System.Directory
 import Control.Monad
 import qualified Data.ByteString.Char8 as B
 
+import Darcs.Watch.Data
 import Darcs.Watch.Storage
 import Data.Maybe
 
 data DarcsWatchConfig = DarcsWatchConfig {
         cRepositories :: [String],
+	cData :: String,
         cOutput :: String,
         cMails :: String
         } deriving (Show, Read)
 
 main = do
 	args <- getArgs
-        let (confdir, outdir) = case args of
-                        [confdir,outdir] -> (addSlash confdir, outdir)
-                        _         -> error "Use convert confdir/ outdir/"
+        let confdir = case args of
+                        [confdir] -> (addSlash confdir)
+                        _         -> error "Use convert confdir/"
         putStrLn "Reading configuration..."
         config <- read `fmap` readFile (confdir ++ "config")
 
@@ -53,7 +55,7 @@ main = do
                 let (checksum: stateString : _ : rest) = words string
                     sender = unwords rest
                     state = case stateString of
-                                "add" -> New
+                                "add" -> Unmatched
                                 "obsolete" -> Obsoleted
                                 "rejected" -> Rejected
                                 unknown    -> error $ "Unknown state " ++ show unknown
@@ -66,9 +68,9 @@ main = do
 		let bundle = parseMail mail
 		let hash = md5sum mail
 		putStrLn $ "State is " ++ show (M.lookup hash p2s)
-		let state = fromMaybe New (M.lookup hash p2s)
-		bhash <- addBundle outdir bundle
-		changeBundleState outdir bhash ManualImport state
+		let state = fromMaybe Unmatched (M.lookup hash p2s)
+		bhash <- addBundle (cData config) bundle
+		changeBundleState (cData config) bhash ManualImport state
 
 addSlash filename | last filename == '/' = filename
                   | otherwise            = filename ++ "/"

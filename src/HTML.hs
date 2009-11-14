@@ -28,7 +28,6 @@ module HTML
 	, repoFile
 	, patchDiffFile
 	, normalizeAuthor
-	, PatchState(..)
 	) where
 
 import Text.XHtml hiding ((!))
@@ -42,13 +41,14 @@ import MultiMap ((!!!!))
 import Data.List
 import Data.Ord
 import Data.Char
+import Data.Maybe
 import System.Time
 
 import qualified Data.ByteString.Char8 as B
 import Data.ByteString.Char8 (ByteString)
 
 import Darcs
-import Darcs.Watch.Data hiding (Rejected, Applied)
+import Darcs.Watch.Data
 
 
 -- not in ghc6.6
@@ -63,7 +63,6 @@ data ResultData = ResultData
 	, p2pe::  M.Map PatchInfo     (PatchExtras)
 	, p2pr :: M.Map PatchInfo     (S.Set String)
 	, r2mp :: M.Map RepositoryURL (S.Set PatchInfo)
-	, p2s  :: M.Map PatchInfo     (PatchState)
 	, unmatched :: (S.Set PatchInfo)
 	, date :: CalendarTime
 	, u2rn :: M.Map ByteString  ByteString
@@ -73,6 +72,7 @@ data PatchExtras = PatchExtras
 	{ peDiff :: ByteString
 	, peContext :: [PatchInfo]
 	, peMailFile :: String
+	, peStateHistory :: [BundleHistory]
 	} deriving (Show)
 
 
@@ -141,10 +141,10 @@ userPage d u = showHtml $
    body << (
 	h1 << ("DarcsWatch overview for " +++ u2rn d ! u) +++
 	p << hotlink "." << "Return to main page" +++
-	patchList d (sps !!!! NotApplied) "Unapplied patches" True +++
+	patchList d (sps !!!! Applicable) "Unapplied patches" True +++
 	patchList d (sps !!!! Unmatched) "Unmatched patches" True +++
 	patchList d (sps !!!! Rejected) "Rejected patches" True +++
-	patchList d (sps !!!! Obsolete) "Obsolete patches" True +++
+	patchList d (sps !!!! Obsoleted) "Obsoleted patches" True +++
 	patchList d (sps !!!! Applied) "Applied patches" True +++
 	footer d
 	)
@@ -158,9 +158,9 @@ repoPage d r = showHtml $
    body << (
 	h1 << ("DarcsWatch overview for " +++ r) +++
 	p << hotlink "." << "Return to main page" +++
-	patchList d (sps !!!! NotApplied) "Unapplied patches" False +++
+	patchList d (sps !!!! Applicable) "Unapplied patches" False +++
 	patchList d (sps !!!! Applied) "Applied patches" False +++
-	patchList d (sps !!!! Obsolete) "Obsolete patches" False +++
+	patchList d (sps !!!! Obsoleted) "Obsoleted patches" False +++
 	patchList d (sps !!!! Rejected) "Rejected patches" True +++
 	footer d
 	)
@@ -219,21 +219,17 @@ patchView d userCentric p =
 				<< "Search submitting mail"
 			)
 		
--- The order defines what state a patch should be considered if it is
--- in sevaral repositories
-data PatchState = Unmatched | Applied | NotApplied | Rejected |  Obsolete | Obsoleting deriving (Eq, Ord)
-
 state d p r | p `S.member` ps                          = Applied
             | ip `S.member` ps                         = explicit_state
-	    | amend_obsoleted                          = Obsolete
-            | ip `S.member` subs && not (piInverted p) = Obsolete
-            | ip `S.member` subs &&      piInverted p  = Obsoleting
+	    | amend_obsoleted                          = Obsoleted
+            | ip `S.member` subs && not (piInverted p) = Obsoleted
             | otherwise                                = explicit_state
   where context = peContext (p2pe d ! p)
+	history = peStateHistory (p2pe d ! p)
   	ps = r2p d ! r
         ip = inversePatch p
 	subs = M.keysSet (p2pe d)
-	explicit_state = max NotApplied (M.findWithDefault Unmatched p (p2s d))
+	explicit_state = maybe Unmatched (\(_,_,s) -> s) (listToMaybe history)
 	amend_obsoleted = any (`laterThan` p) $ S.toList (u2p d ! (normalizeAuthor (piAuthor p)))
 
 p1 `laterThan` p2 =    piAuthor p1 == piAuthor p2
@@ -242,24 +238,21 @@ p1 `laterThan` p2 =    piAuthor p1 == piAuthor p2
 		    && piInverted p1 == piInverted p2
 		    && piDate p1   > piDate p2
 
-instance Show PatchState where
-	show Unmatched = "Unmatched"
-	show Applied = "Applied"
-	show NotApplied = "Not yet applied"
-	show Rejected = "Marked rejected"
-	show Obsolete = "Marked obsolete"
-	show Obsoleting = "Marking patch as obsolete"
+showState Unmatched = "Unmatched"
+showState Applicable = "Not yet applied"
+showState Rejected = "Marked rejected"
+showState Obsoleted = "Marked obsolete"
+showState Applied = "Applied"
 
-stateColor Applied = "green"
-stateColor NotApplied = "red"
-stateColor Obsolete = "gray"
-stateColor Rejected = "brown"
-stateColor Obsoleting = "gray"
 stateColor Unmatched = "black"
+stateColor Applicable = "red"
+stateColor Obsoleted = "gray"
+stateColor Rejected = "brown"
+stateColor Applied = "green"
 
 inColor c = thespan !!! [thestyle ("color:"++c)]
 
-viewState d p r = inColor (stateColor s) << (show s)
+viewState d p r = inColor (stateColor s) << (showState s)
   where	s = state d p r
 
 (!!!) = (Text.XHtml.!)	    
@@ -268,8 +261,8 @@ viewState d p r = inColor (stateColor s) << (show s)
 userStats u d = " " +++
 	show (length ps) +++ 
 	" tracked patches, "+++
-	count NotApplied "unapplied" +++
-	count Obsolete "obsolete" +++
+	count Applicable "unapplied" +++
+	count Obsoleted "obsolete" +++
 	count Rejected "rejected"
   where (ps, sps) = userData u d
   	count s t = case sps !!!! s of
@@ -281,8 +274,8 @@ repoStats r d = " " +++
 	show (S.size (r2p d !!!! r)) +++ 
 	" patches in inventory "+++
 	count Applied "tracked" +++
-	count NotApplied "applicable" +++
-	count Obsolete "obsolete" +++
+	count Applicable "applicable" +++
+	count Obsoleted "obsolete" +++
 	count Rejected "rejected"
   where (ps, sps) = repoData r d
   	count s t = case sps !!!! s of

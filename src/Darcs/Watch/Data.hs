@@ -30,11 +30,12 @@ type StorageConf = String
 type BundleHistory = (UTCTime, Source, BundleState)
 
 data BundleState
-	= New
+	= Unmatched
+	| Applicable
 	| Rejected
 	| Obsoleted
 	| Applied -- ^ Repository URL
-	deriving (Read, Show)
+	deriving (Read, Show, Ord, Eq)
 	
 data Source
 	= ManualImport
