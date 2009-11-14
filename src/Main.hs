@@ -138,7 +138,7 @@ do_work config patchNew = do
 
         -- Unmatched patches
         let unmatched = S.fromList $
-			filter (\p -> M.findWithDefault Unmatched p p2s == Unmatched) $
+			-- filter (\p -> M.findWithDefault Unmatched p p2s == Unmatched) $
                         filter (\p -> not (M.member p p2pr)) patches
 
         now <- getClockTime >>= toCalendarTime
