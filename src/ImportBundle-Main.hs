@@ -31,13 +31,6 @@ import System.FilePath
 import Darcs.Watch.Data
 import Darcs.Watch.Storage
 
-data DarcsWatchConfig = DarcsWatchConfig {
-        cRepositories :: [String],
-	cData :: String,
-        cOutput :: String,
-        cMails :: String
-        } deriving (Show, Read)
-
 main = do
 	args <- getArgs
         let (confdir, file) = case args of

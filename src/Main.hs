@@ -48,13 +48,6 @@ import LockRestart
 import Data.Digest.OpenSSL.MD5 (md5sum)
 import Data.Maybe
 
-data DarcsWatchConfig = DarcsWatchConfig {
-        cRepositories :: [RepositoryURL],
-	cData :: String,
-        cOutput :: String,
-        cMails :: String
-        } deriving (Show, Read)
-
 
 main = do
 	hSetBuffering stdout NoBuffering

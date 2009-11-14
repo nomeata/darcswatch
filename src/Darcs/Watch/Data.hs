@@ -52,3 +52,11 @@ data RepositoryInfo = RepositoryInfo
 	, lastUpdate :: Maybe UTCTime
 	}
 	deriving (Read, Show)
+
+data DarcsWatchConfig = DarcsWatchConfig {
+        cRepositories :: [RepositoryURL],
+	cData :: String,
+        cOutput :: String,
+        cMails :: String
+        } deriving (Show, Read)
+

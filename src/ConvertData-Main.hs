@@ -30,13 +30,6 @@ import Darcs.Watch.Data
 import Darcs.Watch.Storage
 import Data.Maybe
 
-data DarcsWatchConfig = DarcsWatchConfig {
-        cRepositories :: [String],
-	cData :: String,
-        cOutput :: String,
-        cMails :: String
-        } deriving (Show, Read)
-
 main = do
 	args <- getArgs
         let confdir = case args of
