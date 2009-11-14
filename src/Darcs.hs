@@ -171,34 +171,9 @@ breakLast c p = case B.elemIndexEnd c p of
 -- | Given the content of a patch bundle, it returns a list of submitted patches with
 --   their diff, and the list of patches in the context.
 parseMail :: ByteString -> ([(PatchInfo,ByteString)],[PatchInfo])
-parseMail content = do case eesc of 
+parseMail content = do case scan_bundle content of 
 			Left err -> ([],[])  -- putStrLn $ "Parse error: "++ err
 			Right res -> if res == res then res else res
-  where demime = readMail content
-	eesc = scan_bundle demime
-	
-
-readMail :: ByteString -> ByteString
-readMail s = s
---     We already strip the relevant part in the mail filter
---
---     case betweenLines
---          ("Content-Description: A darcs patch for your repository!")
---          ("--=_--") s of
---     Nothing -> s -- if it wasn't an email in the first place, just pass along.
---     Just s' -> qpdecode s'
---
---qpdecode :: String -> String
---qpdecode s = s -- FIXME
---
---betweenLines :: String -> String -> String -> Maybe (String)
---betweenLines start end s
--- = case break (start ==) (lines s) of
---	(_, _:rest) ->
---       		case break (end ==) (reverse rest) of
---			(_,_:rres) -> Just (unlines (reverse rres))
---			_ -> Nothing
---	_ -> Nothing
 
 scan_bundle :: ByteString -> Either String ([(PatchInfo,ByteString)],[PatchInfo])
 scan_bundle ps
