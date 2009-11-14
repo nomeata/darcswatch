@@ -184,7 +184,10 @@ patchList d ps title userCentric =
 
 patchHistoryView d p = 
  	unordList $ flip map (reverse $ peStateHistory $ p2pe d ! p) $ \(date,source,state) ->
-			show date +++ ": " +++ showState state +++ " via " ++ show source
+			show date +++ ": " +++ showState state +++ " " +++ showSource source
+
+showSource (ViaRepository repo) = " in repo " +++ hotlink (repoFile repo) << repo
+showSource ManualImport = toHtml "via a manual import"
 
 patchView d userCentric p =
 	piDate p +++ ": " +++ strong << (
