@@ -74,7 +74,7 @@ listBundles path = do
 
 
 
-updateRepository :: StorageConf -> (String -> IO ()) -> RepositoryURL -> IO ()
+updateRepository :: StorageConf -> (String -> IO ()) -> RepositoryURL -> IO Bool
 updateRepository path write repo = do
 	let infoFile = repoDir path </> safeName repo <.> "data"
 	let repoFile = repoDir path </> safeName repo <.> "inventory"
@@ -88,6 +88,7 @@ updateRepository path write repo = do
 		{ lastCheck  = Just now
 		, lastUpdate = if changed then Just now else lastUpdate info
 		}
+	return changed
 
 readRepository :: StorageConf -> RepositoryURL -> IO [PatchInfo]
 readRepository path repo = do
@@ -100,7 +101,7 @@ getRepositoryInfo :: StorageConf -> RepositoryURL -> IO RepositoryInfo
 getRepositoryInfo path repo = do
 	let infoFile = repoDir path </> safeName repo <.> "data"
 	ex <- doesFileExist infoFile
-	if ex then read `fmap` B.readFile repoFile
+	if ex then read . B.unpack <$> B.readFile infoFile
 	      else return (RepositoryInfo Nothing Nothing)
 
 bundleDir :: StorageConf -> FilePath
