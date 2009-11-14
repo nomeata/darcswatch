@@ -19,6 +19,7 @@ Boston, MA 02110-1301, USA.
 
 module Darcs
 	( PatchInfo(..)
+	, PatchBundle
 	, getInventory
 	, parseMail
 	, patchBasename
@@ -42,6 +43,7 @@ import qualified Data.ByteString.Char8 as B
 import Data.ByteString.Char8 (ByteString)
 import Data.List
 
+
 -- | The defining informtion of a Darcs patch.
 data PatchInfo = PatchInfo
 	{ piDate    :: ByteString
@@ -51,6 +53,8 @@ data PatchInfo = PatchInfo
 	, piInverted :: Bool
    } deriving (Eq,Ord,Show)
 
+-- | A patch bundle (e.g. a mail)
+type PatchBundle = ([(PatchInfo,ByteString)],[PatchInfo])
 
 -- | Toggles the 'piInverted' flag of a 'PatchInfo'
 inversePatch :: PatchInfo -> PatchInfo
@@ -186,7 +190,7 @@ showPatchInfo pi =
 
 -- | Given the content of a patch bundle, it returns a list of submitted patches with
 --   their diff, and the list of patches in the context.
-parseMail :: ByteString -> ([(PatchInfo,ByteString)],[PatchInfo])
+parseMail :: ByteString -> PatchBundle
 parseMail content = do case scan_bundle content of 
 			Left err -> ([],[])  -- putStrLn $ "Parse error: "++ err
 			Right res -> if res == res then res else res
@@ -194,7 +198,7 @@ parseMail content = do case scan_bundle content of
 showPatch :: (PatchInfo,ByteString) -> Doc
 showPatch (pi,d) = showPatchInfo pi <> packedString d
 
-make_bundle :: ([(PatchInfo,ByteString)], [PatchInfo]) -> ByteString
+make_bundle :: PatchBundle -> ByteString
 make_bundle bundle@(to_be_sent, common) = renderPS $
                            text ""
                            $$ text "New patches:"
@@ -208,11 +212,11 @@ make_bundle bundle@(to_be_sent, common) = renderPS $
                            $$ text (hash_bundle bundle)
                            $$ text ""
 
-hash_bundle :: ([(PatchInfo,ByteString)], [PatchInfo]) -> String
+hash_bundle :: PatchBundle -> String
 hash_bundle (to_be_sent,_) = sha1PS $ renderPS $ vcat (map showPatch to_be_sent) <> newline
 
 
-scan_bundle :: ByteString -> Either String ([(PatchInfo,ByteString)],[PatchInfo])
+scan_bundle :: ByteString -> Either String PatchBundle
 scan_bundle ps
   | B.null ps = Left "Bad patch bundle!"
   | otherwise =
