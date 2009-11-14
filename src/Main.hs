@@ -39,6 +39,8 @@ import Data.ByteString.Char8 (ByteString)
 
 -- Darcs stuff
 import Darcs
+import Darcs.Watch.Storage
+import Darcs.Watch.Data
 -- Web ouput
 import HTML
 import LockRestart
@@ -48,6 +50,7 @@ import Data.Maybe
 
 data DarcsWatchConfig = DarcsWatchConfig {
         cRepositories :: [String],
+	cData :: String,
         cOutput :: String,
         cMails :: String
         } deriving (Show, Read)
@@ -84,46 +87,30 @@ do_work config patchNew = do
         if not new then putStrLn "Nothing new, exiting" else do
 
         putStrLn "Reading emails..."
-        mailFiles' <- getDirectoryFiles (cMails config)
-        let mailFiles = filter ((addSlash (cMails config) ++ "patch") `isPrefixOf`) mailFiles'
+	bundleHashes <- listBundles (cData config)
 
-        let readMail (u2p, u2rn, p2pe, md2p) mailFile = do
-                putStrLn $ "Reading mail " ++ mailFile ++ " ..."
-                mail <- B.readFile mailFile
-                let checksum = md5sum mail
-                let (new,context) = parseMail mail
+        let sortInBundle (u2p, u2rn, p2pe, p2s) bundleHash = do
+                putStrLn $ "Reading mail " ++ bundleHash ++ " ..."
+		bundle <- getBundle (cData config) bundleHash
+		history <- getBundleHistory (cData config) bundleHash
+
+                let (new,context) = bundle
                 let u2p' = foldr (\(p,_) -> MM.append (normalizeAuthor (piAuthor p)) p) u2p new
                 let u2rn' = foldr (\(p,_) ->
                         M.insertWith (maxBy B.length) (normalizeAuthor (piAuthor p)) (piAuthor p)
                         ) u2rn new
-                let p2pe' =  foldr (\(p,d) ->
-                        let pe = PatchExtras d context mailFile
+                let p2pe' = foldr (\(p,d) ->
+                        let pe = PatchExtras d context bundleHash
                         -- The patch with the smaller context is the more useful
                         in  M.insertWith (minBy (length.peContext)) p pe
                         ) p2pe new
-                let md2p' = MM.extend checksum (map fst new) md2p
-                return (u2p', u2rn', p2pe', md2p')
-        (u2p, u2rn, p2pe, md2p) <- foldM readMail (MM.empty, M.empty, M.empty, MM.empty) mailFiles
-
-        putStrLn "Reading bundle states..."
-        states <- readFile (addSlash (cMails config) ++ "states")
-        let readStateLine string =
-                let (checksum: stateString : _ : rest) = words string
-                    sender = unwords rest
-                    state = case stateString of
-                                "add" -> Unmatched
-                                "obsolete" -> Obsolete
-                                "rejected" -> Rejected
-                                unknown    -> error $ "Unknown state " ++ show unknown
-                in  flip (foldr (\p -> M.insert p state)) (md2p !!!! checksum)
-            p2s = foldl (flip readStateLine) M.empty (lines states)
-
-	putStrLn "Reading mid to patch mapping..."
-        midmappings <- readFile (addSlash (cMails config) ++ "mid-mapping")
-        let readMidLine string =
-                let [mid,checksum] = words string
-                in  flip (foldr (\p -> M.insert p mid)) (md2p !!!! checksum)
-            p2mid = foldl (flip readMidLine) M.empty (lines midmappings)
+		let state = bundleState2patchState $ case history of
+			[] -> New
+			(_,_,s):_ -> s
+		let p2s' = foldr (\(p,_) -> M.insert p state) p2s new
+                return (u2p', u2rn', p2pe', p2s)
+        (u2p, u2rn, p2pe, p2s) <- foldM sortInBundle (MM.empty, M.empty, M.empty, M.empty) bundleHashes
+        let p2mid = M.empty
 
         let patches = M.keys p2pe -- Submitted patches
         let repos   = M.keys r2p -- Repos with patches
@@ -212,3 +199,7 @@ on :: (b -> b -> c) -> (a -> b) -> a -> a -> c
 {- forkSequence = sequence -}
 -- Enable for parallel downloads
 forkSequence acts = mapM (\act -> newEmptyMVar >>= \mvar -> forkIO (act >>= putMVar mvar) >> return mvar) acts >>= mapM takeMVar
+
+bundleState2patchState Darcs.Watch.Data.New = Unmatched
+bundleState2patchState Darcs.Watch.Data.Obsoleted = Obsolete
+bundleState2patchState Darcs.Watch.Data.Rejected = HTML.Rejected
