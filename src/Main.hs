@@ -44,6 +44,7 @@ import HTML
 import LockRestart
 
 import Data.Digest.OpenSSL.MD5 (md5sum)
+import Data.Maybe
 
 data DarcsWatchConfig = DarcsWatchConfig {
         cRepositories :: [String],
@@ -135,11 +136,11 @@ do_work config patchNew = do
         let addables = do -- List monad
                 patch <- patches
                 repo  <- repos
-                present <- M.lookup repo r2p
+                present <- maybeToList $ M.lookup repo r2p
 		if patch `S.member` present
                   then return (patch,repo)
 		  else do
-			pe <- M.lookup patch p2pe
+			pe <- maybeToList $ M.lookup patch p2pe
 			case partition (`S.member` present) (peContext pe) of
 				(_,[]) -> return (patch,repo)	
 				(m,_) | length m >= 10 -> return (patch,repo)	
