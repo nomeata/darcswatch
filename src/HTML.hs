@@ -42,6 +42,7 @@ import Data.List
 import Data.Ord
 import Data.Char
 import Data.Maybe
+import Data.Time
 import System.Time
 
 import qualified Data.ByteString.Char8 as B
@@ -63,6 +64,7 @@ data ResultData = ResultData
 	, p2pe::  M.Map PatchInfo     (PatchExtras)
 	, p2pr :: M.Map PatchInfo     (S.Set String)
 	, r2mp :: M.Map RepositoryURL (S.Set PatchInfo)
+	, r2ri :: M.Map RepositoryURL (RepositoryInfo)
 	, unmatched :: (S.Set PatchInfo)
 	, date :: CalendarTime
 	, u2rn :: M.Map ByteString  ByteString
@@ -162,6 +164,10 @@ repoPage d r = showHtml $
 	patchList d (sps !!!! Applied) "Applied patches" False +++
 	patchList d (sps !!!! Obsoleted) "Obsoleted patches" False +++
 	patchList d (sps !!!! Rejected) "Rejected patches" True +++
+	thediv << (
+		"Last change in repository " +++ lastUpdate (r2ri d ! r) +++
+		", last check of repository " +++ lastCheck (r2ri d ! r) +++ "."
+	) +++
 	footer d
 	)
   where (ps, sps) = repoData r d
@@ -184,7 +190,7 @@ patchList d ps title userCentric =
 
 patchHistoryView d p = 
  	unordList $ flip map (reverse $ peStateHistory $ p2pe d ! p) $ \(date,source,state) ->
-			show date +++ ": " +++ showState state +++ " " +++ showSource source
+			date +++ ": " +++ showState state +++ " " +++ showSource source
 
 showSource (ViaRepository repo) = " in repo " +++ hotlink (repoFile repo) << repo
 showSource ManualImport = toHtml "via a manual import"
@@ -320,3 +326,6 @@ patchSort = sortBy (flip (compare `on` piDate))
 
 instance HTML ByteString where
 	toHtml = toHtml . B.unpack
+
+instance HTML UTCTime where
+	toHtml = toHtml . show

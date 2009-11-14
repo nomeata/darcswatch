@@ -144,7 +144,7 @@ do_work config patchNew = do
                         filter (\p -> not (M.member p p2pr)) patches
 
         now <- getClockTime >>= toCalendarTime
-        let resultData = ResultData p2r r2p u2p p2pe p2pr r2mp unmatched now u2rn
+        let resultData = ResultData p2r r2p u2p p2pe p2pr r2mp r2ri unmatched now u2rn
 	
 	{-
 	putStrLn "Evalutating data"
