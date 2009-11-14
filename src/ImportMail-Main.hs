@@ -37,16 +37,13 @@ main = do
         let (confdir) = case args of
                         [confdir] -> (confdir)
                         _         -> error "Use convert confdir/ and pipe mail to it"
-        putStrLn "Reading configuration..."
         config <- read `fmap` readFile (confdir </> "config")
 
-	putStrLn "Reading patch bundle..."
 	mail <- getContents
 	let message = MIME.parse mail
 	let mpatch = findDarcsBundle message
-	print message
 	case mpatch of
-		Nothing -> putStrLn "No patch bundle found, returning"
+		Nothing -> return ()
 		Just bundleData -> do
 			let mi = m_message_info message
 			    from = maybe "" (showFrom) (mi_from mi)
@@ -57,7 +54,6 @@ main = do
 			bhash <- addBundle (cData config) bundle
 			changeBundleState (cData config) bhash
 				(ViaEMail from to subject mid) New
-			putStrLn $ "Sucessfully added " ++ bhash
 
 findDarcsBundle :: Message -> Maybe String
 findDarcsBundle (Message _ _ (Body (ContentType "text" "x-darcs-patch" _) _ msg)) = Just msg
