@@ -182,6 +182,10 @@ patchList d [] title userCentric = h5 << ("No "++title)
 patchList d ps title userCentric = 
 	h2 << title +++ (unordList $ map (patchView d userCentric) ps)
 
+patchHistoryView d p = 
+ 	unordList $ flip map (reverse $ peStateHistory $ p2pe d ! p) $ \(date,source,state) ->
+			show date +++ ": " +++ showState state +++ " via " ++ show source
+
 patchView d userCentric p =
 	piDate p +++ ": " +++ strong << (
 		(if piInverted p then stringToHtml "UNDO: " else noHtml) +++
@@ -195,12 +199,7 @@ patchView d userCentric p =
 	 	)
 	) +++
 	pre << B.unlines (piLog p) +++
-	(if userCentric
-	 then	(unordList $ flip map (S.toList (p2pr d !!!! p)) $ \r ->
-			hotlink (repoFile r) << r +++ ": "+++ viewState d p r
-		)
-	 else	noHtml
-	) +++
+	patchHistoryView d p +++
 	actions +++
 	thediv !!! [identifier diffId, thestyle "display:none"] << pre noHtml
   where pid = patchBasename p
