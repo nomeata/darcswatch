@@ -23,6 +23,9 @@ module Darcs
 	, parseMail
 	, patchBasename
 	, inversePatch
+	, make_bundle
+	, scan_bundle
+	, hash_bundle
 	) where
 
 import OldDate
@@ -31,6 +34,9 @@ import StringCrypto
 import System.Time
 import CachedGet
 import Zip
+
+import Printer
+import SHA1
 
 import qualified Data.ByteString.Char8 as B
 import Data.ByteString.Char8 (ByteString)
@@ -167,6 +173,16 @@ breakLast c p = case B.elemIndexEnd c p of
     Nothing -> Nothing
     Just n -> Just (B.take n p, B.drop (n+1) p)
 
+showPatchInfo :: PatchInfo -> Doc
+showPatchInfo pi =
+    blueText "[" <> packedString (piName pi)
+ $$ packedString (piAuthor pi) <> text inverted <> packedString (piDate pi)
+                                 <> myunlines (piLog pi) <> blueText "] "
+    where inverted = if piInverted pi then "*-" else "**"
+          myunlines [] = empty
+          myunlines xs = mul xs
+              where mul [] = text "\n"
+                    mul (s:ss) = text "\n " <> packedString s <> mul ss
 
 -- | Given the content of a patch bundle, it returns a list of submitted patches with
 --   their diff, and the list of patches in the context.
@@ -174,6 +190,27 @@ parseMail :: ByteString -> ([(PatchInfo,ByteString)],[PatchInfo])
 parseMail content = do case scan_bundle content of 
 			Left err -> ([],[])  -- putStrLn $ "Parse error: "++ err
 			Right res -> if res == res then res else res
+
+showPatch :: (PatchInfo,ByteString) -> Doc
+showPatch (pi,d) = showPatchInfo pi <> packedString d
+
+make_bundle :: ([(PatchInfo,ByteString)], [PatchInfo]) -> ByteString
+make_bundle bundle@(to_be_sent, common) = renderPS $
+                           text ""
+                           $$ text "New patches:"
+                           $$ text ""
+                           $$ (vsep $ map showPatch to_be_sent)
+                           $$ text ""
+                           $$ text "Context:"
+                           $$ text ""
+                           $$ (vcat $ map showPatchInfo common)
+                           $$ text "Patch bundle hash:"
+                           $$ text (hash_bundle bundle)
+                           $$ text ""
+
+hash_bundle :: ([(PatchInfo,ByteString)], [PatchInfo]) -> String
+hash_bundle (to_be_sent,_) = sha1PS $ renderPS $ vcat (map showPatch to_be_sent) <> newline
+
 
 scan_bundle :: ByteString -> Either String ([(PatchInfo,ByteString)],[PatchInfo])
 scan_bundle ps
