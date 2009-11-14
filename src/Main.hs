@@ -80,12 +80,13 @@ do_work config patchNew = do
 		repoInfo <- getRepositoryInfo (cData config) rep
 		let thisNew = maybe True (>= lastStamp) (lastUpdate repoInfo)
 		writeC (if thisNew then "Repostory is new.\n" else "Repository is cached.\n")
-		return (rep, ps, thisNew)
-            readInv (p2r,r2p,new) (rep, ps,thisNew) = do
+		return (rep, ps, repoInfo, thisNew)
+            readInv (p2r,r2p,r2ri,new) (rep, ps, repoInfo, thisNew) = do
                 let p2r' = foldr (\p -> MM.append p rep) p2r ps
                     r2p' = MM.extend rep ps r2p :: M.Map RepositoryURL (S.Set PatchInfo)
-                return (p2r', r2p', new || thisNew)
-        (p2r,r2p, new) <- foldM readInv (MM.empty, MM.empty, patchNew) =<<
+		    r2ri' = M.insert rep repoInfo r2ri
+                return (p2r', r2p', r2ri', new || thisNew)
+        (p2r,r2p, r2ri, new) <- foldM readInv (MM.empty, MM.empty, M.empty, patchNew) =<<
                           forkSequence (map loadInv (cRepositories config))
 
         if not new then putStrLn "Nothing new, exiting" else do
