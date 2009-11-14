@@ -193,6 +193,17 @@ patchHistoryView d p =
 			date +++ ": " +++ showState state +++ " " +++ showSource source
 
 showSource (ViaRepository repo) = " in repo " +++ hotlink (repoFile repo) << repo
+showSource (ViaEMail from to subject mmid) = " via email from " +++
+                                             hotlink (userFile (B.pack from)) << from  +++
+                                             " to " +++ 
+                                             hotlink (userFile (B.pack to)) << to  +++
+					     " named \"" +++ subject +++
+					     "\"" +++
+					     case mmid of
+						  Nothing -> noHtml
+						  Just mid -> " " +++
+						     anchor !!! [href $ "http://mid.gmane.org/" ++ mid ]
+							<< "Search submitting mail"
 showSource ManualImport = toHtml "via a manual import"
 
 patchView d userCentric p =
@@ -219,12 +230,7 @@ patchView d userCentric p =
 			hotlink (pid ++ ".dpatch") << "Download .dpatch" +++
 			" "+++ 
 			anchor !!! [identifier diffShowerId, theclass "diffshower", href "javascript:"]
-				<< "Show/Hide diff" +++
-			case Nothing of
-                          Nothing -> noHtml
-                          Just mid -> " " +++
-                             anchor !!! [href $ "http://mid.gmane.org/" ++ mid ]
-				<< "Search submitting mail"
+				<< "Show/Hide diff"
 			)
 		
 state d p r | p `S.member` ps                          = Applied
