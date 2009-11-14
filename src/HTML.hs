@@ -48,6 +48,7 @@ import qualified Data.ByteString.Char8 as B
 import Data.ByteString.Char8 (ByteString)
 
 import Darcs
+import Darcs.Watch.Data hiding (Rejected, Applied)
 
 
 -- not in ghc6.6
@@ -56,13 +57,13 @@ on :: (b -> b -> c) -> (a -> b) -> a -> a -> c
 (*) `on` f = \x y -> f x * f y
 
 data ResultData = ResultData
-	{ p2r ::  M.Map PatchInfo  (S.Set String)
-	, r2p ::  M.Map String     (S.Set PatchInfo)
-	, u2p ::  M.Map ByteString (S.Set PatchInfo)
-	, p2pe::  M.Map PatchInfo   PatchExtras
-	, p2pr :: M.Map PatchInfo  (S.Set String)
-	, r2mp :: M.Map String     (S.Set PatchInfo)
-	, p2s  :: M.Map PatchInfo  (PatchState)
+	{ p2r ::  M.Map PatchInfo     (S.Set RepositoryURL)
+	, r2p ::  M.Map RepositoryURL (S.Set PatchInfo)
+	, u2p ::  M.Map ByteString    (S.Set PatchInfo)
+	, p2pe::  M.Map PatchInfo     (PatchExtras)
+	, p2pr :: M.Map PatchInfo     (S.Set String)
+	, r2mp :: M.Map RepositoryURL (S.Set PatchInfo)
+	, p2s  :: M.Map PatchInfo     (PatchState)
 	, unmatched :: (S.Set PatchInfo)
 	, date :: CalendarTime
 	, u2rn :: M.Map ByteString  ByteString

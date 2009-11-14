@@ -41,5 +41,7 @@ data Source
 	| ViaEMail String String String String -- ^ From, To, Subject, Message-Id 
 	| ViaBugtracker String -- ^ URL
 --	| ViaWeb String -- ^ OpenID Username
-	| ViaRepository String -- ^ Repository-URL
+	| ViaRepository RepositoryURL -- ^ Repository-URL
 	deriving (Read, Show)
+
+type RepositoryURL = String

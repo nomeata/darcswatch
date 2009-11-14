@@ -49,7 +49,7 @@ import Data.Digest.OpenSSL.MD5 (md5sum)
 import Data.Maybe
 
 data DarcsWatchConfig = DarcsWatchConfig {
-        cRepositories :: [String],
+        cRepositories :: [RepositoryURL],
 	cData :: String,
         cOutput :: String,
         cMails :: String
@@ -79,7 +79,7 @@ do_work config patchNew = do
 		return (rep, ps, thisNew)
             readInv (p2r,r2p,new) (rep, ps,thisNew) = do
                 let p2r' = foldr (\p -> MM.append p rep) p2r ps
-                    r2p' = MM.extend rep ps r2p :: M.Map String (S.Set PatchInfo)
+                    r2p' = MM.extend rep ps r2p :: M.Map RepositoryURL (S.Set PatchInfo)
                 return (p2r', r2p', new || thisNew)
         (p2r,r2p, new) <- foldM readInv (MM.empty, MM.empty, patchNew) =<<
                           forkSequence (map loadInv (cRepositories config))
