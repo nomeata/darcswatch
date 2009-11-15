@@ -31,6 +31,9 @@ import Data.Maybe
 import System.FilePath
 import Codec.MIME.String as MIME
 import Text.Regex
+import Data.Monoid
+import Data.Char
+import Control.Applicative
 
 import Darcs.Watch.Data
 import Darcs.Watch.Storage
@@ -39,17 +42,19 @@ importMail :: DarcsWatchConfig -> IO Bool
 importMail config  = do
 	mail <- getContents
 	let message = MIME.parse mail
-	let mpatch = findDarcsBundle message
+            mpatch = findDarcsBundle message
+	    state = getStateFromMessage message
+	    mi = m_message_info message
+	    references = getReferredMails mi
+	    from = maybe "" (showFrom) (mi_from mi)
+	    to   = maybe "" (showTo) (mi_to mi)
+	    subject = maybe "" (\(Subject s) -> s) (mi_subject mi)
+	    mid = get_header (mi_headers mi) "message-id:"
+			     (Just . stripWhitespace )
+	    emailSource = ViaEMail from to subject mid
 	case mpatch of
-		Nothing -> return False
 		Just bundleData -> do
-			let mi = m_message_info message
-			    from = maybe "" (showFrom) (mi_from mi)
-			    to   = maybe "" (showTo) (mi_to mi)
-			    subject = maybe "" (\(Subject s) -> s) (mi_subject mi)
-			    mid = get_header (mi_headers mi) "message-id:" Just 
-			    state = getStateFromMessage message
-			    Right bundle = scan_bundle (B.pack bundleData)
+			let Right bundle = scan_bundle (B.pack bundleData)
 			    roundupURL = findRoundupURL message
 			bhash <- addBundle (cData config) bundle
 			case roundupURL of
@@ -57,9 +62,26 @@ importMail config  = do
 			  Just url -> do
 			  	changeBundleState (cData config) bhash
 			  		(ViaBugtracker url) New
-			changeBundleState (cData config) bhash
-				(ViaEMail from to subject mid) state
+			changeBundleState (cData config) bhash emailSource state
 			return True
+
+		Nothing -> if (state == New || null references) then return False else do
+			-- Maybe this mail refers to another mail?
+			bundleHashes <- listBundles (cData config)
+			changes <- forM bundleHashes $ \bundleHash -> do
+				history <- getBundleHistory (cData config) bundleHash
+				let seenInMail = findSubmittingMail history
+				if null (intersect references seenInMail)
+				  then return False
+				  else do changeBundleState (cData config) bundleHash
+				  			    emailSource state 
+					  return True
+			return (or changes)
+
+findSubmittingMail = mapMaybe isSubmittingMail
+
+isSubmittingMail (_,ViaEMail _ _ _ (Just mid), New) = Just mid
+isSubmittingMail _ = Nothing
 
 darcsTrackerRegex = mkRegex "\\<(http://bugs.darcs.net/patch[0-9]+)\\>"
 
@@ -68,6 +90,13 @@ getStateFromMessage msg | "OBSOLETE" `isInfixOf` subject = Obsoleted
 			| otherwise = fromMaybe New (findDarcsWatchTag msg)
   where	mi = m_message_info msg
 	subject = maybe "" (\(Subject s) -> s) (mi_subject mi)
+
+getReferredMails :: MessageInfo -> [String]
+getReferredMails mi = fromMaybe [] $ mconcat
+	[ get_header (mi_headers mi) "in-reply-to:" (Just . (:[]) . stripWhitespace)
+	, get_header (mi_headers mi) "references:" (Just . map stripWhitespace . words) ]
+
+stripWhitespace = reverse . dropWhile isSpace . reverse . dropWhile isSpace
 
 findRoundupURL :: Message -> Maybe String
 findRoundupURL = findInBody $ fmap concat . matchRegex darcsTrackerRegex
