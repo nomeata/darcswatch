@@ -119,6 +119,8 @@ findInBody query _ = Nothing
 findDarcsBundle :: Message -> Maybe String
 findDarcsBundle (Message _ _ (Data _ (ContentType "text" "x-darcs-patch" _) _ msg)) = Just msg
 findDarcsBundle (Message _ _ (Body (ContentType "text" "x-darcs-patch" _) _ msg)) = Just msg
+findDarcsBundle (Message _ _ (Data _ (ContentType "text" "plain" _) filename msg))
+	| ".dpatch" `isSuffixOf` filename = Just msg
 findDarcsBundle (Message _ _ (Mixed (Multipart _ msgs _ ))) = msum (map findDarcsBundle msgs)
 findDarcsBundle (Message _ _ (Alternative (Multipart _ msgs _ ))) = msum (map findDarcsBundle msgs)
 findDarcsBundle (Message _ _ (Parallel (Multipart _ msgs _ ))) = msum (map findDarcsBundle msgs)
