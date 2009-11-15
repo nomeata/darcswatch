@@ -245,7 +245,7 @@ state d p r | p `S.member` ps                          = Applied
   	ps = r2p d ! r
         ip = inversePatch p
 	subs = M.keysSet (p2pe d)
-	explicit_state = maybe New (\(_,_,s) -> s) (listToMaybe history)
+	explicit_state = maximum $ New : map (\(_,_,s) -> s) history
 	amend_obsoleted = any (`laterThan` p) $ S.toList (u2p d ! (normalizeAuthor (piAuthor p)))
 
 p1 `laterThan` p2 =    piAuthor p1 == piAuthor p2
