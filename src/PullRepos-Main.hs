@@ -47,6 +47,7 @@ import Darcs.Watch.Data
 import Darcs.Watch.PullRepos
 import Darcs.Watch.UpdateRepoData
 import Darcs.Watch.GenerateOutput
+import LockRestart
 
 main = do
 	hSetBuffering stdout NoBuffering
@@ -60,5 +61,6 @@ main = do
 	--lockRestart (cOutput config) patchNew or True (do_work config)
 	new <- pullRepos config
 	when new $ do
-		updateRepoData config
-		generateOutput config True
+		lockRestart (cData config) False or True $ \new -> do
+			updateRepoData config
+			generateOutput config new

@@ -28,6 +28,7 @@ import Darcs.Watch.Data
 import Darcs.Watch.ImportMail
 import Darcs.Watch.UpdateRepoData
 import Darcs.Watch.GenerateOutput
+import LockRestart
 
 main = do
 	args <- getArgs
@@ -41,5 +42,6 @@ main = do
 		nullFd <- openFd "/dev/null" WriteOnly Nothing defaultFileFlags 
 		dupTo nullFd stdOutput
 		
-		updateRepoData config
-		generateOutput config True
+		lockRestart (cData config) False or False $ \new -> do
+			updateRepoData config
+			generateOutput config new
