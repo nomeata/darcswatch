@@ -51,6 +51,7 @@ import HTML
 --import LockRestart
 
 
+pullRepos :: DarcsWatchConfig -> IO Bool
 pullRepos config = do
 	writeC <- getConcurrentOutputter
 
@@ -62,7 +63,8 @@ pullRepos config = do
 		return thisNew
 	new <- or <$> forkSequence (map updateRepo (cRepositories config))
 
-        if not new then putStrLn "Nothing new, exiting" else return ()
+        unless new $ putStrLn "Nothing new found"
+	return new
 
 {- forkSequence = sequence -}
 -- Enable for parallel downloads

@@ -43,8 +43,10 @@ import System.FilePath
 
 -- Darcs stuff
 import Darcs
-import Darcs.Watch.PullRepos
 import Darcs.Watch.Data
+import Darcs.Watch.PullRepos
+import Darcs.Watch.UpdateRepoData
+import Darcs.Watch.GenerateOutput
 
 main = do
 	hSetBuffering stdout NoBuffering
@@ -56,4 +58,7 @@ main = do
         config <- read `fmap` readFile (confdir </> "config")
 
 	--lockRestart (cOutput config) patchNew or True (do_work config)
-	pullRepos config
+	new <- pullRepos config
+	when new $ do
+		updateRepoData config
+		generateOutput config True
