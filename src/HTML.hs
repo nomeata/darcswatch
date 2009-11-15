@@ -254,11 +254,11 @@ p1 `laterThan` p2 =    piAuthor p1 == piAuthor p2
 		    && piInverted p1 == piInverted p2
 		    && piDate p1   > piDate p2
 
-showState New = "Newly submitted patch"
-showState Applicable = "Not yet applied"
-showState Rejected = "Marked rejected"
-showState Obsoleted = "Marked obsolete"
-showState Applied = "Applied"
+showState New = "Newly submitted bundle"
+showState Applicable = "Not yet fully applied bundle"
+showState Rejected = "Bundle marked rejected"
+showState Obsoleted = "Bundle marked obsolete"
+showState Applied = "Bundle fully applied"
 
 stateColor New = "black"
 stateColor Applicable = "red"
