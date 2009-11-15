@@ -24,7 +24,7 @@ tellRoundup config url repo bundle status = do
 	  else do hPutStrLn stderr "Would send this message:"
 	          hPutStrLn stderr message
   where from = cDarcsWatchAddress config
-        to = "patches@darcs.net"
+        to = "bugs@darcs.net"
 	subject = case status of
 	 	   Applicable -> "This patch is being tracked by DarcsWatch [" ++ roundupId ++ "]"
 		   Applied -> "This patch has been applied [" ++ roundupId ++ "] [status=accepted]"
