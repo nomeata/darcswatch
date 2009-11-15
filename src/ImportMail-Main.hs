@@ -28,6 +28,7 @@ import qualified Data.ByteString.Char8 as B
 import Data.Maybe
 import System.FilePath
 import Codec.MIME.String as MIME
+import Text.Regex
 
 import Darcs.Watch.Data
 import Darcs.Watch.Storage
@@ -51,11 +52,17 @@ main = do
 			    subject = maybe "" (\(Subject s) -> s) (mi_subject mi)
 			    mid = get_header (mi_headers mi) "message-id:" Just 
 			    state = getStateFromMessage message
-			let Right bundle = scan_bundle (B.pack bundleData)
-			print ("State: ",state)
+			    Right bundle = scan_bundle (B.pack bundleData)
+			    roundupURL = findRoundupURL message
 			bhash <- addBundle (cData config) bundle
+			case roundupURL of
+			  Nothing -> return ()
+			  Just url -> changeBundleState (cData config) bhash
+			  	(ViaBugtracker url) New
 			changeBundleState (cData config) bhash
 				(ViaEMail from to subject mid) state
+
+darcsTrackerRegex = mkRegex "\\<(http://bugs.darcs.net/patch[0-9]+)\\>"
 
 getStateFromMessage msg | "OBSOLETE" `isInfixOf` subject = Obsoleted
                         | "REJECTED" `isInfixOf` subject = Rejected
@@ -63,6 +70,8 @@ getStateFromMessage msg | "OBSOLETE" `isInfixOf` subject = Obsoleted
   where	mi = m_message_info msg
 	subject = maybe "" (\(Subject s) -> s) (mi_subject mi)
 
+findRoundupURL :: Message -> Maybe String
+findRoundupURL = findInBody $ fmap concat . matchRegex darcsTrackerRegex
 
 findDarcsWatchTag :: Message -> Maybe BundleState
 findDarcsWatchTag = findInBody $ \body -> case () of 

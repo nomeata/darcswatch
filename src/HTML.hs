@@ -201,6 +201,7 @@ patchHistoryView d p =
 			date +++ ": " +++ showState state +++ " " +++ showSource source
 
 showSource (ViaRepository repo) = " in repo " +++ hotlink (repoFile repo) << repo
+showSource (ViaBugtracker url) = " in bug tracker ticket " +++ hotlink url << url
 showSource (ViaEMail from to subject mmid) = " via " +++
 					     thespan !!! [ title $
 					     	"From: " ++ from ++ "\n" ++
