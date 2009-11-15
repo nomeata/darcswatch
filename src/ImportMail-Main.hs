@@ -74,7 +74,7 @@ showAddress (Group _ [])  = ""
 showAddress (Group _ (mb:_))  = showMailbox mb
 
 showMailbox (Mailbox (Just name) mail) = name ++ " <" ++ showRoutedEmailAddress mail ++ ">"
-showMailboy (Mailbox Nothing mail) = showRoutedEmailAddress mail
+showMailbox (Mailbox Nothing mail) = showRoutedEmailAddress mail
 
 showRoutedEmailAddress (NormalEmailAddress mail) = showEmailAddress mail
 showRoutedEmailAddress (RoutedEmailAddress _ mail) = showEmailAddress mail
