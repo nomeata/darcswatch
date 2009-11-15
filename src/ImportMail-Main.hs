@@ -50,10 +50,31 @@ main = do
 			    to   = maybe "" (showTo) (mi_to mi)
 			    subject = maybe "" (\(Subject s) -> s) (mi_subject mi)
 			    mid = get_header (mi_headers mi) "message-id:" Just 
+			    state = getStateFromMessage message
 			let Right bundle = scan_bundle (B.pack bundleData)
+			print ("State: ",state)
 			bhash <- addBundle (cData config) bundle
 			changeBundleState (cData config) bhash
-				(ViaEMail from to subject mid) New
+				(ViaEMail from to subject mid) state
+
+getStateFromMessage msg | "OBSOLETE" `isInfixOf` subject = Obsoleted
+                        | "REJECTED" `isInfixOf` subject = Rejected
+			| otherwise = fromMaybe New (findDarcsWatchTag msg)
+  where	mi = m_message_info msg
+	subject = maybe "" (\(Subject s) -> s) (mi_subject mi)
+
+
+findDarcsWatchTag :: Message -> Maybe BundleState
+findDarcsWatchTag (Message _ _ (Body _ _ msg))
+	| "DarcsWatch: rejected" `isInfixOf` msg = Just Rejected
+	| "DarcsWatch: obsolete" `isInfixOf` msg = Just Obsoleted
+	| otherwise = Nothing
+findDarcsWatchTag (Message _ _ (Mixed (Multipart _ msgs _ ))) = msum (map findDarcsWatchTag msgs)
+findDarcsWatchTag (Message _ _ (Alternative (Multipart _ msgs _ ))) = msum (map findDarcsWatchTag msgs)
+findDarcsWatchTag (Message _ _ (Parallel (Multipart _ msgs _ ))) = msum (map findDarcsWatchTag msgs)
+findDarcsWatchTag (Message _ _ (Digest (Multipart _ msgs _ ))) = msum (map findDarcsWatchTag msgs)
+findDarcsWatchTag _ = Nothing
+
 
 findDarcsBundle :: Message -> Maybe String
 findDarcsBundle (Message _ _ (Data _ (ContentType "text" "x-darcs-patch" _) _ msg)) = Just msg
