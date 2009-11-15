@@ -44,6 +44,7 @@ import Data.Char
 import Data.Maybe
 import Data.Time
 import System.Time
+import System.Locale
 
 import qualified Data.ByteString.Char8 as B
 import Data.ByteString.Char8 (ByteString)
@@ -206,11 +207,15 @@ showSource (ViaEMail from to subject mmid) = " via " +++
 						"Subject: " ++ subject
 					     ] << "e-mail" +++ " to " +++
 					     hotlink ("mailto:" ++ to) << to  +++
-					     case mmid of
-						  Nothing -> noHtml
-						  Just mid -> " " +++
-						     anchor !!! [href $ "http://mid.gmane.org/" ++ mid ]
-							<< "Search submitting mail"
+					     maybe noHtml (\mid ->
+						" " +++ hotlink ("http://mid.gmane.org/" ++ mid) 
+					    	      (image !!!
+						    	[ src "http://gmane.org/favicon.ico"
+							, title "Search this mail on gmane.org"
+							, border 0
+							])
+					     ) mmid
+
 showSource ManualImport = toHtml "via a manual import"
 
 patchView d userCentric p =
@@ -276,6 +281,7 @@ inColor c = thespan !!! [thestyle ("color:"++c)]
 viewState d p r = inColor (stateColor s) << (showState s)
   where	s = state d p r
 
+(!!!) :: ADDATTRS a => a -> [HtmlAttr] -> a
 (!!!) = (Text.XHtml.!)	    
 
 
@@ -341,4 +347,4 @@ instance HTML ByteString where
 	toHtml = toHtml . B.unpack
 
 instance HTML UTCTime where
-	toHtml = toHtml . show
+	toHtml = toHtml . formatTime defaultTimeLocale "%c" 
