@@ -35,12 +35,13 @@ import Text.Regex
 import Darcs.Watch.Data
 import Darcs.Watch.Storage
 
+importMail :: DarcsWatchConfig -> IO Bool
 importMail config  = do
 	mail <- getContents
 	let message = MIME.parse mail
 	let mpatch = findDarcsBundle message
 	case mpatch of
-		Nothing -> return ()
+		Nothing -> return False
 		Just bundleData -> do
 			let mi = m_message_info message
 			    from = maybe "" (showFrom) (mi_from mi)
@@ -57,6 +58,7 @@ importMail config  = do
 			  	(ViaBugtracker url) New
 			changeBundleState (cData config) bhash
 				(ViaEMail from to subject mid) state
+			return True
 
 darcsTrackerRegex = mkRegex "\\<(http://bugs.darcs.net/patch[0-9]+)\\>"
 
