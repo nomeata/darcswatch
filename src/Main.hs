@@ -89,32 +89,35 @@ do_work config patchNew = do
         (p2r,r2p, r2ri, new) <- foldM readInv (MM.empty, MM.empty, M.empty, patchNew) =<<
                           forkSequence (map loadInv (cRepositories config))
 
-        if not new then putStrLn "Nothing new, exiting" else do
-
         putStrLn "Reading emails..."
 	bundleHashes <- listBundles (cData config)
 
-        let sortInBundle (u2p, u2rn, p2pe) bundleHash = do
+        let sortInBundle (u2p, u2rn, p2pe, new) bundleHash = do
                 putStrLn $ "Reading mail " ++ bundleHash ++ " ..."
 		bundle <- getBundle (cData config) bundleHash
 		let bundleFileName = getBundleFileName (cData config) bundleHash
 		history <- getBundleHistory (cData config) bundleHash
+		
+		let thisNew = any (\(d,_,_) -> d >= lastStamp) history
 
-                let (new,context) = bundle
-                let u2p' = foldr (\(p,_) -> MM.append (normalizeAuthor (piAuthor p)) p) u2p new
+                let (patches,context) = bundle
+                let u2p' = foldr (\(p,_) -> MM.append (normalizeAuthor (piAuthor p)) p) u2p patches
                 let u2rn' = foldr (\(p,_) ->
                         M.insertWith (maxBy B.length) (normalizeAuthor (piAuthor p)) (piAuthor p)
-                        ) u2rn new
+                        ) u2rn patches
                 let p2pe' = foldr (\(p,d) ->
                         let pe = PatchExtras d context bundleFileName history
                         -- The patch with the smaller context is the more useful
                         in  M.insertWith (minBy (length.peContext)) p pe
-                        ) p2pe new
-                return (u2p', u2rn', p2pe')
-        (u2p, u2rn, p2pe) <- foldM sortInBundle (MM.empty, M.empty, M.empty) bundleHashes
+                        ) p2pe patches
+                return (u2p', u2rn', p2pe', new || thisNew)
+        (u2p, u2rn, p2pe, new') <- foldM sortInBundle (MM.empty, M.empty, M.empty, new) bundleHashes
         let patches = M.keys p2pe -- Submitted patches
         let repos   = M.keys r2p -- Repos with patches
         let users   = M.keys u2p -- Known users
+        
+	if not new' then putStrLn "Nothing new, exiting" else do
+
 
 	-- Clonsider patches as belonging to a repository when either
 	--  * it is already applied
