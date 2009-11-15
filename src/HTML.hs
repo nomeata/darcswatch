@@ -165,8 +165,10 @@ repoPage d r = showHtml $
 	patchList d (sps !!!! Obsoleted) "Obsoleted patches" False +++
 	patchList d (sps !!!! Rejected) "Rejected patches" True +++
 	thediv << (
-		"Last change in repository " +++ lastUpdate (r2ri d ! r) +++
-		", last check of repository " +++ lastCheck (r2ri d ! r) +++ "."
+		"Last change in repository at " +++
+		maybe (toHtml "No idea when") toHtml (lastUpdate (r2ri d ! r)) +++
+		", last check of repository at " +++
+		maybe (toHtml "No idea when") toHtml (lastCheck (r2ri d ! r)) +++ "."
 	) +++
 	footer d
 	)
