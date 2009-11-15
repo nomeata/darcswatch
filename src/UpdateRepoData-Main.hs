@@ -43,11 +43,8 @@ import System.FilePath
 
 -- Darcs stuff
 import Darcs
-import Darcs.Watch.Storage
+import Darcs.Watch.UpdateRepoData
 import Darcs.Watch.Data
--- Web ouput
-import HTML
---import LockRestart
 
 
 
@@ -61,54 +58,4 @@ main = do
         config <- read `fmap` readFile (confdir </> "config")
 
 	--lockRestart (cOutput config) patchNew or True (do_work config)
-	do_work config
-
-do_work config = do
-
-	let readRepo rep = do
-		inv <- readRepository (cData config)  rep
-		return (rep, S.fromList inv)
-	repos <- mapM readRepo (cRepositories config)
-
-	bundleHashes <- listBundles (cData config)
-	forM_ bundleHashes $ \bundleHash -> do
-		bundle <- getBundle (cData config) bundleHash
-		history <- getBundleHistory (cData config) bundleHash
-
-		let context = snd bundle
-		let patches = map fst (fst bundle)
-		
-		forM repos $ \(repo, inv) -> do
-			let statusQuoAnte =
-				fromMaybe New $
-				listToMaybe $
-				map (\(_,_,s) -> s) $
-				filter (aboutRepo repo) $
-				history
-			
-			let statusQuo = 
-				if all (`S.member` inv) patches then Applied
-				else if applicable inv context then Applicable
-				else New
-
-			when (statusQuo /= statusQuoAnte) $ do
-				putStrLn $ "Marking bundle " ++ bundleHash ++
-			  		  " as " ++ show statusQuo ++
-					  " with regard to " ++ repo
-				changeBundleState (cData config)
-						  bundleHash
-						  (ViaRepository repo)
-						  statusQuo
-
--- Clonsider patches as applicable to a repository when either
---  * all its context is in the repository
---  * at least 10 patches of the context are in the repository
-applicable inv context = 
-	case partition (`S.member` inv) context of
-		(_,[])                 -> True
-		(m,_) | length m >= 10 -> True
-		_                      -> False
-
-
-aboutRepo repo (_,ViaRepository r,_) = repo == r
-aboutRepo _    _                     = False
+	updateRepoData config
