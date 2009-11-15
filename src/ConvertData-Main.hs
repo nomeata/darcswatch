@@ -60,7 +60,7 @@ main = do
                 mail <- B.readFile mailFile
 		let bundle = parseMail mail
 		let hash = md5sum mail
-		putStrLn $ "State is " ++ show (M.lookup hash p2s)
+		putStrLn $ "State is " ++ maybe "Unknown" show (M.lookup hash p2s)
 		let state = fromMaybe New (M.lookup hash p2s)
 		bhash <- addBundle (cData config) bundle
 		changeBundleState (cData config) bhash ManualImport state
