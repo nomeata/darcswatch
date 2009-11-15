@@ -60,7 +60,7 @@ generateOutput config patchNew = do
 
         putStrLn "Reading repositories..."
 	let loadInv rep = do
-                putStr $ "Reading " ++ rep ++ ":\n"
+                putStr $ "Reading " ++ rep ++ " ...\n"
 		ps <- readRepository (cData config) rep
 		repoInfo <- getRepositoryInfo (cData config) rep
 		let thisNew = maybe True (>= lastStamp) (lastUpdate repoInfo)
