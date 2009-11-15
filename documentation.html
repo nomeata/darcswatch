@@ -21,6 +21,7 @@
 <li>Link to the submitting mail on gmane.org, if Message-ID is known.</li>
 <li>Knows about inverse and amend-recorded patches and uses them to consider patches obsolete.</li>
 <li>Knows about tagged repositories and reads the old patches as well.</li>
+<li>Integrates into a roundup bug tracker (at the moment, this feature is hardcoded with the instance on <a href="http://bugs.darcs.net/">http://bugs.darcs.net/</a>.</li>
 </ul>
 
 <h2>How can i use DarcsWatch?</h2>
@@ -33,12 +34,15 @@
 <p>To have your patch submissions tracked, you have to send them to <tt>darcswatch@nomeata.de</tt>. The easiest way to achieve this is by adding the line <tt>send cc darcswatch@nomeata.de</tt> to <tt>~/.darcs/defaults</tt>.</p>
 <p>If the repositories you are submitting to are not yet tracked, you have to drop a note to <a href="mailto:mail@joachim-breitner.de">Joachim Breitner</a> with the repository URL, and it will be added.</p>
 
-
 <h3>...as a project maintainer with a mailing list?</h3>
 <p>If you receive patches on a mailing list and want to have them tracked by DarcsWatch, just subscribe <tt>darcswatch@nomeata.de</tt> to the list, and drop <a href="mailto:mail@joachim-breitner.de">Joachim Breitner</a> a note with the darcs repository URL.</p>
 
 <h3>...as a project maintainer without a mailing list?</h3>
 <p>If you receive patches directly, but want them tracked by DarcsWatch, you should set up an email address somewhere that forwards all mails to both yourself and <tt>darcswatch@nomeata.de</tt>. If you can not do that. get in touch with <a href="mailto:mail@joachim-breitner.de">Joachim Breitner</a>, he might be able to set something up for you.</p>
+
+<h3>...as developer on the darcs.net codebase?</h3>
+<p>If a patch is submitted to the Darcs project, a ticket in their roundup instance is created. DarcsWatch notices this and links the entries both ways. When DarcsWatch detects that the patch bundle is completely appiled in a repository, it will close the ticket as “accepted”.
+</p>
 
 <h2>Other questions.</h2>
 
