@@ -25,7 +25,6 @@ Homepage:        http://darcswatch.nomeata.de/
 Cabal-Version:   >= 1.6
 License:         GPL
 License-File:    LICENSE
-extra-source-files: mailfilter.sh
 data-files:      documentation.html,
                  README, 
                  example/config
@@ -41,6 +40,16 @@ Executable darcswatch-generate
                         , StringCrypto
                         , CachedGet
                         , LockRestart
+                        , SHA1
+                        , ByteStringUtils
+                        , Zip
+                        , Darcs.Watch.Roundup
+                        , Darcs.Watch.GenerateOutput
+                        , Darcs.Watch.Data
+                        , Darcs.Watch.PullRepos
+                        , Darcs.Watch.ImportMail
+                        , Darcs.Watch.UpdateRepoData
+                        , Darcs.Watch.Storage
         Build-Depends:  base > 3 && < 4
                         , network
                         , HTTP >= 4000
@@ -65,57 +74,22 @@ Executable darcswatch-generate
 Executable darcswatch-import-mail
         Main-Is:        ImportMail-Main.hs
         hs-source-dirs: src
-        Other-modules:  HTML
-                        , MultiMap
-                        , Darcs
-                        , OldDate
-                        , StringCrypto
-                        , CachedGet
-                        , LockRestart
 
 Executable darcswatch-import-bundle
         Main-Is:        ImportBundle-Main.hs
         hs-source-dirs: src
-        Other-modules:  HTML
-                        , MultiMap
-                        , Darcs
-                        , OldDate
-                        , StringCrypto
-                        , CachedGet
-                        , LockRestart
 
 Executable darcswatch-convert-data
         Main-Is:        ConvertData-Main.hs
         hs-source-dirs: src
-        Other-modules:  HTML
-                        , MultiMap
-                        , Darcs
-                        , OldDate
-                        , StringCrypto
-                        , CachedGet
-                        , LockRestart
 
 Executable darcswatch-pull-repos
         Main-Is:        PullRepos-Main.hs
         hs-source-dirs: src
-        Other-modules:  HTML
-                        , MultiMap
-                        , Darcs
-                        , OldDate
-                        , StringCrypto
-                        , CachedGet
-                        , LockRestart
 
 Executable darcswatch-update-data
         Main-Is:        UpdateRepoData-Main.hs
         hs-source-dirs: src
-        Other-modules:  HTML
-                        , MultiMap
-                        , Darcs
-                        , OldDate
-                        , StringCrypto
-                        , CachedGet
-                        , LockRestart
 
 source-repository head
   type:     darcs
