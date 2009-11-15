@@ -57,6 +57,9 @@ data DarcsWatchConfig = DarcsWatchConfig {
         cRepositories :: [RepositoryURL],
 	cData :: String,
         cOutput :: String,
-        cMails :: String
+        cMails :: String,
+	cDarcsWatchURL :: String,
+	cDarcsWatchAddress :: String,
+	cSendRoundupMails :: Bool
         } deriving (Show, Read)
 

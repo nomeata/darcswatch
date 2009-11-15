@@ -10,4 +10,7 @@ DarcsWatchConfig
 	, cData = "/home/jojo/projekte/programming/haskell/darcswatch/example/data"
 	, cOutput = "/home/jojo/projekte/programming/haskell/darcswatch/example/output"
 	, cMails = "/home/jojo/projekte/programming/haskell/darcswatch/example/mails"
+	, cDarcsWatchURL = "http://darcswatch.nomeata.de/"
+	, cDarcsWatchAddress = "darcswatch@nomeata.de"
+	, cSendRoundupMails = False
 	}
