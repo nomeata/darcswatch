@@ -265,7 +265,7 @@ p1 `laterThan` p2 =    piAuthor p1 == piAuthor p2
 		    && piInverted p1 == piInverted p2
 		    && piDate p1   > piDate p2
 
-showState New = "Newly submitted bundle"
+showState New = "Seen bundle"
 showState Applicable = "Not yet fully applied bundle"
 showState Rejected = "Bundle marked rejected"
 showState Obsoleted = "Bundle marked obsolete"
