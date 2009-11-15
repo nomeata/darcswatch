@@ -56,7 +56,7 @@ importMail config  = do
 			case roundupURL of
 			  Nothing -> return ()
 			  Just url -> do
-			  	tellRoundupAboutURL config bundle
+			  	tellRoundupAboutURL config url bundle
 			  	changeBundleState (cData config) bhash
 			  		(ViaBugtracker url) New
 			changeBundleState (cData config) bhash
