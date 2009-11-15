@@ -33,7 +33,7 @@ main = do
 	args <- getArgs
         let (confdir) = case args of
                         [confdir] -> (confdir)
-                        _         -> error "Use convert confdir/ and pipe mail to it"
+                        _         -> error "Use import-mail confdir/ and pipe mail to it"
         config <- read `fmap` readFile (confdir </> "config")
 	foundMail <- importMail config
 	when foundMail $ do
