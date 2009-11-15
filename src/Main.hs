@@ -65,8 +65,6 @@ main = do
 	lockRestart (cOutput config) patchNew or True (do_work config)
 
 do_work config patchNew = do
-	writeC <- getConcurrentOutputter
-
 	nowStamp <- getCurrentTime
 	let outputStampFile = cData config </> "output.stamp"
 	ex <- doesFileExist outputStampFile
@@ -75,11 +73,11 @@ do_work config patchNew = do
 
         putStrLn "Reading repositories..."
 	let loadInv rep = do
-                writeC $ "Reading " ++ rep ++ ":\n"
+                putStr $ "Reading " ++ rep ++ ":\n"
 		ps <- readRepository (cData config) rep
 		repoInfo <- getRepositoryInfo (cData config) rep
 		let thisNew = maybe True (>= lastStamp) (lastUpdate repoInfo)
-		writeC (if thisNew then "Repostory is new.\n" else "Repository is cached.\n")
+		putStr (if thisNew then "Repostory is new.\n" else "Repository is cached.\n")
 		return (rep, ps, repoInfo, thisNew)
             readInv (p2r,r2p,r2ri,new) (rep, ps, repoInfo, thisNew) = do
                 let p2r' = foldr (\p -> MM.append p rep) p2r ps
