@@ -65,15 +65,18 @@ getStateFromMessage msg | "OBSOLETE" `isInfixOf` subject = Obsoleted
 
 
 findDarcsWatchTag :: Message -> Maybe BundleState
-findDarcsWatchTag (Message _ _ (Body _ _ msg))
-	| "DarcsWatch: rejected" `isInfixOf` msg = Just Rejected
-	| "DarcsWatch: obsolete" `isInfixOf` msg = Just Obsoleted
-	| otherwise = Nothing
-findDarcsWatchTag (Message _ _ (Mixed (Multipart _ msgs _ ))) = msum (map findDarcsWatchTag msgs)
-findDarcsWatchTag (Message _ _ (Alternative (Multipart _ msgs _ ))) = msum (map findDarcsWatchTag msgs)
-findDarcsWatchTag (Message _ _ (Parallel (Multipart _ msgs _ ))) = msum (map findDarcsWatchTag msgs)
-findDarcsWatchTag (Message _ _ (Digest (Multipart _ msgs _ ))) = msum (map findDarcsWatchTag msgs)
-findDarcsWatchTag _ = Nothing
+findDarcsWatchTag = findInBody $ \body -> case () of 
+     () | "DarcsWatch: rejected" `isInfixOf` body -> Just Rejected
+	| "DarcsWatch: obsolete" `isInfixOf` body -> Just Obsoleted
+	| otherwise                               ->  Nothing
+
+findInBody :: (String -> Maybe a) -> Message -> Maybe a
+findInBody query (Message _ _ (Body _ _ msg)) = query msg
+findInBody query (Message _ _ (Mixed (Multipart _ msgs _ ))) = msum (map (findInBody query) msgs)
+findInBody query (Message _ _ (Alternative (Multipart _ msgs _ ))) = msum (map (findInBody query) msgs)
+findInBody query (Message _ _ (Parallel (Multipart _ msgs _ ))) = msum (map (findInBody query) msgs)
+findInBody query (Message _ _ (Digest (Multipart _ msgs _ ))) = msum (map (findInBody query) msgs)
+findInBody query _ = Nothing
 
 
 findDarcsBundle :: Message -> Maybe String
