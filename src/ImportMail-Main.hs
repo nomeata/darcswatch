@@ -49,7 +49,7 @@ main = do
 			    from = maybe "" (showFrom) (mi_from mi)
 			    to   = maybe "" (showTo) (mi_to mi)
 			    subject = maybe "" (\(Subject s) -> s) (mi_subject mi)
-			    mid = get_header (mi_headers mi) "message-id" Just 
+			    mid = get_header (mi_headers mi) "message-id:" Just 
 			let Right bundle = scan_bundle (B.pack bundleData)
 			bhash <- addBundle (cData config) bundle
 			changeBundleState (cData config) bhash
