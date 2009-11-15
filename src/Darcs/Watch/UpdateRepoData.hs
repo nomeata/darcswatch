@@ -46,6 +46,7 @@ import System.FilePath
 import Darcs
 import Darcs.Watch.Storage
 import Darcs.Watch.Data
+import Darcs.Watch.Roundup
 
 updateRepoData config = do
 	let readRepo rep = do
@@ -82,6 +83,12 @@ updateRepoData config = do
 						  bundleHash
 						  (ViaRepository repo)
 						  statusQuo
+				
+				case haveRoundupURL history of
+					Nothing -> return ()
+					Just url -> 
+					  	tellRoundup config url repo bundle statusQuo
+
 
 -- Clonsider patches as applicable to a repository when either
 --  * all its context is in the repository

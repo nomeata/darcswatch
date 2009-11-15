@@ -5,15 +5,16 @@ import Data.List
 import System.IO
 import System.Exit
 import System.Process
+import Control.Monad
 
 import Darcs.Watch.Data
 import Darcs
 import HTML
 
-tellRoundupAboutURL :: DarcsWatchConfig -> String -> PatchBundle -> IO ()
-tellRoundupAboutURL _ _ ([],_) = return ()
-tellRoundupAboutURL _ url _ | not $ "http://bugs.darcs.net/" `isPrefixOf` url = return ()
-tellRoundupAboutURL config url bundle = do
+tellRoundup :: DarcsWatchConfig -> String -> RepositoryURL -> PatchBundle -> BundleState -> IO ()
+tellRoundup _      _   _    _      status | status `notElem` [Applied, Applicable] = return ()
+tellRoundup _      url _    _      _      | not $ "http://bugs.darcs.net/" `isPrefixOf` url = return ()
+tellRoundup config url repo bundle status = do
 	message <- flatten [mk_header ["From: " ++ from]
 	                   ,mk_header ["To: " ++ to]
 			   ,mk_header ["Subject: " ++ subject]
@@ -24,10 +25,19 @@ tellRoundupAboutURL config url bundle = do
 	          putStrLn message
   where from = cDarcsWatchAddress config
         to = "patches@darcs.net"
-	subject = "This patch is being tracked by DarcsWatch [" ++ roundupId ++ "]"
-	body = "This patch bundle (with " ++ show (length (fst bundle)) ++" patches) is now " ++
-	       "tracked on DarcsWatch <" ++ cDarcsWatchURL config ++
-	       userFile (piAuthor (fst (head (fst bundle)))) ++ ">."
+	subject = case status of
+	 	   Applicable -> "This patch is being tracked by DarcsWatch [" ++ roundupId ++ "]"
+		   Applied -> "This patch has been applied [" ++ roundupId ++ "] [status=accepted]"
+	body = case status of
+		Applicable -> "This patch bundle (with " ++ show (length (fst bundle)) ++
+			      " patches), which can be applied to the repository " ++ repo ++
+			      " is now tracked on " ++
+			      "DarcsWatch <" ++ cDarcsWatchURL config ++ repoFile repo ++ ">."
+		Applied ->    "This patch bundle (with " ++ show (length (fst bundle)) ++
+			      " patches) was just applied to the repository " ++ repo ++".\n" ++
+			      "This message was brought to you by " ++
+			      "DarcsWatch <" ++ cDarcsWatchURL config ++ repoFile repo ++ ">."
+
 	roundupId = drop (length "http://bugs.darcs.net/") url
 
 sendMail ::  String -> IO ()
@@ -42,3 +52,7 @@ sendMail text = do
       return ()
       
 
+haveRoundupURL = msum . map fromRoundup 
+
+fromRoundup (_,ViaBugtracker r,_) = Just r
+fromRoundup  _                    = Nothing
