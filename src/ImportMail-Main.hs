@@ -56,6 +56,7 @@ main = do
 				(ViaEMail from to subject mid) New
 
 findDarcsBundle :: Message -> Maybe String
+findDarcsBundle (Message _ _ (Data _ (ContentType "text" "x-darcs-patch" _) _ msg)) = Just msg
 findDarcsBundle (Message _ _ (Body (ContentType "text" "x-darcs-patch" _) _ msg)) = Just msg
 findDarcsBundle (Message _ _ (Mixed (Multipart _ msgs _ ))) = msum (map findDarcsBundle msgs)
 findDarcsBundle (Message _ _ (Alternative (Multipart _ msgs _ ))) = msum (map findDarcsBundle msgs)
