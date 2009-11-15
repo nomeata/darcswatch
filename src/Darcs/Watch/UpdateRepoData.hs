@@ -63,12 +63,7 @@ updateRepoData config = do
 		let patches = map fst (fst bundle)
 		
 		forM repos $ \(repo, inv) -> do
-			let statusQuoAnte =
-				fromMaybe New $
-				listToMaybe $
-				map (\(_,_,s) -> s) $
-				filter (aboutRepo repo) $
-				history
+			let statusQuoAnte = stateOfRepo history repo
 			
 			let statusQuo = 
 				if all (`S.member` inv) patches then Applied
@@ -98,6 +93,3 @@ applicable inv context =
 		(_,[])                 -> True
 		(m,_) | length m >= 10 -> True
 		_                      -> False
-
-aboutRepo repo (_,ViaRepository r,_) = repo == r
-aboutRepo _    _                     = False

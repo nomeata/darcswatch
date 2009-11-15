@@ -20,6 +20,7 @@ Boston, MA 02110-1301, USA.
 module Darcs.Watch.Data where
 
 import Data.Time
+import Data.Maybe
 
 type BundleHash = String
 
@@ -63,3 +64,8 @@ data DarcsWatchConfig = DarcsWatchConfig {
 	cSendRoundupMails :: Bool
         } deriving (Show, Read)
 
+
+stateOfRepo history repo = fromMaybe New (lookup repo (repoStates history))
+
+repoStates history = [ (repo, state)
+	             | (_,ViaRepository repo, state) <- history ]

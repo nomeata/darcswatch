@@ -37,6 +37,7 @@ import Control.Applicative
 
 import Darcs.Watch.Data
 import Darcs.Watch.Storage
+import Darcs.Watch.Roundup
 
 importMail :: DarcsWatchConfig -> IO Bool
 importMail config  = do
@@ -60,6 +61,9 @@ importMail config  = do
 			case roundupURL of
 			  Nothing -> return ()
 			  Just url -> do
+				history <- getBundleHistory (cData config) bhash
+				forM_ (repoStates history) $ \(repo,state) -> 	
+					tellRoundup config url repo bundle state
 			  	changeBundleState (cData config) bhash
 			  		(ViaBugtracker url) New
 			changeBundleState (cData config) bhash emailSource state
@@ -79,7 +83,6 @@ importMail config  = do
 			return (or changes)
 
 findSubmittingMail = mapMaybe isSubmittingMail
-
 isSubmittingMail (_,ViaEMail _ _ _ (Just mid), New) = Just mid
 isSubmittingMail _ = Nothing
 
