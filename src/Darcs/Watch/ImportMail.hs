@@ -34,7 +34,7 @@ import Text.Regex
 
 import Darcs.Watch.Data
 import Darcs.Watch.Storage
-import HTML
+import Darcs.Watch.Roundup
 
 importMail :: DarcsWatchConfig -> IO Bool
 importMail config  = do
@@ -118,21 +118,3 @@ showEmailAddress (EmailAddress local domain) = local ++ "@" ++ showDomain domain
 
 showDomain (Domain s) = s
 showDomain (LiteralDomain s) = s
-
-tellRoundupAboutURL :: DarcsWatchConfig -> PatchBundle -> IO ()
-tellRoundupAboutURL _ ([],_) = return ()
-tellRoundupAboutURL config bundle = do
-	message <- flatten [mk_header ["From: " ++ from]
-	                   ,mk_header ["To: " ++ to]
-			   ,mk_header ["Subject: " ++ subject]
-			   ] body Nothing []
-	if cSendRoundupMails config
-	  then do fail "Not implemented yet"
-	  else do putStrLn "Would send this message:"
-	          putStrLn message
-  where from = cDarcsWatchAddress config
-        to = "SomeAdress@bugs.darcs.net"
-	subject = "This patch is being tracked by DarcsWatch"
-	body = "This patch bundle (with " ++ show (length (fst bundle)) ++" patches) is now " ++
-	       "tracked on DarcsWatch <" ++ cDarcsWatchURL config ++
-	       userFile (piAuthor (fst (head (fst bundle)))) ++ ">."
