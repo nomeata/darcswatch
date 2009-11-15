@@ -31,9 +31,8 @@ data-files:      documentation.html,
                  example/config
 Build-Type:      Simple
 
-Executable darcswatch
-        Executable:     darcswatch
-        Main-Is:        Main.hs
+Executable darcswatch-generate
+        Main-Is:        Generate-Main.hs
         hs-source-dirs: src
         Other-modules:  HTML
                         , MultiMap
@@ -57,12 +56,67 @@ Executable darcswatch
                         , filepath
                         , bytestring
                         , concurrentoutput
+                        , time
+                        , old-locale
+                        , process
+                        , mime-string
+                        , regex-compat
+
+Executable darcswatch-import-mail
+        Main-Is:        ImportMail-Main.hs
+        hs-source-dirs: src
+        Other-modules:  HTML
+                        , MultiMap
+                        , Darcs
+                        , OldDate
+                        , StringCrypto
+                        , CachedGet
+                        , LockRestart
+
+Executable darcswatch-import-bundle
+        Main-Is:        ImportBundle-Main.hs
+        hs-source-dirs: src
+        Other-modules:  HTML
+                        , MultiMap
+                        , Darcs
+                        , OldDate
+                        , StringCrypto
+                        , CachedGet
+                        , LockRestart
+
+Executable darcswatch-convert-data
+        Main-Is:        ConvertData-Main.hs
+        hs-source-dirs: src
+        Other-modules:  HTML
+                        , MultiMap
+                        , Darcs
+                        , OldDate
+                        , StringCrypto
+                        , CachedGet
+                        , LockRestart
+
+Executable darcswatch-pull-repos
+        Main-Is:        PullRepos-Main.hs
+        hs-source-dirs: src
+        Other-modules:  HTML
+                        , MultiMap
+                        , Darcs
+                        , OldDate
+                        , StringCrypto
+                        , CachedGet
+                        , LockRestart
+
+Executable darcswatch-update-data
+        Main-Is:        UpdateRepoData-Main.hs
+        hs-source-dirs: src
+        Other-modules:  HTML
+                        , MultiMap
+                        , Darcs
+                        , OldDate
+                        , StringCrypto
+                        , CachedGet
+                        , LockRestart
 
 source-repository head
   type:     darcs
   location: http://darcs.nomeata.de/darcswatch/
-
-source-repository this
-  type:     darcs
-  location: http://darcs.nomeata.de/darcswatch/
-  tag:      v0.2
