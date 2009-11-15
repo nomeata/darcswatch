@@ -29,15 +29,17 @@ tellRoundup config url repo bundle status = do
 	 	   Applicable -> "This patch is being tracked by DarcsWatch [" ++ roundupId ++ "]"
 		   Applied -> "This patch has been applied [" ++ roundupId ++ "] [status=accepted]"
 	body = case status of
-		Applicable -> "This patch bundle (with " ++ show (length (fst bundle)) ++
-			      " patches), which can be applied to the repository " ++ repo ++
-			      " is now tracked on DarcsWatch at " ++
+		Applicable -> "This patch bundle (with " ++ show numPatches ++ " patch" ++
+			      (if numPatches == 1 then "" else "es") ++ "), which can be " ++
+			      " applied to the repository " ++ repo ++ " is now tracked " ++
+			      " on DarcsWatch at " ++
                               cDarcsWatchURL config ++ repoFile repo
 		Applied ->    "This patch bundle (with " ++ show (length (fst bundle)) ++
 			      " patches) was just applied to the repository " ++ repo ++".\n" ++
 			      "This message was brought to you by " ++
 			      "DarcsWatch\n" ++
                               cDarcsWatchURL config ++ repoFile repo
+        numPatches = length (fst bundle)
 
 	roundupId = drop (length "http://bugs.darcs.net/") url
 
