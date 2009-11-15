@@ -2,6 +2,9 @@ module Darcs.Watch.Roundup where
 
 import Codec.MIME.String as MIME
 import Data.List
+import System.IO
+import System.Exit
+import System.Process
 
 import Darcs.Watch.Data
 import Darcs
@@ -16,7 +19,7 @@ tellRoundupAboutURL config url bundle = do
 			   ,mk_header ["Subject: " ++ subject]
 			   ] body Nothing []
 	if cSendRoundupMails config
-	  then do fail "Not implemented yet"
+	  then do sendMail message
 	  else do putStrLn "Would send this message:"
 	          putStrLn message
   where from = cDarcsWatchAddress config
@@ -26,3 +29,16 @@ tellRoundupAboutURL config url bundle = do
 	       "tracked on DarcsWatch <" ++ cDarcsWatchURL config ++
 	       userFile (piAuthor (fst (head (fst bundle)))) ++ ">."
 	roundupId = drop (length "http://bugs.darcs.net/") url
+
+sendMail ::  String -> IO ()
+sendMail text = do
+      (inh, outh, errh, ph) <- runInteractiveProcess "/usr/sbin/sendmail" ["-t"] Nothing Nothing
+      hClose outh
+      hPutStr inh text
+      hClose inh
+      err <- hGetContents errh
+      hPutStr stderr err
+      ec <- waitForProcess ph
+      return ()
+      
+
