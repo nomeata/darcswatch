@@ -134,6 +134,11 @@ myHeader d = script !!! [thetype "text/javascript", src "/javascript/jquery/jque
 		\           }});\
                 \   })})\
 		\"
+             +++
+	     style !!! [thetype "text/css" ] << "\
+	     	\span[title] { border-bottom: dotted 1px black; } \
+		\"
+
 
 userPage d u = showHtml $
    header << (
@@ -195,12 +200,12 @@ patchHistoryView d p =
 			date +++ ": " +++ showState state +++ " " +++ showSource source
 
 showSource (ViaRepository repo) = " in repo " +++ hotlink (repoFile repo) << repo
-showSource (ViaEMail from to subject mmid) = " via email from " +++
-                                             hotlink (userFile (B.pack from)) << from  +++
-                                             " to " +++ 
-                                             hotlink (userFile (B.pack to)) << to  +++
-					     " named \"" +++ subject +++
-					     "\"" +++
+showSource (ViaEMail from to subject mmid) = " via " +++
+					     thespan !!! [ title $
+					     	"From: " ++ from ++ "\n" ++
+						"Subject: " ++ subject
+					     ] << "e-mail" +++ " to " +++
+					     hotlink ("mailto:" ++ to) << to  +++
 					     case mmid of
 						  Nothing -> noHtml
 						  Just mid -> " " +++
