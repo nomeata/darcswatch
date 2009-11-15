@@ -21,8 +21,8 @@ tellRoundup config url repo bundle status = do
 			   ] body Nothing []
 	if cSendRoundupMails config
 	  then do sendMail message
-	  else do putStrLn "Would send this message:"
-	          putStrLn message
+	  else do hPutStrLn stderr "Would send this message:"
+	          hPutStrLn stderr message
   where from = cDarcsWatchAddress config
         to = "patches@darcs.net"
 	subject = case status of
