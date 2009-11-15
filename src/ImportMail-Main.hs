@@ -22,6 +22,7 @@ import System.Environment
 import Control.Monad
 import Data.Maybe
 import System.FilePath
+import System.Posix.IO
 
 import Darcs.Watch.Data
 import Darcs.Watch.ImportMail
@@ -36,5 +37,9 @@ main = do
         config <- read `fmap` readFile (confdir </> "config")
 	foundMail <- importMail config
 	when foundMail $ do
+		-- We do not want output here
+		nullFd <- openFd "/dev/null" WriteOnly Nothing defaultFileFlags 
+		dupTo nullFd stdOutput
+		
 		updateRepoData config
 		generateOutput config True
