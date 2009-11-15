@@ -72,7 +72,7 @@ generateOutput config patchNew = do
 		    r2ri' = M.insert rep repoInfo r2ri
                 return (p2r', r2p', r2ri', new || thisNew)
         (p2r,r2p, r2ri, new) <- foldM readInv (MM.empty, MM.empty, M.empty, patchNew) =<<
-                          forkSequence (map loadInv (cRepositories config))
+                          sequence (map loadInv (cRepositories config))
 
         putStrLn "Reading emails..."
 	bundleHashes <- listBundles (cData config)
@@ -183,7 +183,3 @@ addSlash filename | last filename == '/' = filename
 infixl 0 `on`
 on :: (b -> b -> c) -> (a -> b) -> a -> a -> c
 (*) `on` f = \x y -> f x * f y
-
-{- forkSequence = sequence -}
--- Enable for parallel downloads
-forkSequence acts = mapM (\act -> newEmptyMVar >>= \mvar -> forkIO (act >>= putMVar mvar) >> return mvar) acts >>= mapM takeMVar
