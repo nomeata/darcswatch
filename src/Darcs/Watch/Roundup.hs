@@ -23,7 +23,7 @@ tellRoundupAboutURL config url bundle = do
 	  else do putStrLn "Would send this message:"
 	          putStrLn message
   where from = cDarcsWatchAddress config
-        to = "patches@bugs.darcs.net"
+        to = "patches@darcs.net"
 	subject = "This patch is being tracked by DarcsWatch [" ++ roundupId ++ "]"
 	body = "This patch bundle (with " ++ show (length (fst bundle)) ++" patches) is now " ++
 	       "tracked on DarcsWatch <" ++ cDarcsWatchURL config ++
