@@ -24,6 +24,10 @@ DarcsWatch uses modules from these non-standard packages:
  * parsec
  * nano-md5
  * zlib
+ * concurrentoutput
+ * time
+ * mime-string
+ * regex-compat
 
 There are a lot of open issues, and help is very
 appreciated. A non exclusive list of TODO items is:
