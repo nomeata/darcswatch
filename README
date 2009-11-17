@@ -16,7 +16,7 @@ The program expects a directory as a parameter and will read
 the config file therein for configuration. An example
 configuration is included.
 
-darcsweb uses modules from these non-standard packages:
+DarcsWatch uses modules from these non-standard packages:
  * xhtml
  * network
  * HTTP
