@@ -26,24 +26,17 @@ tellRoundup config url repo bundle status = do
   where from = cDarcsWatchAddress config
         to = "bugs@darcs.net"
 	subject = case status of
-	 	   Applicable -> "This patch is being tracked by DarcsWatch [" ++ roundupId ++ "]"
+	 	   Applicable -> "This patch is being tracked by DarcsWatch [" ++ roundupId ++ "] [darcswatchurl=" ++ bundleLink ++ "]"
 		   Applied -> "This patch has been applied [" ++ roundupId ++ "] [status=accepted]"
 	body = case status of
-		Applicable -> "This patch bundle (with " ++ show numPatches ++ " patch" ++
-			      (if numPatches == 1 then "" else "es") ++ "), which can be " ++
-			      " applied to the repository " ++ repo ++ " is now tracked " ++
-			      " on DarcsWatch at " ++
-                              cDarcsWatchURL config ++ repoFile repo
+		Applicable -> "" -- no messages about this, please
 		Applied ->    "This patch bundle (with " ++ show (length (fst bundle)) ++
 			      " patches) was just applied to the repository " ++ repo ++".\n" ++
 			      "This message was brought to you by " ++
-			      "DarcsWatch\n" ++
-                              cDarcsWatchURL config ++ repoFile repo
+			      "DarcsWatch\n" ++ bundleLink
+	bundleLink = cDarcsWatchURL config ++ repoFile repo
         numPatches = length (fst bundle)
-	doSend = case status of
-		Applied -> True
-		_       -> False
-
+	doSend = status `elem` [Applicable, Applied]
 	roundupId = drop (length "http://bugs.darcs.net/") url
 
 sendMail ::  String -> IO ()
