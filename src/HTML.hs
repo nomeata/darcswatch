@@ -102,18 +102,16 @@ mainPage d = showHtml $
 			++ [hotlink "unmatched.html" << "Unmatched patches"
 			    +++ " "+++  show (S.size (unmatched d)) +++ " patches" ]
 		  ) +++
-	footer d
+	footer (Just (date d))
 	)
 
-footer d = 
+footer mDate = 
 	p !!! [thestyle "font-size:80%"] << (
 		"darcswatch © Joachim Breitner <" +++
 		hotlink "mailto:mail@joachim-breitner.de" << "mail@joachim-breitner.de" +++
 		">. Source code at " +++
 		hotlink "http://darcs.nomeata.de/darcswatch/" << "http://darcs.nomeata.de/darcswatch/"+++
-		". Last update " +++
-		calendarTimeToString (date d) +++
-		"."
+		"." +++ maybe noHtml (\d -> " Last update " +++ calendarTimeToString d +++ ".") mDate
 		)
 
 myHeader d = script !!! [thetype "text/javascript", src "/javascript/jquery/jquery.js"] << noHtml
@@ -154,7 +152,7 @@ userPage d u = showHtml $
 	patchList d (sps !!!! Rejected) "Rejected patches" True +++
 	patchList d (sps !!!! Obsoleted) "Obsoleted patches" True +++
 	patchList d (sps !!!! Applied) "Applied patches" True +++
-	footer d
+	footer (Just (date d))
 	)
   where (ps, sps) = userData u d
 
@@ -176,7 +174,7 @@ repoPage d r = showHtml $
 		", last check of repository at " +++
 		maybe (toHtml "No idea when") toHtml (lastCheck (r2ri d ! r)) +++ "."
 	) +++
-	footer d
+	footer (Just (date d))
 	)
   where (ps, sps) = repoData r d
  
@@ -189,7 +187,7 @@ unmatchedPage d = showHtml $
 	h1 << ("DarcsWatch overview, unmatched Patches") +++
 	p << hotlink "." << "Return to main page" +++
 	patchList d (S.toList (unmatched d)) "Unmatched patches" False +++
-	footer d
+	footer (Just (date d))
 	)
 
 patchList d [] title userCentric = h5 << ("No "++title)
