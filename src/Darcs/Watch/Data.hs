@@ -42,7 +42,7 @@ data Source
 	= ManualImport
 	| ViaEMail String String String (Maybe String) -- ^ From, To, Subject, Message-Id 
 	| ViaBugtracker String -- ^ URL
---	| ViaWeb String -- ^ OpenID Username
+	| ViaWeb String -- ^ OpenID Username
 	| ViaRepository RepositoryURL -- ^ Repository-URL
 	deriving (Read, Show)
 
