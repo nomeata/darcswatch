@@ -17,9 +17,12 @@ the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 Boston, MA 02110-1301, USA.
 -}
 
+import Data.List
+import Data.Maybe
 import System.Environment
 import System.FilePath
 import Network.CGI
+import Control.Applicative
 
 import Darcs.Watch.Storage
 import Darcs.Watch.Data
@@ -35,26 +38,35 @@ main = do
 
 	setHeader "Content-type" "text/html; charset=UTF-8"
 
-	mBundleHash <- getInput "bundlehash"	
-	mState <- getInput "state"
-	case (mBundleHash, mState) of
-	 (Just bhash, Just state) -> case state of
-	 	"OBSOLETE" -> cgiSetState config bhash Obsoleted
-		"REJECTED" -> cgiSetState config bhash Rejected
-		_          -> output $ cgiMessagePage True $ "Unkown state " ++ state
-	 _ -> do
-	 	output $ cgiMessagePage True "Missing parameters bundlehash or state."
+	bundleChanges <- getBundleChanges <$> getInputs
+	if null bundleChanges
+	 then output $ cgiMessagePage True "No changed entered"
+	 else do errors <- catMaybes <$> mapM (applyBundleChange config) bundleChanges
+	         if null errors
+		  then output $ cgiMessagePage False $ "Sucessfully updated" ++
+			show (length bundleChanges) ++ " patch bundle state" ++
+			(if (length bundleChanges) == 1 then "" else "s")++ ". " ++
+			"The DarcsWatch web pages are generated " ++
+			"periodically, so it might take a while until your "++
+			"changes become visible."
+		  else output $ cgiMessagePage True $ "There were errors "++
+			"applying your updates: "++ show errors
 
-cgiSetState config bhash newState = do
+getBundleChanges = mapMaybe $ \(n,v) -> 
+	case ("state-" `stripPrefix` n, v) of
+		(Nothing,_) -> Nothing
+		(Just hb,"UNCHANGED") -> Nothing
+		(Just hb,"OBSOLETE") -> Just (hb, Obsoleted)
+		(Just hb,"REJECTED") -> Just (hb, Rejected)
+		_ -> Nothing 
+
+applyBundleChange config (bhash,newState) = do
 	history <- liftIO $ getBundleHistory (cData config) bhash
 	let explicit_state = maximum $ New : map (\(_,_,s) -> s) history
 	if newState <= explicit_state then
-		output $ cgiMessagePage True $
-			"Can not set patch bundle state to " ++ show newState ++", "++
-			"already in state " ++ show explicit_state ++ "!"
+		return $ Just $
+			"Can not set patch bundle state to " ++ show newState
+			++", "++ "already in state " ++ show explicit_state ++ "!"
 	  else do
 	  	liftIO $ changeBundleState (cData config) bhash (ViaWeb "unauthenticated") newState
-		output $ cgiMessagePage False $
-			"Sucessfully set patch bundle state to " ++ show newState ++
-			". Note that the DarcsWatch pages are updated periodically, " ++
-			"so your change may take a while to show up."
+		return Nothing
