@@ -214,6 +214,7 @@ patchHistoryView d p =
 
 showSource (ViaRepository repo) = " in repo " +++ hotlink (repoFile repo) << repo
 showSource (ViaBugtracker url) = " in bug tracker ticket " +++ hotlink url << url
+showSource (ViaWeb openid) = " via web interface by user " +++ hotlink openid << openid
 showSource (ViaEMail from to subject mmid) = " via " +++
 					     thespan !!! [ title $
 					     	"From: " ++ from ++ "\n" ++
