@@ -24,6 +24,7 @@ module HTML
 	, userPage
 	, repoPage
 	, unmatchedPage
+	, cgiMessagePage
 	, userFile
 	, repoFile
 	, patchDiffFile
@@ -189,6 +190,18 @@ unmatchedPage d = showHtml $
 	p << hotlink "." << "Return to main page" +++
 	patchList d (S.toList (unmatched d)) "Unmatched patches" False +++
 	footer (Just (date d))
+	)
+
+cgiMessagePage isError msg = showHtml $
+   header << thetitle << "DarcsWatch" +++
+   body << (
+	h1 << "DarcsWatch" +++
+	p << (
+		(if isError then inColor "red" << "Error: " else noHtml)
+		+++
+		msg
+	      ) +++
+	footer Nothing
 	)
 
 patchList d [] title userCentric = h5 << ("No "++title)
