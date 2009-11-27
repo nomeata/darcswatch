@@ -30,6 +30,10 @@ data-files:      documentation.html,
                  example/config
 Build-Type:      Simple
 
+Flag Static
+        Description: Build static binaries
+        Default: False
+
 Executable darcswatch-generate
         Main-Is:        Generate-Main.hs
         hs-source-dirs: src
@@ -71,30 +75,45 @@ Executable darcswatch-generate
                         , mime-string
                         , regex-compat
                         , cgi
+                        , openid
+        if flag(Static)
+                ghc-options: -static -optl-static -optl-pthread                           
 
 Executable darcswatch-import-mail
         Main-Is:        ImportMail-Main.hs
         hs-source-dirs: src
+        if flag(Static)
+                ghc-options: -static -optl-static -optl-pthread                           
 
 Executable darcswatch-import-bundle
         Main-Is:        ImportBundle-Main.hs
         hs-source-dirs: src
+        if flag(Static)
+                ghc-options: -static -optl-static -optl-pthread                           
 
 Executable darcswatch-convert-data
         Main-Is:        ConvertData-Main.hs
         hs-source-dirs: src
+        if flag(Static)
+                ghc-options: -static -optl-static -optl-pthread                           
 
 Executable darcswatch-pull-repos
         Main-Is:        PullRepos-Main.hs
         hs-source-dirs: src
+        if flag(Static)
+                ghc-options: -static -optl-static -optl-pthread                           
 
 Executable darcswatch-update-data
         Main-Is:        UpdateRepoData-Main.hs
         hs-source-dirs: src
+        if flag(Static)
+                ghc-options: -static -optl-static -optl-pthread                           
 
 Executable darcswatch-cgi
         Main-Is:        CGI-Main.hs
         hs-source-dirs: src
+        if flag(Static)
+                ghc-options: -static -optl-static -optl-pthread                           
 
 source-repository head
   type:     darcs
