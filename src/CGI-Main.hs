@@ -34,14 +34,14 @@ main = do
         config <- read `fmap` readFile (confdir </> "config") :: IO DarcsWatchConfig
 
 	
-	runCGI $ handleErrors $ do
+	runCGI $ handleErrors $ authenticated config $ \openID -> do
 
 	--setHeader "Content-type" "text/html; charset=UTF-8"
 
 	bundleChanges <- getBundleChanges <$> getInputs
 	if null bundleChanges
 	 then output $ cgiMessagePage True "No changed entered"
-	 else do errors <- catMaybes <$> mapM (applyBundleChange config) bundleChanges
+	 else do errors <- catMaybes <$> mapM (applyBundleChange config openID) bundleChanges
 	         if null errors
 		  then output $ cgiMessagePage False $ "Sucessfully updated " ++
 			show (length bundleChanges) ++ " patch bundle state" ++
@@ -60,7 +60,7 @@ getBundleChanges = mapMaybe $ \(n,v) ->
 		(Just hb,"REJECTED") -> Just (hb, Rejected)
 		_ -> Nothing 
 
-applyBundleChange config (bhash,newState) = do
+applyBundleChange config openID (bhash,newState) = do
 	history <- liftIO $ getBundleHistory (cData config) bhash
 	let explicit_state = maximum $ New : map (\(_,_,s) -> s) history
 	if newState <= explicit_state then
@@ -68,5 +68,8 @@ applyBundleChange config (bhash,newState) = do
 			"Can not set patch bundle state to " ++ show newState
 			++", "++ "already in state " ++ show explicit_state ++ "!"
 	  else do
-	  	liftIO $ changeBundleState (cData config) bhash (ViaWeb "unauthenticated") newState
+	  	liftIO $ changeBundleState (cData config) bhash (ViaWeb openID) newState
 		return Nothing
+
+authenticated config action = do
+	action "unauthenticated"
