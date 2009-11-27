@@ -263,13 +263,15 @@ patchView d userCentric p =
 			" "+++ 
 			anchor !!! [identifier diffShowerId, theclass "diffshower", href "javascript:"]
 				<< "Show/Hide diff" +++
-			" "+++
-			select !!! [ name ("state-" ++ peBundleHash (p2pe d ! p)), size "1"] << (
-				option !!! [ value "UNCHANGED" ] << "Mark patch as..." +++
-				option !!! [ value "OBSOLETE" ] << "Obsolete" +++
-				option !!! [ value "REJECTED" ] << "Rejected"
-				) +++
-			submit "submit" "Submit"
+			if maximum (New : (map (\(_,_,s) -> s) $ peStateHistory $ p2pe d ! p)) <= Applicable
+			then	" "+++
+				select !!! [ name ("state-" ++ peBundleHash (p2pe d ! p)), size "1"] << (
+					option !!! [ value "UNCHANGED" ] << "Mark patch as..." +++
+					option !!! [ value "OBSOLETE" ] << "Obsolete" +++
+					option !!! [ value "REJECTED" ] << "Rejected"
+					) +++
+				submit "submit" "Submit"
+			else noHtml
 			)
 		
 state d p r | p `S.member` ps                          = Applied
