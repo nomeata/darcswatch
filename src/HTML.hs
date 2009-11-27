@@ -257,12 +257,21 @@ patchView d userCentric p =
   where pid = patchBasename p
 	diffShowerId = "diffshower_"++pid
 	diffId = "diff_"++pid
-	actions = paragraph << (
+	actions = form !!! [ method "GET", action "cgi", thestyle "display:inline"] <<
+		  paragraph << (
 			strong << "Actions: " +++
 			hotlink (pid ++ ".dpatch") << "Download .dpatch" +++
 			" "+++ 
 			anchor !!! [identifier diffShowerId, theclass "diffshower", href "javascript:"]
-				<< "Show/Hide diff"
+				<< "Show/Hide diff" +++
+			" "+++
+			"Mark: " +++
+			hidden "bundehash" (peBundleHash (p2pe d ! p)) +++
+			select !!! [ name "state", size "1"] << (
+				option !!! [ value "OBSOLETE" ] << "Obsolete" +++
+				option !!! [ value "REJECTED" ] << "Rejected"
+				) +++
+			submit "submit" "Submit"
 			)
 		
 state d p r | p `S.member` ps                          = Applied
