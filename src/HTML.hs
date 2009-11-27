@@ -85,7 +85,10 @@ users d = M.keys (u2p d)
 repos d = M.keys (r2p d)
 
 mainPage d = showHtml $
-   header << thetitle << "DarcsWatch overview" +++
+   header << (
+   	thetitle << "DarcsWatch overview" +++
+	myHeader 
+	) +++
    body << (
 	h1 << "DarcsWatch overview" +++
 	p << ( "Welcome to DarcsWatch. If you want to know more, please read the " +++
@@ -116,7 +119,7 @@ footer mDate =
 		"." +++ maybe noHtml (\d -> " Last update " +++ calendarTimeToString d +++ ".") mDate
 		)
 
-myHeader d = script !!! [thetype "text/javascript", src "/javascript/jquery/jquery.js"] << noHtml
+myHeader   = script !!! [thetype "text/javascript", src "/javascript/jquery/jquery.js"] << noHtml
              +++
              script !!! [thetype "text/javascript"] << "\
 		\$(document).ready(function () { \
@@ -144,7 +147,7 @@ myHeader d = script !!! [thetype "text/javascript", src "/javascript/jquery/jque
 userPage d u = showHtml $
    header << (
    	thetitle << ("DarcsWatch overview for " +++ u2rn d ! u) +++
-	myHeader d
+	myHeader
 	) +++
    body << (
 	h1 << ("DarcsWatch overview for " +++ u2rn d ! u) +++
@@ -161,7 +164,7 @@ userPage d u = showHtml $
 repoPage d r = showHtml $
    header << (
    	thetitle << ("DarcsWatch overview for " +++ r) +++
-	myHeader d
+	myHeader
 	) +++
    body << (
 	h1 << ("DarcsWatch overview for " +++ r) +++
@@ -183,7 +186,7 @@ repoPage d r = showHtml $
 unmatchedPage d = showHtml $
    header << (
    	thetitle << ("DarcsWatch overview, unmatched patches") +++
-	myHeader d
+	myHeader
 	) +++
    body << (
 	h1 << ("DarcsWatch overview, unmatched Patches") +++
@@ -193,7 +196,10 @@ unmatchedPage d = showHtml $
 	)
 
 cgiMessagePage isError msg = showHtml $
-   header << thetitle << "DarcsWatch" +++
+   header << (
+   	thetitle << "DarcsWatch" +++
+	myHeader
+	) +++
    body << (
 	h1 << "DarcsWatch" +++
 	p << (
