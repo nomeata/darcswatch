@@ -149,7 +149,7 @@ userPage d u = showHtml $
    	thetitle << ("DarcsWatch overview for " +++ u2rn d ! u) +++
 	myHeader
 	) +++
-   body << (
+   body << form !!! [ method "GET", action "cgi"] << (
 	h1 << ("DarcsWatch overview for " +++ u2rn d ! u) +++
 	p << hotlink "." << "Return to main page" +++
 	patchList d (sps !!!! Applicable) "Unapplied patches" True +++
@@ -166,7 +166,7 @@ repoPage d r = showHtml $
    	thetitle << ("DarcsWatch overview for " +++ r) +++
 	myHeader
 	) +++
-   body << (
+   body << form !!! [ method "GET", action "cgi"] << (
 	h1 << ("DarcsWatch overview for " +++ r) +++
 	p << hotlink "." << "Return to main page" +++
 	patchList d (sps !!!! Applicable) "Unapplied patches" False +++
@@ -188,7 +188,7 @@ unmatchedPage d = showHtml $
    	thetitle << ("DarcsWatch overview, unmatched patches") +++
 	myHeader
 	) +++
-   body << (
+   body << form !!! [ method "GET", action "cgi"] << (
 	h1 << ("DarcsWatch overview, unmatched Patches") +++
 	p << hotlink "." << "Return to main page" +++
 	patchList d (S.toList (unmatched d)) "Unmatched patches" False +++
@@ -257,17 +257,15 @@ patchView d userCentric p =
   where pid = patchBasename p
 	diffShowerId = "diffshower_"++pid
 	diffId = "diff_"++pid
-	actions = form !!! [ method "GET", action "cgi", thestyle "display:inline"] <<
-		  paragraph << (
+	actions = paragraph << (
 			strong << "Actions: " +++
 			hotlink (pid ++ ".dpatch") << "Download .dpatch" +++
 			" "+++ 
 			anchor !!! [identifier diffShowerId, theclass "diffshower", href "javascript:"]
 				<< "Show/Hide diff" +++
 			" "+++
-			"Mark: " +++
-			hidden "bundehash" (peBundleHash (p2pe d ! p)) +++
-			select !!! [ name "state", size "1"] << (
+			select !!! [ name ("state-" ++ peBundleHash (p2pe d ! p)), size "1"] << (
+				option !!! [ value "UNCHANGED" ] << "Mark patch as..." +++
 				option !!! [ value "OBSOLETE" ] << "Obsolete" +++
 				option !!! [ value "REJECTED" ] << "Rejected"
 				) +++
