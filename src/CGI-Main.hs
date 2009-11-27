@@ -43,7 +43,7 @@ main = do
 	 then output $ cgiMessagePage True "No changed entered"
 	 else do errors <- catMaybes <$> mapM (applyBundleChange config) bundleChanges
 	         if null errors
-		  then output $ cgiMessagePage False $ "Sucessfully updated" ++
+		  then output $ cgiMessagePage False $ "Sucessfully updated " ++
 			show (length bundleChanges) ++ " patch bundle state" ++
 			(if (length bundleChanges) == 1 then "" else "s")++ ". " ++
 			"The DarcsWatch web pages are generated " ++
