@@ -91,7 +91,7 @@ generateOutput config patchNew = do
                         M.insertWith (maxBy B.length) (normalizeAuthor (piAuthor p)) (piAuthor p)
                         ) u2rn patches
                 let p2pe' = foldr (\(p,d) ->
-                        let pe = PatchExtras d context bundleFileName history
+                        let pe = PatchExtras d context bundleHash bundleFileName history
                         -- The patch with the smaller context is the more useful
                         in  M.insertWith (minBy (length.peContext)) p pe
                         ) p2pe patches
