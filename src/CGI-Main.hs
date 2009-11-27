@@ -36,7 +36,7 @@ main = do
 	
 	runCGI $ handleErrors $ do
 
-	setHeader "Content-type" "text/html; charset=UTF-8"
+	--setHeader "Content-type" "text/html; charset=UTF-8"
 
 	bundleChanges <- getBundleChanges <$> getInputs
 	if null bundleChanges
