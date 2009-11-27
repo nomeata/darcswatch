@@ -70,6 +70,7 @@ Executable darcswatch-generate
                         , process
                         , mime-string
                         , regex-compat
+                        , cgi
 
 Executable darcswatch-import-mail
         Main-Is:        ImportMail-Main.hs
@@ -89,6 +90,10 @@ Executable darcswatch-pull-repos
 
 Executable darcswatch-update-data
         Main-Is:        UpdateRepoData-Main.hs
+        hs-source-dirs: src
+
+Executable darcswatch-cgi
+        Main-Is:        CGI-Main.hs
         hs-source-dirs: src
 
 source-repository head
