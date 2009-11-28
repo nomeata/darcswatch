@@ -60,4 +60,4 @@ main = do
         putStrLn "Reading configuration..."
         config <- read `fmap` readFile (confdir ++ "config")
 
-	lockRestart (cOutput config) patchNew or True (generateOutput config)
+	lockRestart (cData config) patchNew or True (generateOutput config)

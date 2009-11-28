@@ -58,7 +58,6 @@ main = do
         putStrLn "Reading configuration..."
         config <- read `fmap` readFile (confdir </> "config")
 
-	--lockRestart (cOutput config) patchNew or True (do_work config)
 	new <- pullRepos config
 	when new $ do
 		lockRestart (cData config) False or True $ \new -> do
