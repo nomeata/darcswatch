@@ -62,6 +62,8 @@ addBundleListEntry bl bh = tell (BundleListMap (M.singleton bl (S.singleton bh))
 forBundleListMap :: Monad m => BundleListMap -> (BundleList -> [BundleHash] -> m ()) -> m ()
 forBundleListMap (BundleListMap m) act = mapM_ (\(bl,bhs) -> act bl (S.toList bhs)) $ M.toList m
 
+bundleListMapKeys (BundleListMap m) = M.keys m
+
 updateRepoData config = do
 	let readRepo rep = do
 		inv <- readRepository (cData config)  rep
@@ -109,6 +111,7 @@ updateRepoData config = do
 	putStrLn $ "Writing bundle lists..."
 	forBundleListMap bundleHashLists $ \bl bh -> do
 		writeBundleList (cData config) bl bh	
+	setBundleListList (cData config) (bundleListMapKeys bundleHashLists)
 
 -- Clonsider patches as applicable to a repository when either
 --  * all its context is in the repository

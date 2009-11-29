@@ -104,6 +104,14 @@ getRepositoryInfo path repo = do
 	if ex then read . B.unpack <$> B.readFile infoFile
 	      else return (RepositoryInfo Nothing Nothing)
 
+setBundleListList :: StorageConf -> [BundleList] -> IO ()
+setBundleListList path bll = do
+	writeFile (bundleListDir path </> "index")  (show bll)
+
+getBundleListList :: StorageConf -> IO [BundleList]
+getBundleListList path = do
+	read <$> B.unpack <$> B.readFile (bundleListDir path </> "index")
+
 writeBundleList :: StorageConf -> BundleList -> [BundleHash] -> IO ()
 writeBundleList path bl blist = do
 	let filename = bundleListFilename path bl
