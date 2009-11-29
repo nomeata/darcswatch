@@ -28,6 +28,7 @@ module HTML
 	, patchDiffFile
 	, normalizeAuthor
 	, bundleInfoFilter
+	, maxState
 	) where
 
 import Text.XHtml hiding ((!))
