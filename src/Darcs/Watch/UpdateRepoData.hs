@@ -41,12 +41,26 @@ import Data.ByteString.Char8 (ByteString)
 import Data.Digest.OpenSSL.MD5 (md5sum)
 import Data.Maybe
 import System.FilePath
+import Control.Monad.Writer
 
 -- Darcs stuff
 import Darcs
 import Darcs.Watch.Storage
 import Darcs.Watch.Data
 import Darcs.Watch.Roundup
+import HTML (normalizeAuthor)
+
+newtype BundleListMap = BundleListMap { unBundleListMap :: M.Map BundleList (S.Set BundleHash) }
+
+instance Monoid BundleListMap where
+	mempty = BundleListMap M.empty
+	mappend (BundleListMap m1) (BundleListMap m2) =
+		BundleListMap (M.unionWith (S.union) m1 m2)
+
+addBundleListEntry bl bh = tell (BundleListMap (M.singleton bl (S.singleton bh)))
+
+forBundleListMap :: Monad m => BundleListMap -> (BundleList -> [BundleHash] -> m ()) -> m ()
+forBundleListMap (BundleListMap m) act = mapM_ (\(bl,bhs) -> act bl (S.toList bhs)) $ M.toList m
 
 updateRepoData config = do
 	let readRepo rep = do
@@ -55,22 +69,26 @@ updateRepoData config = do
 	repos <- mapM readRepo (cRepositories config)
 
 	bundleHashes <- listBundles (cData config)
-	forM_ bundleHashes $ \bundleHash -> do
-		bundle <- getBundle (cData config) bundleHash
-		history <- getBundleHistory (cData config) bundleHash
+	putStrLn "Detecing bundle state changes..."
+	bundleHashLists <- execWriterT $ forM_ bundleHashes $ \bundleHash -> do
+		bundle  <- liftIO $ getBundle (cData config) bundleHash
+		history <- liftIO $ getBundleHistory (cData config) bundleHash
 
 		let context = snd bundle
 		let patches = map fst (fst bundle)
+
+		forM patches $ \pi -> do
+			let email = B.unpack (normalizeAuthor (piAuthor pi))
+			addBundleListEntry (AuthorBundleList email) bundleHash
 		
 		forM repos $ \(repo, inv) -> do
 			let statusQuoAnte = stateOfRepo history repo
-			
-			let statusQuo = 
+			    statusQuo = 
 				if all (`S.member` inv) patches then Applied
 				else if applicable inv context then Applicable
 				else New
 
-			when (statusQuo /= statusQuoAnte) $ do
+			when (statusQuo /= statusQuoAnte) $ liftIO $ do
 				putStrLn $ "Marking bundle " ++ bundleHash ++
 			  		  " as " ++ show statusQuo ++
 					  " with regard to " ++ repo
@@ -84,6 +102,13 @@ updateRepoData config = do
 					Just url -> 
 					  	tellRoundup config url repo bundle statusQuo
 
+			when (statusQuo /= New) $
+				addBundleListEntry (RepositoryBundleList repo) bundleHash
+
+	
+	putStrLn $ "Writing bundle lists..."
+	forBundleListMap bundleHashLists $ \bl bh -> do
+		writeBundleList (cData config) bl bh	
 
 -- Clonsider patches as applicable to a repository when either
 --  * all its context is in the repository
