@@ -62,11 +62,10 @@ getBundleChanges = mapMaybe $ \(n,v) ->
 
 applyBundleChange config openID (bhash,newState) = do
 	history <- liftIO $ getBundleHistory (cData config) bhash
-	let explicit_state = maximum $ New : map (\(_,_,s) -> s) history
-	if newState <= explicit_state then
+	if newState <= maxState history then
 		return $ Just $
 			"Can not set patch bundle state to " ++ show newState
-			++", "++ "already in state " ++ show explicit_state ++ "!"
+			++", "++ "already in state " ++ show (maxState history) ++ "!"
 	  else do
 	  	liftIO $ changeBundleState (cData config) bhash (ViaWeb openID) newState
 		return Nothing

@@ -18,12 +18,10 @@ Boston, MA 02110-1301, USA.
 -}
 
 module HTML 
-	( ResultData(ResultData)
-	, PatchExtras(..)
+	( BundleInfo(..)
 	, mainPage
 	, userPage
 	, repoPage
-	, unmatchedPage
 	, cgiMessagePage
 	, userFile
 	, repoFile
@@ -59,32 +57,22 @@ infixl 0 `on`
 on :: (b -> b -> c) -> (a -> b) -> a -> a -> c
 (*) `on` f = \x y -> f x * f y
 
-data ResultData = ResultData
-	{ p2r ::  M.Map PatchInfo     (S.Set RepositoryURL)
-	, r2p ::  M.Map RepositoryURL (S.Set PatchInfo)
-	, u2p ::  M.Map ByteString    (S.Set PatchInfo)
-	, p2pe::  M.Map PatchInfo     (PatchExtras)
-	, p2pr :: M.Map PatchInfo     (S.Set String)
-	, r2mp :: M.Map RepositoryURL (S.Set PatchInfo)
-	, r2ri :: M.Map RepositoryURL (RepositoryInfo)
-	, unmatched :: (S.Set PatchInfo)
-	, date :: CalendarTime
-	, u2rn :: M.Map ByteString  ByteString
-	} deriving (Show)
+data BundleInfo = BundleInfo
+	{ biBundleHash :: BundleHash
+	, biBundle :: PatchBundle
+	, biFileName :: FilePath
+	, biHistory :: [BundleHistory]
+	}
+	deriving (Eq)
 
-data PatchExtras = PatchExtras
-	{ peDiff :: ByteString
-	, peContext :: [PatchInfo]
-	, peBundleHash :: BundleHash
-	, peBundleFile :: FilePath
-	, peStateHistory :: [BundleHistory]
-	} deriving (Show)
+instance Ord BundleInfo where
+	compare = compare `on` (piDate.fst.head.fst.biBundle)
 
-
-users d = M.keys (u2p d)
-repos d = M.keys (r2p d)
-
-mainPage d = showHtml $
+mainPage date
+         numPatches
+	 repoData
+	 authorData
+	= showHtml $
    header << (
    	thetitle << "DarcsWatch overview" +++
 	myHeader 
@@ -98,17 +86,33 @@ mainPage d = showHtml $
 	h2 << "Statistics" +++
 	p << stringToHtml (
 		printf "Tracking %d repositories and %d patches submitted by %d users"
-		(M.size (r2p d)) (M.size (p2pe d)) (M.size (u2p d))
+		(length repoData) (numPatches::Integer) (length authorData)
 		) +++
 	h2 << "Listing by user" +++ 
-	unordList (map (\u -> hotlink (userFile u) << u2rn d ! u +++ userStats u d) (users d)) +++
+	unordList (map userLine authorData) +++
 	h2 << "Listing by repository" +++ 
-	unordList ( map (\r -> hotlink (repoFile r) << r +++ repoStats r d) (repos d)
-			++ [hotlink "unmatched.html" << "Unmatched patches"
-			    +++ " "+++  show (S.size (unmatched d)) +++ " patches" ]
-		  ) +++
-	footer (Just (date d))
+	unordList (map repoLine repoData) +++
+	footer (Just date)
 	)
+  where userLine (u, tracked, unapplied, obsolete, rejected) =
+ 		hotlink (userFile (B.pack u)) << u +++ -- TODO realname
+		" " ++
+		show tracked +++ 
+		" tracked patches, "+++
+		count Applicable "unapplied" unapplied +++
+		count Obsoleted "obsolete" obsolete +++
+		count Rejected "rejected" rejected
+        repoLine (r, inventory, tracked, applicable, obsolete, rejected) =
+ 		hotlink (repoFile r) << r +++
+		" " ++
+		show tracked +++ 
+		" patches in inventory, "+++
+		count Applied "tracked" tracked +++
+		count Applicable "applicable" applicable +++
+		count Obsoleted "obsolete" obsolete +++
+		count Rejected "rejected" rejected
+	count s t 0 = noHtml
+	count s t n = inColor (stateColor s) << (show n +++ " " +++ t) +++ " "
 
 footer mDate = 
 	p !!! [thestyle "font-size:80%"] << (
@@ -143,25 +147,24 @@ myHeader   = script !!! [thetype "text/javascript", src "/javascript/jquery/jque
 	     	\span[title] { border-bottom: dotted 1px black; } \
 		\"
 
-
-userPage d u = showHtml $
+userPage date u bundleInfos = showHtml $
    header << (
-   	thetitle << ("DarcsWatch overview for " +++ u2rn d ! u) +++
+   	thetitle << ("DarcsWatch overview for " +++ u) +++
 	myHeader
 	) +++
    body << form !!! [ method "GET", action "cgi"] << (
-	h1 << ("DarcsWatch overview for " +++ u2rn d ! u) +++
+	h1 << ("DarcsWatch overview for " +++ u) +++ -- TODO: Mapping to real name
 	p << hotlink "." << "Return to main page" +++
-	patchList d (sps !!!! Applicable) "Unapplied patches" True +++
-	patchList d (sps !!!! New) "Unmatched patches" True +++
-	patchList d (sps !!!! Rejected) "Rejected patches" True +++
-	patchList d (sps !!!! Obsoleted) "Obsoleted patches" True +++
-	patchList d (sps !!!! Applied) "Applied patches" True +++
-	footer (Just (date d))
+	bundleList "Unapplied patch bundles" (bundleInfoFilter Applicable bundleInfos) +++ 
+	bundleList "Unmatched patch bundles" (bundleInfoFilter New bundleInfos) +++ 
+	bundleList "Applied patch bundles" (bundleInfoFilter Applied bundleInfos) +++ 
+	bundleList "Obsoleted patch bundles" (bundleInfoFilter Obsoleted bundleInfos) +++ 
+	bundleList "Rejected patch bundles" (bundleInfoFilter Rejected bundleInfos) +++ 
+	footer (Just date)
 	)
-  where (ps, sps) = userData u d
 
-repoPage d r = showHtml $
+
+repoPage date r repoInfo bundleInfos = showHtml $
    header << (
    	thetitle << ("DarcsWatch overview for " +++ r) +++
 	myHeader
@@ -169,20 +172,27 @@ repoPage d r = showHtml $
    body << form !!! [ method "GET", action "cgi"] << (
 	h1 << ("DarcsWatch overview for " +++ r) +++
 	p << hotlink "." << "Return to main page" +++
-	patchList d (sps !!!! Applicable) "Unapplied patches" False +++
-	patchList d (sps !!!! Applied) "Applied patches" False +++
-	patchList d (sps !!!! Obsoleted) "Obsoleted patches" False +++
-	patchList d (sps !!!! Rejected) "Rejected patches" True +++
+	bundleList "Unapplied patch bundles" (bundleInfoFilter Applicable bundleInfos) +++ 
+	bundleList "Applied patch bundles" (bundleInfoFilter Applied bundleInfos) +++ 
+	bundleList "Obsoleted patch bundles" (bundleInfoFilter Obsoleted bundleInfos) +++ 
+	bundleList "Rejected patch bundles" (bundleInfoFilter Rejected bundleInfos) +++ 
 	thediv << (
 		"Last change in repository at " +++
-		maybe (toHtml "No idea when") toHtml (lastUpdate (r2ri d ! r)) +++
+		maybe (toHtml "No idea when") toHtml (lastUpdate repoInfo) +++
 		", last check of repository at " +++
-		maybe (toHtml "No idea when") toHtml (lastCheck (r2ri d ! r)) +++ "."
+		maybe (toHtml "No idea when") toHtml (lastCheck repoInfo) +++ "."
 	) +++
-	footer (Just (date d))
+	footer (Just date)
 	)
-  where (ps, sps) = repoData r d
- 
+
+bundleList title [] = noHtml
+bundleList title list = 
+	h2 << title +++
+	unordList (map bundleView list)
+
+bundleInfoFilter state = sort . filter (\bi -> state == maxState (biHistory bi))
+
+{-
 unmatchedPage d = showHtml $
    header << (
    	thetitle << ("DarcsWatch overview, unmatched patches") +++
@@ -194,6 +204,7 @@ unmatchedPage d = showHtml $
 	patchList d (S.toList (unmatched d)) "Unmatched patches" False +++
 	footer (Just (date d))
 	)
+-}
 
 cgiMessagePage isError msg = showHtml $
    header << (
@@ -210,13 +221,10 @@ cgiMessagePage isError msg = showHtml $
 	footer Nothing
 	)
 
-patchList d [] title userCentric = h5 << ("No "++title)
-patchList d ps title userCentric = 
-	h2 << title +++ (unordList $ map (patchView d userCentric) ps)
-
-patchHistoryView d p = 
- 	unordList $ flip map (reverse $ peStateHistory $ p2pe d ! p) $ \(date,source,state) ->
-			date +++ ": " +++ showState state +++ " " +++ showSource source
+patchHistoryView history = unordList $
+	map (\(date,source,state) ->
+		date +++ ": " +++ showState state +++ " " +++ showSource source)
+	    (reverse history)
 
 showSource (ViaRepository repo) = " in repo " +++ hotlink (repoFile repo) << repo
 showSource (ViaBugtracker url) = " in bug tracker ticket " +++ hotlink url << url
@@ -238,34 +246,26 @@ showSource (ViaEMail from to subject mmid) = " via " +++
 
 showSource ManualImport = toHtml "via a manual import"
 
-patchView d userCentric p =
-	piDate p +++ ": " +++ strong << (
-		(if piInverted p then stringToHtml "UNDO: " else noHtml) +++
-		piName p
-		) +++
-	(if userCentric
-	 then	noHtml
-	 else   (	" " +++ small << (
-	 	      " by " +++ hotlink (userFile (piAuthor p)) << piAuthor p
-		      )
-	 	)
+bundleView (BundleInfo bundleHash (ps,ctx) bundleFileName history) = 
+	p << (strong << "Contents:" +++
+	     " (" +++
+	     (if length ps == 1
+	      then "1 patch"
+	      else show (length ps) ++ " patches" ) +++
+	     ")"
 	) +++
-	pre << B.unlines (piLog p) +++
-	patchHistoryView d p +++
-	actions +++
-	thediv !!! [identifier diffId, thestyle "display:none"] << pre noHtml
-  where pid = patchBasename p
-	diffShowerId = "diffshower_"++pid
-	diffId = "diff_"++pid
+	unordList (map patchView (map fst ps)) +++
+	p << (strong << "History:") +++
+	patchHistoryView history +++
+	actions
+  where
 	actions = paragraph << (
 			strong << "Actions: " +++
-			hotlink (pid ++ ".dpatch") << "Download .dpatch" +++
+			hotlink bundleFileName << "Download .dpatch" +++
 			" "+++ 
-			anchor !!! [identifier diffShowerId, theclass "diffshower", href "javascript:"]
-				<< "Show/Hide diff" +++
-			if maximum (New : (map (\(_,_,s) -> s) $ peStateHistory $ p2pe d ! p)) <= Applicable
+			if maxState history <= Applicable
 			then	" "+++
-				select !!! [ name ("state-" ++ peBundleHash (p2pe d ! p)), size "1"] << (
+				select !!! [ name ("state-" ++ bundleHash), size "1"] << (
 					option !!! [ value "UNCHANGED" ] << "Mark patch as..." +++
 					option !!! [ value "OBSOLETE" ] << "Obsolete" +++
 					option !!! [ value "REJECTED" ] << "Rejected"
@@ -273,18 +273,44 @@ patchView d userCentric p =
 				submit "submit" "Submit"
 			else noHtml
 			)
-		
+
+patchView p =
+	piDate p +++ ": " +++ strong << (
+		(if piInverted p then stringToHtml "UNDO: " else noHtml) +++
+		piName p
+		) +++
+	" " +++
+	small << (
+		" by " +++
+		hotlink (userFile (piAuthor p)) << piAuthor p +++
+		" " +++
+		diffShower
+	) +++
+	(if null (stripIgnorethis (piLog p)) then noHtml else pre << B.unlines (piLog p)) +++
+	thediv !!! [identifier diffId, thestyle "display:none"] << pre noHtml
+  where pid = patchBasename p
+	diffShowerId = "diffshower_"++pid
+	diffId = "diff_"++pid
+	diffShower = anchor
+		!!! [identifier diffShowerId, theclass "diffshower", href "javascript:"]
+		<< "Show/Hide diff"
+	stripIgnorethis [] = []
+	stripIgnorethis (x:xs) = if B.pack "Ignore-this:" `B.isPrefixOf` x 
+	                         then xs else (x:xs)
+
+maxState history = maximum $ New : map (\(_,_,s) -> s) history
+
+{-
 state d p r | p `S.member` ps                          = Applied
-            | ip `S.member` ps                         = explicit_state
+            | ip `S.member` ps                         = maxState history
 	    | amend_obsoleted                          = Obsoleted
             | ip `S.member` subs && not (piInverted p) = Obsoleted
-            | otherwise                                = explicit_state
+            | otherwise                                = maxState history
   where context = peContext (p2pe d ! p)
 	history = peStateHistory (p2pe d ! p)
   	ps = r2p d ! r
         ip = inversePatch p
 	subs = M.keysSet (p2pe d)
-	explicit_state = maximum $ New : map (\(_,_,s) -> s) history
 	amend_obsoleted = any (`laterThan` p) $ S.toList (u2p d ! (normalizeAuthor (piAuthor p)))
 
 p1 `laterThan` p2 =    piAuthor p1 == piAuthor p2
@@ -292,6 +318,7 @@ p1 `laterThan` p2 =    piAuthor p1 == piAuthor p2
 		    && piLog p1    == piLog p2
 		    && piInverted p1 == piInverted p2
 		    && piDate p1   > piDate p2
+-}
 
 showState New = "Seen bundle"
 showState Applicable = "Not yet fully applied bundle"
@@ -307,13 +334,10 @@ stateColor Applied = "green"
 
 inColor c = thespan !!! [thestyle ("color:"++c)]
 
-viewState d p r = inColor (stateColor s) << (showState s)
-  where	s = state d p r
-
 (!!!) :: ADDATTRS a => a -> [HtmlAttr] -> a
 (!!!) = (Text.XHtml.!)	    
 
-
+{-
 userStats u d = " " +++
 	show (length ps) +++ 
 	" tracked patches, "+++
@@ -349,6 +373,7 @@ userData u d = (ps, sorted)
 	state' p | S.null repos = New
 	         | otherwise    = S.findMax (S.map (state d p) repos)
 	  where repos = p2pr d !!!! p
+-}
 
 userFile u = "user_" ++ B.unpack (normalizeAuthor u) ++ ".html"
 repoFile r = "repo_" ++ safeName r ++ ".html"

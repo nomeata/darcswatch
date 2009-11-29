@@ -36,6 +36,9 @@ import MultiMap ((!!!!))
 import Data.Char
 import Data.List
 import Data.Time
+import Data.Digest.OpenSSL.MD5 (md5sum)
+import Data.Maybe
+import Data.Monoid
 import System.FilePath
 
 import qualified Data.ByteString.Char8 as B
@@ -48,9 +51,6 @@ import Darcs.Watch.Data
 -- Web ouput
 import HTML
 
-import Data.Digest.OpenSSL.MD5 (md5sum)
-import Data.Maybe
-
 generateOutput config patchNew = do
 	nowStamp <- getCurrentTime
 	let outputStampFile = cData config </> "output.stamp"
@@ -58,6 +58,50 @@ generateOutput config patchNew = do
 	lastStamp <- if ex then read . B.unpack <$> B.readFile outputStampFile
 	                   else return $ UTCTime (ModifiedJulianDay 0) 0
 
+	date <- getClockTime >>= toCalendarTime
+
+	putStrLn "Reading bundle list lists.."
+	bundleLists <- getBundleListList (cData config)
+	-- Split bundle lists by type
+	let (repos, authors) = mconcat $ map (\bl -> case bl of
+		RepositoryBundleList repo -> ([repo],[])
+		AuthorBundleList author -> ([],[author])
+		_ -> mempty) bundleLists
+	
+	let getBundleInfos bundleHash = do
+		bundle <- getBundle (cData config) bundleHash
+		let bundleFileName = getBundleFileName (cData config) bundleHash
+		history <- getBundleHistory (cData config) bundleHash
+		
+		return (BundleInfo bundleHash bundle bundleFileName history)
+
+        putStrLn "Writing output (repo pages)..."
+        forM_ repos $ \r -> do
+		(bundleHashes,_) <- readBundleList (cData config) (RepositoryBundleList r)
+		bundleInfos <- mapM getBundleInfos bundleHashes
+		repoInfo <- getRepositoryInfo (cData config) r
+                writeFile (cOutput config ++ "/" ++ repoFile r) $
+			repoPage date r repoInfo bundleInfos
+
+        putStrLn "Writing output (user pages)..."
+        forM_ authors $ \u -> do
+		(bundleHashes,_) <- readBundleList (cData config) (AuthorBundleList u)
+		bundleInfos <- mapM getBundleInfos bundleHashes
+                writeFile (cOutput config ++ "/" ++ userFile (B.pack u)) $
+			userPage date u bundleInfos
+        
+	putStrLn "Writing output (main page)..."
+	repoData <- forM repos $ \r -> do
+		-- (bundleHashes,_) <- readBundleList (cData config) (RepositoryBundleList r)
+		-- bundleInfos <- mapM getBundleInfos bundleHashes
+		return (r, -1, -1, -1, -1, -1)
+	userData <- forM authors $ \u -> do
+		-- (bundleHashes,_) <- readBundleList (cData config) (RepositoryBundleList r)
+		-- bundleInfos <- mapM getBundleInfos bundleHashes
+		return (u, -1, -1, -1, -1)
+        writeFile (cOutput config ++ "/index.html") $
+		mainPage date (-1) repoData userData
+{-
         putStrLn "Reading repositories..."
 	let loadInv rep = do
                 putStr $ "Reading " ++ rep ++ " ... "
@@ -170,6 +214,8 @@ generateOutput config patchNew = do
                         catch (removeFile link) (const (return ()))
                         createSymbolicLink (peBundleFile pe) link
         mapM_ patchLink $ M.toList p2pe
+-}
+
 
 	B.writeFile outputStampFile (B.pack (show nowStamp))
 

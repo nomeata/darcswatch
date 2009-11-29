@@ -44,7 +44,7 @@ data Source
 	| ViaBugtracker String -- ^ URL
 	| ViaWeb String -- ^ OpenID Username
 	| ViaRepository RepositoryURL -- ^ Repository-URL
-	deriving (Read, Show)
+	deriving (Read, Show, Eq, Ord)
 
 type RepositoryURL = String
 
