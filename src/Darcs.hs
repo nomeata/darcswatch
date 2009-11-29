@@ -17,6 +17,7 @@ the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 Boston, MA 02110-1301, USA.
 -}
 
+{-# LANGUAGE BangPatterns #-}
 module Darcs
 	( PatchInfo(..)
 	, PatchBundle
@@ -139,16 +140,17 @@ readPatchInfo s =
     if B.null s' || B.head s' /= '[' -- ]
     then Nothing
     else case breakOn '\n' (B.tail s') of
-         (name,s') | B.null s' -> error $ "Broken file (1) " ++ show (B.unpack s)
-         (name,s') | otherwise -> 
+         (!name,s') | B.null s' -> error $ "Broken file (1) " ++ show (B.unpack s)
+                    | otherwise -> 
              case breakOn '*' $ B.tail s' of
-             (author,s2) | B.null s2 -> error "Broken file (2)"
+             (!author,s2) | B.null s2 -> error "Broken file (2)"
 	                 | otherwise -> 
                  case B.break (\c->c==']'||c=='\n') $ B.drop 2 s2 of
-                 (ct,s''') ->
-                     do (log, s4) <- lines_starting_with_ending_with ' ' ']' $ dn s'''
+                 (!ct,!s''') ->
+                     do (!log, !s4) <- lines_starting_with_ending_with ' ' ']' $ dn s'''
                         let not_star = B.index s2 1 /= '*'
-                        return $ (PatchInfo { piDate = ct
+			not_star `seq` return 
+				( PatchInfo { piDate = ct
                                             , piName = name
                                             , piAuthor = author
                                             , piLog = log
@@ -167,12 +169,13 @@ lines_starting_with_ending_with st en s = lswew s
     else if B.head x /= st
          then Nothing
          else case breakOn '\n' $ B.tail x of
-              (l,r) -> case lswew $ B.tail r of
-                       Just (ls,r') -> Just (l:ls,r')
+              (!l,r) -> case lswew $ B.tail r of
+                       Just (!ls,r') -> Just (l:ls,r')
                        Nothing ->
                            case breakLast en l of
-                           Just (l2,_) ->
-                               Just ([l2],  B.drop (B.length l2+2) x)
+                           Just (!l2,_) ->
+			   	let rest = B.drop (B.length l2+2) x in
+                           	rest `seq` Just ([l2],  B.drop (B.length l2+2) x)
                            Nothing -> Nothing
 
 
