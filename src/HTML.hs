@@ -70,6 +70,7 @@ instance Ord BundleInfo where
 	compare = compare `on` (map (piDate.fst) . fst . biBundle)
 
 mainPage date
+	 nameMapping
          patchCount
 	 bundleCount
 	 repoData
@@ -97,7 +98,7 @@ mainPage date
 	footer (Just date)
 	)
   where userLine (u, tracked, unapplied, obsolete, rejected) =
- 		hotlink (userFile u) << u +++ -- TODO realname
+ 		hotlink (userFile u) << M.findWithDefault u u nameMapping +++
 		" " ++
 		show tracked +++ 
 		" tracked patches, "+++
@@ -149,24 +150,24 @@ myHeader   = script !!! [thetype "text/javascript", src "/javascript/jquery/jque
 	     	\span[title] { border-bottom: dotted 1px black; } \
 		\"
 
-userPage date u bundleInfos = showHtml $
+userPage date nameMapping u bundleInfos = showHtml $
    header << (
    	thetitle << ("DarcsWatch overview for " +++ u) +++
 	myHeader
 	) +++
    body << form !!! [ method "GET", action "cgi"] << (
-	h1 << ("DarcsWatch overview for " +++ u) +++ -- TODO: Mapping to real name
+	h1 << ("DarcsWatch overview for " +++ M.findWithDefault u u nameMapping) +++
 	p << hotlink "." << "Return to main page" +++
-	bundleList "Unapplied patch bundles" (bundleInfoFilter Applicable bundleInfos) +++ 
-	bundleList "Unmatched patch bundles" (bundleInfoFilter New bundleInfos) +++ 
-	bundleList "Applied patch bundles" (bundleInfoFilter Applied bundleInfos) +++ 
-	bundleList "Obsoleted patch bundles" (bundleInfoFilter Obsoleted bundleInfos) +++ 
-	bundleList "Rejected patch bundles" (bundleInfoFilter Rejected bundleInfos) +++ 
+	bundleList nameMapping "Unapplied patch bundles" (bundleInfoFilter Applicable bundleInfos) +++ 
+	bundleList nameMapping "Unmatched patch bundles" (bundleInfoFilter New bundleInfos) +++ 
+	bundleList nameMapping "Applied patch bundles" (bundleInfoFilter Applied bundleInfos) +++ 
+	bundleList nameMapping "Obsoleted patch bundles" (bundleInfoFilter Obsoleted bundleInfos) +++ 
+	bundleList nameMapping "Rejected patch bundles" (bundleInfoFilter Rejected bundleInfos) +++ 
 	footer (Just date)
 	)
 
 
-repoPage date r repoInfo bundleInfos = showHtml $
+repoPage date nameMapping r repoInfo bundleInfos = showHtml $
    header << (
    	thetitle << ("DarcsWatch overview for " +++ r) +++
 	myHeader
@@ -174,10 +175,10 @@ repoPage date r repoInfo bundleInfos = showHtml $
    body << form !!! [ method "GET", action "cgi"] << (
 	h1 << ("DarcsWatch overview for " +++ r) +++
 	p << hotlink "." << "Return to main page" +++
-	bundleList "Unapplied patch bundles" (bundleInfoFilter Applicable bundleInfos) +++ 
-	bundleList "Applied patch bundles" (bundleInfoFilter Applied bundleInfos) +++ 
-	bundleList "Obsoleted patch bundles" (bundleInfoFilter Obsoleted bundleInfos) +++ 
-	bundleList "Rejected patch bundles" (bundleInfoFilter Rejected bundleInfos) +++ 
+	bundleList nameMapping "Unapplied patch bundles" (bundleInfoFilter Applicable bundleInfos) +++ 
+	bundleList nameMapping "Applied patch bundles" (bundleInfoFilter Applied bundleInfos) +++ 
+	bundleList nameMapping "Obsoleted patch bundles" (bundleInfoFilter Obsoleted bundleInfos) +++ 
+	bundleList nameMapping "Rejected patch bundles" (bundleInfoFilter Rejected bundleInfos) +++ 
 	thediv << (
 		"Last change in repository at " +++
 		maybe (toHtml "No idea when") toHtml (lastUpdate repoInfo) +++
@@ -187,10 +188,10 @@ repoPage date r repoInfo bundleInfos = showHtml $
 	footer (Just date)
 	)
 
-bundleList title [] = noHtml
-bundleList title list = 
+bundleList nameMapping title [] = noHtml
+bundleList nameMapping title list = 
 	h2 << title +++
-	unordList (map bundleView list)
+	unordList (map (bundleView nameMapping) list)
 
 bundleInfoFilter state = sort . filter (\bi -> state == maxState (biHistory bi))
 
@@ -248,7 +249,7 @@ showSource (ViaEMail from to subject mmid) = " via " +++
 
 showSource ManualImport = toHtml "via a manual import"
 
-bundleView (BundleInfo bundleHash (ps,ctx) bundleFileName history) = 
+bundleView nameMapping (BundleInfo bundleHash (ps,ctx) bundleFileName history) = 
 	p << (strong << "Contents:" +++
 	     " (" +++
 	     (if length ps == 1
@@ -256,7 +257,7 @@ bundleView (BundleInfo bundleHash (ps,ctx) bundleFileName history) =
 	      else show (length ps) ++ " patches" ) +++
 	     ")"
 	) +++
-	unordList (map patchView (map fst ps)) +++
+	unordList (map (patchView nameMapping) (map fst ps)) +++
 	p << (strong << "History:") +++
 	patchHistoryView history +++
 	actions
@@ -276,7 +277,7 @@ bundleView (BundleInfo bundleHash (ps,ctx) bundleFileName history) =
 			else noHtml
 			)
 
-patchView p =
+patchView nameMapping p =
 	piDate p +++ ": " +++ strong << (
 		(if piInverted p then stringToHtml "UNDO: " else noHtml) +++
 		piName p
@@ -284,7 +285,9 @@ patchView p =
 	" " +++
 	small << (
 		" by " +++
-		hotlink (userFile (B.unpack (piAuthor p))) << piAuthor p +++
+		let u = B.unpack (piAuthor p) in
+		hotlink (userFile u) <<
+			M.findWithDefault u u nameMapping +++
 		" " +++
 		diffShower
 	) +++

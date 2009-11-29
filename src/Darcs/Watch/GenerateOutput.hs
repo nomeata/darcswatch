@@ -60,6 +60,9 @@ generateOutput config patchNew = do
 
 	date <- getClockTime >>= toCalendarTime
 
+	putStrLn "Reading name mapping list..."
+	nameMapping <- readNameMapping (cData config)
+
 	putStrLn "Reading bundle list lists.."
 	bundleLists <- getBundleListList (cData config)
 	-- Split bundle lists by type
@@ -81,14 +84,14 @@ generateOutput config patchNew = do
 		bundleInfos <- mapM getBundleInfos bundleHashes
 		repoInfo <- getRepositoryInfo (cData config) r
                 writeFile (cOutput config ++ "/" ++ repoFile r) $
-			repoPage date r repoInfo bundleInfos
+			repoPage date nameMapping r repoInfo bundleInfos
 
         putStrLn "Writing output (user pages)..."
         forM_ authors $ \u -> do
 		(bundleHashes,_) <- readBundleList (cData config) (AuthorBundleList u)
 		bundleInfos <- mapM getBundleInfos bundleHashes
-                writeFile (cOutput config ++ "/" ++ userFile (B.pack u)) $
-			userPage date u bundleInfos
+                writeFile (cOutput config ++ "/" ++ userFile u) $
+			userPage date nameMapping u bundleInfos
         
 	putStrLn "Writing output (main page)..."
 	bundleHashes <- listBundles (cData config)
@@ -118,7 +121,7 @@ generateOutput config patchNew = do
 			length $ bundleInfoFilter Rejected bundleInfos
 			)
         writeFile (cOutput config ++ "/index.html") $
-		mainPage date patchCount bundleCount repoData userData
+		mainPage date nameMapping patchCount bundleCount repoData userData
 {-
         putStrLn "Reading repositories..."
 	let loadInv rep = do
