@@ -69,7 +69,8 @@ instance Ord BundleInfo where
 	compare = compare `on` (map (piDate.fst) . fst . biBundle)
 
 mainPage date
-         numPatches
+         patchCount
+	 bundleCount
 	 repoData
 	 authorData
 	= showHtml $
@@ -85,8 +86,8 @@ mainPage date
 	       ) +++
 	h2 << "Statistics" +++
 	p << stringToHtml (
-		printf "Tracking %d repositories and %d patches submitted by %d users"
-		(length repoData) (numPatches::Integer) (length authorData)
+		printf "Tracking %d repositories and %d patches in %d bundles submitted by %d users."
+		(length repoData) (patchCount :: Int) (bundleCount :: Int) (length authorData)
 		) +++
 	h2 << "Listing by user" +++ 
 	unordList (map userLine authorData) +++

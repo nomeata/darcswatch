@@ -91,6 +91,12 @@ generateOutput config patchNew = do
 			userPage date u bundleInfos
         
 	putStrLn "Writing output (main page)..."
+	bundleHashes <- listBundles (cData config)
+	patchCount <- sum <$> forM bundleHashes (\bundleHash -> do
+		(ps,_) <- getBundle (cData config) bundleHash
+		return (length ps)
+		)
+	let bundleCount = length bundleHashes
 	repoData <- forM repos $ \r -> do
 		-- (bundleHashes,_) <- readBundleList (cData config) (RepositoryBundleList r)
 		-- bundleInfos <- mapM getBundleInfos bundleHashes
@@ -100,7 +106,7 @@ generateOutput config patchNew = do
 		-- bundleInfos <- mapM getBundleInfos bundleHashes
 		return (u, -1, -1, -1, -1)
         writeFile (cOutput config ++ "/index.html") $
-		mainPage date (-1) repoData userData
+		mainPage date patchCount bundleCount repoData userData
 {-
         putStrLn "Reading repositories..."
 	let loadInv rep = do
