@@ -24,6 +24,7 @@ import Darcs.Watch.Data
 
 import Data.Time
 import qualified Data.ByteString.Char8 as B
+import qualified Data.Map as M
 import Data.ByteString.Char8 (ByteString)
 import System.FilePath
 import System.Directory
@@ -129,12 +130,25 @@ readBundleList path bl = do
 		(stamp:bhashes) <- lines <$> B.unpack <$> B.readFile filename
 		return (bhashes, read stamp)
 
+writeNameMapping :: StorageConf -> M.Map Author String -> IO ()
+writeNameMapping path map = do
+	B.writeFile (nameMappingFilename path) $ B.pack $ show map
+
+readNameMapping :: StorageConf -> IO (M.Map Author String)
+readNameMapping path = do
+	let filename = nameMappingFilename path
+	ex <- doesFileExist filename	
+	if not ex then return M.empty else 
+		read <$> B.unpack <$> B.readFile filename
+
 bundleListFilename path (RepositoryBundleList repo) =
 	bundleListDir path </> "repo_" ++ safeName repo
 bundleListFilename path (AuthorBundleList author) =
 	bundleListDir path </> "user_" ++ safeName author
 bundleListFilename path UnmatchedBundleList =
 	bundleListDir path </> "unmatched"
+
+nameMappingFilename path = path </> "nameMapping"
 
 bundleDir :: StorageConf -> FilePath
 bundleDir path = path </> "bundles"
