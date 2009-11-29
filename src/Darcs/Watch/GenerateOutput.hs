@@ -139,18 +139,22 @@ generateOutput config patchNew = do
 	putStrLn (show (length (show (resultData))))
 	-}
 
-        putStrLn "Writing output..."
+        putStrLn "Writing output (main page)..."
         writeFile (cOutput config ++ "/index.html") (mainPage resultData)
 
+        putStrLn "Writing output (user pages)..."
         forM_ users $ \u ->
                 writeFile (cOutput config ++ "/" ++ userFile u) (userPage resultData u)
 
+        putStrLn "Writing output (repo pages)..."
         forM_ repos $ \r ->
                 writeFile (cOutput config ++ "/" ++ repoFile r) (repoPage resultData r)
 
+        putStrLn "Writing output (diffs)..."
         forM_ patches $ \p ->
                 B.writeFile (cOutput config ++ "/" ++ patchDiffFile p) (peDiff (p2pe M.! p))
 
+        putStrLn "Writing output (unmatched patches)..."
 	writeFile (cOutput config ++ "/" ++ "unmatched.html") (unmatchedPage resultData)
 
         putStrLn "Linking patches"
