@@ -76,6 +76,7 @@ Executable darcswatch-generate
                         , regex-compat
                         , cgi
                         , openid
+                        , mtl
         if flag(Static)
                 ghc-options: -static -optl-static -optl-pthread                           
 
