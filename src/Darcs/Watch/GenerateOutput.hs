@@ -74,11 +74,11 @@ generateOutput config patchNew = do
         (p2r,r2p, r2ri, new) <- foldM readInv (MM.empty, MM.empty, M.empty, patchNew) =<<
                           sequence (map loadInv (cRepositories config))
 
-        putStrLn "Reading emails..."
+        putStrLn "Discovering patch bundles..."
 	bundleHashes <- listBundles (cData config)
 
+	putStrLn $ "Reading patch bundles..."
         let sortInBundle (u2p, u2rn, p2pe, new) bundleHash = do
-                putStrLn $ "Reading mail " ++ bundleHash ++ " ..."
 		bundle <- getBundle (cData config) bundleHash
 		let bundleFileName = getBundleFileName (cData config) bundleHash
 		history <- getBundleHistory (cData config) bundleHash

@@ -71,11 +71,11 @@ getInventory :: (String -> IO ()) -> FilePath -> RepositoryURL -> IO ([PatchInfo
 getInventory write cDir repo = do
 	format <- get write False cDir formatUrl
 	case format of
-		Nothing                                     -> getInventory1 write cDir repo
-		Just (f,_) | f == B.pack "hashed\ndarcs-2\n" -> getInventory2 write cDir repo
-		           | f == B.pack "darcs-1.0\n"      -> getInventory1 write cDir repo
-		           | f == B.pack "hashed\n"         -> getInventory2 write cDir repo
-		           | otherwise                      -> error $ "Unkown repository format: " ++ B.unpack f ++ " in repo " ++ repo
+		Nothing                           -> getInventory1 write cDir repo
+		Just (f,_) | f == litHashedDarcs2 -> getInventory2 write cDir repo
+		           | f == litDarcs10      -> getInventory1 write cDir repo
+		           | f == litHashed       -> getInventory2 write cDir repo
+		           | otherwise            -> error $ "Unkown repository format: " ++ B.unpack f ++ " in repo " ++ repo
   where	formatUrl = addSlash repo ++ "_darcs/format"
 
 -- | Gets called when old style format was detected
@@ -91,7 +91,7 @@ getInventory1 write cDir repo = getInventoryFile False (addSlash repo ++ "_darcs
 	   let unzipped = maybeUnzipB body
 	   let patches = readPatchInfos unzipped
 	   case breakOn '\n' unzipped of
-	     (l1,r) | l1 == B.pack "Starting with tag:" -> do
+	     (l1,r) | l1 == litStartingWithTag -> do
 	     	let p = head patches
 		let filename = addSlash repo ++ "_darcs/inventories/" ++  patchBasename p ++ ".gz"
                 (prev_p,prev_u) <- getInventoryFile True filename
@@ -108,11 +108,11 @@ getInventory2 write cDir repo = getInventoryFile False (addSlash repo ++ "_darcs
 			write $ "Repository " ++ repo ++ " not found.\n"
 			return ([],False)
 	skip_pristine s = case breakOn '\n' s of
-	                    (l1,r) | B.pack "pristine" `B.isPrefixOf` l1 -> B.tail r
+	                    (l1,r) | litPristine `B.isPrefixOf` l1 -> B.tail r
 			    _                                            -> s
 	parseStart body = do 
 	   case breakOn '\n' (skip_pristine body) of
-	     (l,r) | l == B.pack "Starting with inventory:" -> do
+	     (l,r) | l == litStartingWithInventory -> do
 	     	 case breakOn '\n' $ B.tail r of
 		   (h,r'') -> do prev <- getInventoryFile True (addSlash repo ++ "_darcs/inventories/" ++ B.unpack h)
 		                 return (prev,B.tail r'')
@@ -277,19 +277,20 @@ get_context ps =
 filter_gpg_dashes :: ByteString -> ByteString
 filter_gpg_dashes ps =
     B.unlines $ map drop_dashes $
-    takeWhile (/= B.pack "-----END PGP SIGNED MESSAGE-----") $
+    takeWhile (/= litEndPGPSignedMessages) $
     dropWhile not_context_or_newpatches $ B.lines ps
     where drop_dashes x = if B.length x < 2 then x
-                          else if B.take 2 x == B.pack "- "
+                          else if B.take 2 x == litDashSpace
                                then B.drop 2 x
                                else x
-          not_context_or_newpatches s = (s /= B.pack "Context:") &&
-                                        (s /= B.pack "New patches:")
+          not_context_or_newpatches s = (s /= litContext) &&
+                                        (s /= litNewPatches)
 
 readDiff :: ByteString -> Maybe (ByteString, ByteString)
 readDiff s = 
 	if B.null s' then Nothing
-	else find (\(p,r) -> B.pack "\n\n" `B.isPrefixOf` r || B.pack "\n[" `B.isPrefixOf` r)
+	else find (\(p,r) -> litNewlineNewline `B.isPrefixOf` r
+ 	                  || litNewlineBracket `B.isPrefixOf` r)
                   (zip (B.inits s') (B.tails s'))
   where	s' = dropWhite s
 
@@ -300,8 +301,8 @@ patchFilename pi = patchBasename pi ++ ".gz"
 --   stores it in, without the ".gz" suffix.
 patchBasename :: PatchInfo -> String
 patchBasename pi = showIsoDateTime d++"-"++sha1_a++"-"++sha1 (B.unpack sha1_me)
-        where b2ps True = B.pack "t"
-              b2ps False = B.pack "f"
+        where b2ps True  = litT
+	      b2ps False = litF
               sha1_me = B.concat [piName pi,
                                   piAuthor pi,
                                   piDate pi,
@@ -320,3 +321,23 @@ a -:- (as,r) = (a:as,r)
 
 addSlash filename | last filename == '/' = filename
                   | otherwise            = filename ++ "/"
+
+-- Packed bytestring literators, to avoid re-packing them constantly (ghc is
+-- probably not smart enough to do it by itself 
+
+litHashedDarcs2 = B.pack "hashed\ndarcs-2\n"
+litDarcs10 = B.pack "darcs-1.0\n"
+litHashed = B.pack "hashed\n"
+litStartingWithTag = B.pack "Starting with tag:"
+litPristine = B.pack "pristine"
+litStartingWithInventory = B.pack "Starting with inventory:"
+litEndPGPSignedMessages = B.pack "-----END PGP SIGNED MESSAGE-----"
+litDashSpace = B.pack "- "
+litContext = B.pack "Context:"
+litNewPatches = B.pack "New patches:"
+litNewlineNewline = B.pack "\n\n" 
+litNewlineBracket = B.pack "\n[" 
+litT = B.pack "t"
+litF = B.pack "f"
+
+
