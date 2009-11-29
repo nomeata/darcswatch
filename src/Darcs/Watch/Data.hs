@@ -47,8 +47,9 @@ data Source
 	deriving (Read, Show, Eq, Ord)
 
 type RepositoryURL = String
+type EMailAddress = String -- ^ not use for patch authors, but subscriptions etc.
 
-type Author = String -- ^ the e-Mail-Adress of an patch author
+type Author = String -- ^ the email-address of an patch author
 
 data BundleList = RepositoryBundleList RepositoryURL
                 | AuthorBundleList Author
@@ -68,7 +69,8 @@ data DarcsWatchConfig = DarcsWatchConfig {
         cMails :: String,
 	cDarcsWatchURL :: String,
 	cDarcsWatchAddress :: String,
-	cSendRoundupMails :: Bool
+	cRepoSubscriptions :: [(RepositoryURL, EMailAddress)],
+	cSendMails :: Bool
         } deriving (Show, Read)
 
 

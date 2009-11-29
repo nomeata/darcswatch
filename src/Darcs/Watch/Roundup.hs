@@ -19,7 +19,7 @@ tellRoundup config url repo bundle status = do
 	                   ,mk_header ["To: " ++ to]
 			   ,mk_header ["Subject: " ++ subject]
 			   ] body Nothing []
-	if cSendRoundupMails config
+	if cSendMails config
 	  then do when doSend $ sendMail message
 	  else do hPutStrLn stderr "Would send this message:"
 	          hPutStrLn stderr message

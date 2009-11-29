@@ -12,5 +12,8 @@ DarcsWatchConfig
 	, cMails = "/home/jojo/projekte/programming/haskell/darcswatch/example/mails"
 	, cDarcsWatchURL = "http://darcswatch.nomeata.de/"
 	, cDarcsWatchAddress = "darcswatch@nomeata.de"
-	, cSendRoundupMails = False
+	, cRepoSubscriptions =
+		[ ("http://code.haskell.org/XMonadContrib", "xmonad@haskell.org")
+		]
+	, cSendMails = False
 	}
