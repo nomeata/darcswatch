@@ -48,6 +48,7 @@ import Darcs
 import Darcs.Watch.Storage
 import Darcs.Watch.Data
 import Darcs.Watch.Roundup
+import Darcs.Watch.Mail
 import HTML (normalizeAuthor)
 
 newtype BundleListMap = BundleListMap { unBundleListMap :: M.Map BundleList (S.Set BundleHash) }
@@ -108,6 +109,8 @@ updateRepoData config = do
 					Nothing -> return ()
 					Just url -> 
 					  	tellRoundup config url repo bundle statusQuo
+				
+				mailSubscriptions config repo bundle history statusQuo
 
 			when (statusQuo /= New) $
 				addBundleListEntry (RepositoryBundleList repo) bundleHash

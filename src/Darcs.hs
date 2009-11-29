@@ -30,6 +30,7 @@ module Darcs
 	, hash_bundle
 	, make_context
 	, scan_context
+	, make_patch
 	) where
 
 import OldDate
@@ -207,6 +208,10 @@ parseMail content = do case scan_bundle content of
 
 showPatch :: (PatchInfo,ByteString) -> Doc
 showPatch (pi,d) = showPatchInfo pi <> packedString d
+
+
+make_patch :: PatchInfo -> ByteString
+make_patch = renderPS . showPatchInfo
 
 make_bundle :: PatchBundle -> ByteString
 make_bundle bundle@(to_be_sent, common) = renderPS $
