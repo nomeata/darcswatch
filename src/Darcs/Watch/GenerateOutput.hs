@@ -60,11 +60,11 @@ generateOutput config patchNew = do
 
         putStrLn "Reading repositories..."
 	let loadInv rep = do
-                putStr $ "Reading " ++ rep ++ " ...\n"
+                putStr $ "Reading " ++ rep ++ " ... "
 		ps <- readRepository (cData config) rep
 		repoInfo <- getRepositoryInfo (cData config) rep
 		let thisNew = maybe True (>= lastStamp) (lastUpdate repoInfo)
-		putStr (if thisNew then "Repostory is new.\n" else "Repository is cached.\n")
+		putStr (if thisNew then "new data.\n" else " unchanged\n")
 		return (rep, ps, repoInfo, thisNew)
             readInv (p2r,r2p,r2ri,new) (rep, ps, repoInfo, thisNew) = do
                 let p2r' = foldr (\p -> MM.append p rep) p2r ps
