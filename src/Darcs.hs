@@ -287,10 +287,11 @@ filter_gpg_dashes ps =
                                         (s /= B.pack "New patches:")
 
 readDiff :: ByteString -> Maybe (ByteString, ByteString)
-readDiff s | B.null (dropWhite s) = Nothing
-readDiff s = find (\(p,r) -> B.pack "\n\n" `B.isPrefixOf` r || B.pack "\n[" `B.isPrefixOf` r)
+readDiff s = 
+	if B.null s' then Nothing
+	else find (\(p,r) -> B.pack "\n\n" `B.isPrefixOf` r || B.pack "\n[" `B.isPrefixOf` r)
                   (zip (B.inits s') (B.tails s'))
-	where s' = dropWhite s
+  where	s' = dropWhite s
 
 patchFilename :: PatchInfo -> String
 patchFilename pi = patchBasename pi ++ ".gz"
