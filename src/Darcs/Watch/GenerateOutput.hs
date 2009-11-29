@@ -102,26 +102,28 @@ generateOutput config patchNew = do
 		)
 	let patchCount = M.size patches
 	let bundleCount = length bundleHashes
+	let strict5 f a b c d e = ((((f $! a) $! b) $! c) $! d ) $! e
+	let strict6 f a b c d e g = (((((f $! a) $! b) $! c) $! d ) $! e) $! g
 	repoData <- forM repos $ \r -> do
 		(bundleHashes,_) <- readBundleList (cData config) (RepositoryBundleList r)
 		bundleInfos <- mapM getBundleInfos bundleHashes
 		inv <- readRepository (cData config) r
-		return (r,
-			length inv,
-			length $ bundleInfoFilter Applied bundleInfos,
-			length $ bundleInfoFilter Applicable bundleInfos,
-			length $ bundleInfoFilter Obsoleted bundleInfos,
-			length $ bundleInfoFilter Rejected bundleInfos
-			)
+		return $ strict6 (,,,,,) 
+			r
+			(length inv)
+			(length $ bundleInfoFilter Applied bundleInfos)
+			(length $ bundleInfoFilter Applicable bundleInfos)
+			(length $ bundleInfoFilter Obsoleted bundleInfos)
+			(length $ bundleInfoFilter Rejected bundleInfos)
 	userData <- forM authors $ \u -> do
 		(bundleHashes,_) <- readBundleList (cData config) (AuthorBundleList u)
 		bundleInfos <- mapM getBundleInfos bundleHashes
-		return (u,
-			length bundleInfos,
-			length $ bundleInfoFilter Applicable bundleInfos,
-			length $ bundleInfoFilter Obsoleted bundleInfos,
-			length $ bundleInfoFilter Rejected bundleInfos
-			)
+		return $ strict5 (,,,,) 
+			u
+			(length bundleInfos)
+			(length (bundleInfoFilter Applicable bundleInfos))
+			(length (bundleInfoFilter Obsoleted bundleInfos))
+			(length (bundleInfoFilter Rejected bundleInfos))
         writeFile (cOutput config ++ "/index.html") $
 		mainPage date nameMapping patchCount bundleCount repoData userData
 
