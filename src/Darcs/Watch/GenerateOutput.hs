@@ -73,8 +73,8 @@ generateOutput config patchNew = do
 	
 	let getBundleInfos bundleHash = do
 		bundle <- getBundle (cData config) bundleHash
-		let bundleFileName = getBundleFileName (cData config) bundleHash
 		history <- getBundleHistory (cData config) bundleHash
+		let bundleFileName = "bundles" </> bundleBaseName bundleHash
 		
 		return (BundleInfo bundleHash bundle bundleFileName history)
 
@@ -133,18 +133,9 @@ generateOutput config patchNew = do
 			putStrLn $ "Writing new patch file " ++ filename
 			B.writeFile filename d
 
-{-
-        putStrLn "Linking patches"
-        let patchLink (p,pe) = do
-                let link = cOutput config ++ "/" ++ patchBasename p ++ ".dpatch"
-                ex <- fileExist link
-                unless ex $ do
-                        -- There might be a broken symlink here:
-                        catch (removeFile link) (const (return ()))
-                        createSymbolicLink (peBundleFile pe) link
-        mapM_ patchLink $ M.toList p2pe
--}
-
+	ex <- doesDirectoryExist (cOutput config </> "bundles")
+	unless ex $ 
+		createSymbolicLink (bundleDir (cData config)) (cOutput config </> "bundles")
 
 	B.writeFile outputStampFile (B.pack (show nowStamp))
 

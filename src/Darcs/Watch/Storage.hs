@@ -42,7 +42,7 @@ addBundle path bundle = do
 	let dataFile = bundleDir path </> hash <.> "data"
 	ex <- doesFileExist dataFile
 	unless ex $ B.writeFile dataFile (B.pack "[]")
-	B.writeFile (bundleDir path </> hash <.> "bundle")
+	B.writeFile (bundleFileName path hash)
 	            (make_bundle bundle)
 	return hash
 
@@ -50,7 +50,7 @@ addBundle path bundle = do
 -- | Retrieves a new patch bundle from the storage
 getBundle :: StorageConf -> BundleHash -> IO PatchBundle
 getBundle path hash = 
-	either error id . scan_bundle <$> B.readFile (bundleDir path </> hash <.> "bundle")
+	either error id . scan_bundle <$> B.readFile (bundleFileName path hash)
 
 -- | Retrieves the meta information for the handle
 getBundleHistory :: StorageConf -> BundleHash -> IO [BundleHistory]
@@ -153,8 +153,11 @@ nameMappingFilename path = path </> "nameMapping"
 bundleDir :: StorageConf -> FilePath
 bundleDir path = path </> "bundles"
 
-getBundleFileName :: StorageConf -> BundleHash -> FilePath
-getBundleFileName path hash  = bundleDir path </> hash <.> "bundle"
+bundleBaseName :: BundleHash -> FilePath
+bundleBaseName hash = hash <.> "bundle"
+
+bundleFileName :: StorageConf -> BundleHash -> FilePath
+bundleFileName path hash  = bundleDir path </> bundleBaseName hash
 
 repoDir :: StorageConf -> FilePath
 repoDir path = path </> "repos"
