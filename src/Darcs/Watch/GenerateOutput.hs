@@ -95,9 +95,9 @@ generateOutput config patchNew = do
         
 	putStrLn "Writing output (main page)..."
 	bundleHashes <- listBundles (cData config)
-	patchCount <- sum <$> forM bundleHashes (\bundleHash -> do
+	patchCount <- S.size <$> mconcat <$> forM bundleHashes (\bundleHash -> do
 		(ps,_) <- getBundle (cData config) bundleHash
-		return (length ps)
+		return (S.fromList ps)
 		)
 	let bundleCount = length bundleHashes
 	repoData <- forM repos $ \r -> do
