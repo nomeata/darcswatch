@@ -292,7 +292,7 @@ patchView nameMapping p =
 		" " +++
 		diffShower
 	) +++
-	(if null (stripIgnorethis (piLog p)) then noHtml else pre << B.unlines (piLog p)) +++
+	(if null log then noHtml else pre << B.unlines log) +++
 	thediv !!! [identifier diffId, thestyle "display:none"] << pre noHtml
   where pid = patchBasename p
 	diffShowerId = "diffshower_"++pid
@@ -300,9 +300,11 @@ patchView nameMapping p =
 	diffShower = anchor
 		!!! [identifier diffShowerId, theclass "diffshower", href "javascript:"]
 		<< "Show/Hide diff"
+	log  = stripIgnorethis (piLog p)
 	stripIgnorethis [] = []
-	stripIgnorethis (x:xs) = if B.pack "Ignore-this:" `B.isPrefixOf` x 
-	                         then xs else (x:xs)
+	stripIgnorethis (x:xs) | B.pack "Ignore-this:" `B.isPrefixOf` x = stripIgnorethis xs
+		               | B.null x                               = stripIgnorethis xs
+	                       | otherwise                              = x:xs
 
 maxState history = maximum $ New : map (\(_,_,s) -> s) history
 
