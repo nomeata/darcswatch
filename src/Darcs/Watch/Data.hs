@@ -48,6 +48,8 @@ data Source
 
 type RepositoryURL = String
 
+type Author = String -- ^ the e-Mail-Adress of an patch author
+
 data RepositoryInfo = RepositoryInfo 
 	{ lastCheck :: Maybe UTCTime
 	, lastUpdate :: Maybe UTCTime
