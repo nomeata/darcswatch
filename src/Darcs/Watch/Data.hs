@@ -50,6 +50,10 @@ type RepositoryURL = String
 
 type Author = String -- ^ the e-Mail-Adress of an patch author
 
+data BundleList = RepositoryBundleList RepositoryURL
+                | AuthorBundleList Author
+		| UnmatchedBundleList
+
 data RepositoryInfo = RepositoryInfo 
 	{ lastCheck :: Maybe UTCTime
 	, lastUpdate :: Maybe UTCTime

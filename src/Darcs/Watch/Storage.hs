@@ -104,25 +104,29 @@ getRepositoryInfo path repo = do
 	if ex then read . B.unpack <$> B.readFile infoFile
 	      else return (RepositoryInfo Nothing Nothing)
 
-writeBundleList :: StorageConf -> Either RepositoryURL Author -> [BundleHash] -> IO ()
-writeBundleList path era blist = do
-	let filename = bundleListFilename path era
+writeBundleList :: StorageConf -> BundleList -> [BundleHash] -> IO ()
+writeBundleList path bl blist = do
+	let filename = bundleListFilename path bl
 	    sorted = sort blist
-	(oldList,_) <- readBundleList path era
+	(oldList,_) <- readBundleList path bl
 	when (oldList /= blist) $ do
 		now <- getCurrentTime
 		writeFile filename (unlines (show now : blist))
 
-readBundleList :: StorageConf -> Either RepositoryURL Author -> IO ([BundleHash], UTCTime)
-readBundleList path era = do
-	let filename = bundleListFilename path era
+readBundleList :: StorageConf -> BundleList -> IO ([BundleHash], UTCTime)
+readBundleList path bl = do
+	let filename = bundleListFilename path bl
 	ex <- doesFileExist filename	
 	if not ex then return ([],UTCTime (ModifiedJulianDay 0) 0) else do
-		(stamp:bhashes) <- lines <$> readFile filename
+		(stamp:bhashes) <- lines <$> B.unpack <$> B.readFile filename
 		return (bhashes, read stamp)
 
-bundleListFilename path (Left repo)  = bundleListDir path </> "repo_" ++ safeName repo
-bundleListFilename path (Right user) = bundleListDir path </> "user_" ++ safeName user
+bundleListFilename path (RepositoryBundleList repo) =
+	bundleListDir path </> "repo_" ++ safeName repo
+bundleListFilename path (AuthorBundleList author) =
+	bundleListDir path </> "user_" ++ safeName author
+bundleListFilename path UnmatchedBundleList =
+	bundleListDir path </> "unmatched"
 
 bundleDir :: StorageConf -> FilePath
 bundleDir path = path </> "bundles"
