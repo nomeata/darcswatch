@@ -177,7 +177,8 @@ lines_starting_with_ending_with st en s = lswew s
 
 
 dropWhite = B.dropWhile (`elem` " \n\t\r")
-breakOn c = B.break (c ==)
+breakOn :: Char -> ByteString -> (ByteString, ByteString)
+breakOn c = B.break (==c)
 
 breakLast c p = case B.elemIndexEnd c p of
     Nothing -> Nothing
