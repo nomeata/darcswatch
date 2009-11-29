@@ -66,7 +66,7 @@ data BundleInfo = BundleInfo
 	deriving (Eq)
 
 instance Ord BundleInfo where
-	compare = compare `on` (piDate.fst.head.fst.biBundle)
+	compare = compare `on` (map (piDate.fst) . fst . biBundle)
 
 mainPage date
          numPatches
