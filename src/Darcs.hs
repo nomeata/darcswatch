@@ -41,6 +41,8 @@ import Zip
 import Printer
 import SHA1
 
+import Control.Arrow
+
 import qualified Data.ByteString.Char8 as B
 import Data.ByteString.Char8 (ByteString)
 import Data.List
@@ -133,11 +135,10 @@ readPatchInfos inv = case breakOn '[' inv of
 			     Nothing -> []
 
 readPatchInfo :: ByteString -> Maybe (PatchInfo, ByteString)
-readPatchInfo s | B.null (dropWhite s) = Nothing
 readPatchInfo s =
-    if B.head (dropWhite s) /= '[' -- ]
+    if B.null s' || B.head s' /= '[' -- ]
     then Nothing
-    else case breakOn '\n' $ B.tail $ dropWhite s of
+    else case breakOn '\n' (B.tail s') of
          (name,s') | B.null s' -> error $ "Broken file (1) " ++ show (B.unpack s)
          (name,s') | otherwise -> 
              case breakOn '*' $ B.tail s' of
@@ -154,6 +155,7 @@ readPatchInfo s =
                                             , piInverted = not_star
                                             }, s4)
     where dn x = if B.null x || B.head x /= '\n' then x else B.tail x
+    	  s' = dropWhite s
 
 lines_starting_with_ending_with :: Char -> Char -> ByteString -> Maybe ([ByteString],ByteString)
 lines_starting_with_ending_with st en s = lswew s
@@ -258,8 +260,7 @@ get_patches ps =
 
 
 silly_lex :: ByteString -> (String, ByteString)
-silly_lex ps = (B.unpack $ B.takeWhile (/='\n') $ dropWhite ps,
-                           B.dropWhile (/='\n') $ dropWhite ps)
+silly_lex = first B.unpack . B.span (/='\n') . dropWhite
 
 make_context :: [PatchInfo] -> ByteString
 make_context = renderPS . vcat . map showPatchInfo
