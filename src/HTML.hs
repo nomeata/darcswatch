@@ -27,6 +27,7 @@ module HTML
 	, repoFile
 	, patchDiffFile
 	, normalizeAuthor
+	, bundleInfoFilter
 	) where
 
 import Text.XHtml hiding ((!))
