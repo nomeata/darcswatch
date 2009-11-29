@@ -70,7 +70,7 @@ listBundles :: StorageConf -> IO [BundleHash]
 listBundles path = do
 	items <- getDirectoryContents (bundleDir path)
 	return $ map dropExtension
-	       $ filter ( (".bundle" == ) .takeExtension )
+	       $ filter ( (".dpatch" == ) . takeExtension )
 	       $ items
 
 
@@ -154,7 +154,7 @@ bundleDir :: StorageConf -> FilePath
 bundleDir path = path </> "bundles"
 
 bundleBaseName :: BundleHash -> FilePath
-bundleBaseName hash = hash <.> "bundle"
+bundleBaseName hash = hash <.> "dpatch"
 
 bundleFileName :: StorageConf -> BundleHash -> FilePath
 bundleFileName path hash  = bundleDir path </> bundleBaseName hash
