@@ -97,7 +97,7 @@ mainPage date
 	footer (Just date)
 	)
   where userLine (u, tracked, unapplied, obsolete, rejected) =
- 		hotlink (userFile (B.pack u)) << u +++ -- TODO realname
+ 		hotlink (userFile u) << u +++ -- TODO realname
 		" " ++
 		show tracked +++ 
 		" tracked patches, "+++
@@ -284,7 +284,7 @@ patchView p =
 	" " +++
 	small << (
 		" by " +++
-		hotlink (userFile (piAuthor p)) << piAuthor p +++
+		hotlink (userFile (B.unpack (piAuthor p))) << piAuthor p +++
 		" " +++
 		diffShower
 	) +++
@@ -377,18 +377,15 @@ userData u d = (ps, sorted)
 	  where repos = p2pr d !!!! p
 -}
 
-userFile u = "user_" ++ B.unpack (normalizeAuthor u) ++ ".html"
+userFile u = "user_" ++ normalizeAuthor u ++ ".html"
 repoFile r = "repo_" ++ safeName r ++ ".html"
 patchDiffFile p = "diff_" ++ patchBasename p ++ ".txt"
 
-normalizeAuthor name | not (B.null r') && valid = email
-                     | otherwise                = safeNameB name
-  where r' = B.dropWhile (/='<') name
-        (email,r'') = B.span (/='>') (B.tail r')
-	valid = not (B.null email) && not (B.null r'') && B.all (isSafeFileChar) email
-
-safeNameB n = B.map s n
-  where s c = if isSafeFileChar c then c else '_'
+normalizeAuthor name | not (null r') && valid = email
+                     | otherwise              = safeName name
+  where r' = dropWhile (/='<') name
+        (email,r'') = span (/='>') (tail r')
+	valid = not (null email) && not (null r'') && all (isSafeFileChar) email
 
 safeName n = map s n
   where s c = if isSafeFileChar c then c else '_'

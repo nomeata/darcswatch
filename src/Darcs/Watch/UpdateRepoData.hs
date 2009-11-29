@@ -57,7 +57,11 @@ instance Monoid BundleListMap where
 	mappend (BundleListMap m1) (BundleListMap m2) =
 		BundleListMap (M.unionWith (S.union) m1 m2)
 
-addBundleListEntry bl bh = tell (BundleListMap (M.singleton bl (S.singleton bh)))
+addBundleListEntry bl bh =
+	tell (mempty,(BundleListMap (M.singleton bl (S.singleton bh))))
+
+addNameOccurence name =
+	tell (Endo (M.insertWith (maxBy length) (normalizeAuthor name) name), mempty)
 
 forBundleListMap :: Monad m => BundleListMap -> (BundleList -> [BundleHash] -> m ()) -> m ()
 forBundleListMap (BundleListMap m) act = mapM_ (\(bl,bhs) -> act bl (S.toList bhs)) $ M.toList m
@@ -72,7 +76,7 @@ updateRepoData config = do
 
 	bundleHashes <- listBundles (cData config)
 	putStrLn "Detecing bundle state changes..."
-	bundleHashLists <- execWriterT $ forM_ bundleHashes $ \bundleHash -> do
+	(nameSetters, bundleHashLists) <- execWriterT $ forM_ bundleHashes $ \bundleHash -> do
 		bundle  <- liftIO $ getBundle (cData config) bundleHash
 		history <- liftIO $ getBundleHistory (cData config) bundleHash
 
@@ -80,9 +84,10 @@ updateRepoData config = do
 		let patches = map fst (fst bundle)
 
 		forM patches $ \pi -> do
-			let email = B.unpack (normalizeAuthor (piAuthor pi))
+			let email = normalizeAuthor (B.unpack (piAuthor pi))
 			addBundleListEntry (AuthorBundleList email) bundleHash
-		
+			addNameOccurence (B.unpack (piAuthor pi))
+
 		forM repos $ \(repo, inv) -> do
 			let statusQuoAnte = stateOfRepo history repo
 			    statusQuo = 
@@ -113,6 +118,9 @@ updateRepoData config = do
 		writeBundleList (cData config) bl bh	
 	setBundleListList (cData config) (bundleListMapKeys bundleHashLists)
 
+	putStrLn $ "Writing name mapping list..."
+	writeNameMapping (cData config) (appEndo nameSetters M.empty)
+
 -- Clonsider patches as applicable to a repository when either
 --  * all its context is in the repository
 --  * at least 10 patches of the context are in the repository
@@ -121,3 +129,5 @@ applicable inv context =
 		(_,[])                 -> True
 		(m,_) | length m >= 10 -> True
 		_                      -> False
+
+maxBy f v1 v2 = if f v1 >= f v2 then v1 else v2
