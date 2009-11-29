@@ -150,6 +150,9 @@ generateOutput config patchNew = do
         forM_ repos $ \r ->
                 writeFile (cOutput config ++ "/" ++ repoFile r) (repoPage resultData r)
 
+        putStrLn "Writing output (unmatched patches)..."
+	writeFile (cOutput config ++ "/" ++ "unmatched.html") (unmatchedPage resultData)
+
         putStrLn "Writing output (diffs)..."
         forM_ patches $ \p -> do
 		let filename = cOutput config ++ "/" ++ patchDiffFile p 
@@ -157,9 +160,6 @@ generateOutput config patchNew = do
 		unless ex $ do
 			putStrLn $ "Writing new patch file " ++ filename
 			B.writeFile filename (peDiff (p2pe M.! p))
-
-        putStrLn "Writing output (unmatched patches)..."
-	writeFile (cOutput config ++ "/" ++ "unmatched.html") (unmatchedPage resultData)
 
         putStrLn "Linking patches"
         let patchLink (p,pe) = do
