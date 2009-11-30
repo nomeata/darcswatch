@@ -34,14 +34,23 @@ mailSubscriptions config repo bundleHash bundle history status =
 			[] -> "Applied: Patch bundle"
 		   	sj -> "Applied: " ++ fixUpSubject (last sj)
 	body = case status of
-		Applied ->    "This patch bundle (with " ++ show (length (fst bundle)) ++
-			      " patches) was just applied to the repository " ++ repo ++
+		Applied ->    "This " ++
+			       (if length (fst bundle) ==  1
+			       	then "1-patch"
+				else show (length (fst bundle)) ++ "-patches") ++ 
+			       " bundle was just applied to " ++ repo ++
 			      ":\n\n" ++
-			      unlines (map (B.unpack .make_patch . fst) (fst bundle)) ++
-			      "\nThis message was brought to you by DarcsWatch\n" ++
+			      concatMap showPatch (fst bundle) ++
+			      "\n-- \n" ++
+			      "This message was brought to you by DarcsWatch\n" ++
 			      bundleURL config repo bundleHash
         numPatches = length (fst bundle)
 	references = mapMaybe extractMessageId history
+	showPatch (pi,_) =
+		B.unpack (piDate pi) ++ "  " ++ B.unpack (piAuthor pi) ++ "\n" ++
+		" * " ++ B.unpack (piName pi) ++ "\n" ++
+		unlines (map ((' ':). B.unpack) (stripIgnorethis (piLog pi))) ++
+		"\n"
 
 sendMail ::  String -> IO ()
 sendMail text = do

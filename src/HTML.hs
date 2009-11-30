@@ -30,6 +30,7 @@ module HTML
 	, bundleInfoFilter
 	, maxState
 	, bundleURL
+	, stripIgnorethis
 	) where
 
 import Text.XHtml hiding ((!))
@@ -305,10 +306,6 @@ patchView nameMapping p =
 		!!! [identifier diffShowerId, theclass "diffshower", href "javascript:"]
 		<< "Show/Hide diff"
 	log  = stripIgnorethis (piLog p)
-	stripIgnorethis [] = []
-	stripIgnorethis (x:xs) | B.pack "Ignore-this:" `B.isPrefixOf` x = stripIgnorethis xs
-		               | B.null x                               = stripIgnorethis xs
-	                       | otherwise                              = x:xs
 
 maxState history = maximum $ New : map (\(_,_,s) -> s) history
 
@@ -408,6 +405,11 @@ patchSort = sortBy (flip (compare `on` piDate))
 
 bundleURL :: DarcsWatchConfig -> RepositoryURL -> BundleHash -> String
 bundleURL config repo hash = cDarcsWatchURL config ++ repoFile repo ++ "#bundle-" ++ hash
+
+stripIgnorethis [] = []
+stripIgnorethis (x:xs) | B.pack "Ignore-this:" `B.isPrefixOf` x = stripIgnorethis xs
+		       | B.null x                               = stripIgnorethis xs
+		       | otherwise                              = x:xs
 
 instance HTML ByteString where
 	toHtml = toHtml . B.unpack
