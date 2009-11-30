@@ -29,6 +29,7 @@ module HTML
 	, normalizeAuthor
 	, bundleInfoFilter
 	, maxState
+	, bundleURL
 	) where
 
 import Text.XHtml hiding ((!))
@@ -404,6 +405,9 @@ isSafeFileChar c = isAlpha c || isDigit c || c `elem` "-_.@:"
 
 s2List = patchSort . S.toList
 patchSort = sortBy (flip (compare `on` piDate))
+
+bundleURL :: DarcsWatchConfig -> RepositoryURL -> BundleHash -> String
+bundleURL config repo hash = cDarcsWatchURL config ++ repoFile repo ++ "#bundle-" ++ hash
 
 instance HTML ByteString where
 	toHtml = toHtml . B.unpack

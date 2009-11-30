@@ -11,10 +11,10 @@ import Darcs.Watch.Data
 import Darcs
 import HTML
 
-tellRoundup :: DarcsWatchConfig -> String -> RepositoryURL -> PatchBundle -> BundleState -> IO ()
-tellRoundup _      _   _    _      status | status `notElem` [Applied, Applicable] = return ()
-tellRoundup _      url _    _      _      | not $ "http://bugs.darcs.net/" `isPrefixOf` url = return ()
-tellRoundup config url repo bundle status = do
+tellRoundup :: DarcsWatchConfig -> String -> RepositoryURL -> BundleHash -> PatchBundle -> BundleState -> IO ()
+tellRoundup _      _   _    _          _      status | status `notElem` [Applied, Applicable] = return ()
+tellRoundup _      url _    _          _      _      | not $ "http://bugs.darcs.net/" `isPrefixOf` url = return ()
+tellRoundup config url repo bundleHash bundle status = do
 	message <- flatten [mk_header ["From: " ++ from]
 	                   ,mk_header ["To: " ++ to]
 			   ,mk_header ["Subject: " ++ subject]
@@ -33,8 +33,9 @@ tellRoundup config url repo bundle status = do
 		Applied ->    "This patch bundle (with " ++ show (length (fst bundle)) ++
 			      " patches) was just applied to the repository " ++ repo ++".\n" ++
 			      "This message was brought to you by " ++
-			      "DarcsWatch\n" ++ bundleLink
-	bundleLink = cDarcsWatchURL config ++ repoFile repo
+			      "DarcsWatch\n" ++
+			      bundleLink
+	bundleLink = bundleURL config repo bundleHash
         numPatches = length (fst bundle)
 	doSend = status `elem` [Applicable, Applied]
 	roundupId = drop (length "http://bugs.darcs.net/") url

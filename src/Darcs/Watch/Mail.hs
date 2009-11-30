@@ -14,9 +14,10 @@ import Darcs.Watch.Data
 import Darcs
 import HTML
 
-mailSubscriptions :: DarcsWatchConfig -> RepositoryURL -> PatchBundle -> [BundleHistory] -> BundleState -> IO ()
-mailSubscriptions _      _    _      _       status | status `notElem` [Applied] = return ()
-mailSubscriptions config repo bundle history status = 
+mailSubscriptions :: DarcsWatchConfig -> RepositoryURL -> BundleHash -> PatchBundle -> [BundleHistory] -> BundleState -> IO ()
+mailSubscriptions _      _    _          _      _       status
+	| status `notElem` [Applied] = return ()
+mailSubscriptions config repo bundleHash bundle history status = 
 	forM_ (map snd (filter (\(r,m) -> r == repo) (cRepoSubscriptions config))) $ \to -> do
 		message <- flatten [mk_header ["From: " ++ from]
 				   ,mk_header ["To: " ++ to]
@@ -38,8 +39,7 @@ mailSubscriptions config repo bundle history status =
 			      ":\n\n" ++
 			      unlines (map (B.unpack .make_patch . fst) (fst bundle)) ++
 			      "\nThis message was brought to you by DarcsWatch\n" ++
-			      bundleLink
-	bundleLink = cDarcsWatchURL config ++ repoFile repo
+			      bundleURL config repo bundleHash
         numPatches = length (fst bundle)
 	references = mapMaybe extractMessageId history
 

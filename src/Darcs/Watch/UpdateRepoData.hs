@@ -108,9 +108,9 @@ updateRepoData config = do
 				case haveRoundupURL history of
 					Nothing -> return ()
 					Just url -> 
-					  	tellRoundup config url repo bundle statusQuo
+					  	tellRoundup config url repo bundleHash bundle statusQuo
 				
-				mailSubscriptions config repo bundle history statusQuo
+				mailSubscriptions config repo bundleHash bundle history statusQuo
 
 			when (statusQuo /= New) $
 				addBundleListEntry (RepositoryBundleList repo) bundleHash
