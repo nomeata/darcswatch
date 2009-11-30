@@ -253,7 +253,8 @@ showSource (ViaEMail from to subject mmid) = " via " +++
 showSource ManualImport = toHtml "via a manual import"
 
 bundleView nameMapping (BundleInfo bundleHash (ps,ctx) bundleFileName history) = 
-	p << (strong << "Contents:" +++
+	p << (anchor !!! [name ("bundle-" ++ bundleHash)] << noHtml +++
+	     strong << "Contents:" +++
 	     " (" +++
 	     (if length ps == 1
 	      then "1 patch"
