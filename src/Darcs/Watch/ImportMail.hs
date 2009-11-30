@@ -63,7 +63,7 @@ importMail config  = do
 			  Just url -> do
 				history <- getBundleHistory (cData config) bhash
 				forM_ (repoStates history) $ \(repo,state) -> 	
-					tellRoundup config url repo bundle state
+					tellRoundup config url repo bhash bundle state
 			  	changeBundleState (cData config) bhash
 			  		(ViaBugtracker url) New
 			changeBundleState (cData config) bhash emailSource state
