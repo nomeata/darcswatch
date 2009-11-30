@@ -20,7 +20,7 @@ tellRoundup config url repo bundleHash bundle status = do
 			   ,mk_header ["Subject: " ++ subject]
 			   ] body Nothing []
 	if cSendMails config
-	  then do when doSend $ sendMail message
+	  then do sendMail message
 	  else do hPutStrLn stderr "Would send this message:"
 	          hPutStrLn stderr message
   where from = cDarcsWatchAddress config
@@ -37,7 +37,6 @@ tellRoundup config url repo bundleHash bundle status = do
 			      bundleLink
 	bundleLink = bundleURL config repo bundleHash
         numPatches = length (fst bundle)
-	doSend = status `elem` [Applicable, Applied]
 	roundupId = drop (length "http://bugs.darcs.net/") url
 
 sendMail ::  String -> IO ()
