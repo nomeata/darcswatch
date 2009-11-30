@@ -28,7 +28,7 @@ type BundleHash = String
 type StorageConf = String
 
 -- | A history entry is a state change
-type BundleHistory = (UTCTime, Source, BundleState)
+type BundleHistory = (ZonedTime, Source, BundleState)
 
 data BundleState
 	= New

@@ -65,7 +65,9 @@ data BundleInfo = BundleInfo
 	, biFileName :: FilePath
 	, biHistory :: [BundleHistory]
 	}
-	deriving (Eq)
+
+instance Eq BundleInfo where
+	(==) = (==) `on` biBundleHash
 
 instance Ord BundleInfo where
 	compare = compare `on` (map (piDate.fst) . fst . biBundle)
@@ -406,4 +408,7 @@ instance HTML ByteString where
 	toHtml = toHtml . B.unpack
 
 instance HTML UTCTime where
+	toHtml = toHtml . formatTime defaultTimeLocale "%c" 
+
+instance HTML ZonedTime where
 	toHtml = toHtml . formatTime defaultTimeLocale "%c" 

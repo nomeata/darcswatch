@@ -61,7 +61,7 @@ getBundleHistory path hash =
 changeBundleState :: StorageConf -> BundleHash -> Source -> BundleState -> IO ()
 changeBundleState path hash source state = do
 	history <- getBundleHistory path hash
-	now <- getCurrentTime
+	now <- getZonedTime
 	B.writeFile (bundleDir path </> hash <.> "data") $ B.pack $ show $
 		(now, source, state) : history
 		
