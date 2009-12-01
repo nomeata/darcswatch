@@ -1,5 +1,5 @@
 Name:            darcswatch
-version:         0.3
+version:         0.4
 Category:        Distribution
 name:            darcswatch
 author:          Joachim Breitner
@@ -20,6 +20,10 @@ Description:     DarcsWatch is a tool to track the state of darcs patches
                  * Download link for each patch, to apply without searching for the email.
                  .
                  * Knows about inverse and amend-recorded patches and uses them to consider
+                 .
+                 * Integrates into http://bugs.darcs.net/
+                 .
+                 * Optionally sends out mails to mailing lists when a patch is applied to a repository
                  patches obsolete.
 Homepage:        http://darcswatch.nomeata.de/
 Cabal-Version:   >= 1.6
