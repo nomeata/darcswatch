@@ -30,7 +30,6 @@ import System.FilePath
 import System.Directory
 import Data.List
 import Control.Applicative
-import System.Directory
 import Control.Monad
 import Data.Char
 
