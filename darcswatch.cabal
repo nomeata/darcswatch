@@ -1,5 +1,5 @@
 Name:            darcswatch
-version:         0.4.2
+version:         0.4.3
 Category:        Distribution
 name:            darcswatch
 author:          Joachim Breitner
@@ -59,6 +59,7 @@ Executable darcswatch-generate
                         , Darcs.Watch.ImportMail
                         , Darcs.Watch.UpdateRepoData
                         , Darcs.Watch.Storage
+                        , Darcs.Watch.Mail
         Build-Depends:  base > 3 && < 4
                         , network
                         , HTTP >= 4000
