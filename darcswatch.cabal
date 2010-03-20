@@ -1,5 +1,5 @@
 Name:            darcswatch
-version:         0.4.1
+version:         0.4.2
 Category:        Distribution
 name:            darcswatch
 author:          Joachim Breitner
@@ -51,6 +51,7 @@ Executable darcswatch-generate
                         , SHA1
                         , ByteStringUtils
                         , Zip
+                        , Printer
                         , Darcs.Watch.Roundup
                         , Darcs.Watch.GenerateOutput
                         , Darcs.Watch.Data
