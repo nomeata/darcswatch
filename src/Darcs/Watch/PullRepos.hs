@@ -68,4 +68,13 @@ pullRepos config = do
 
 {- forkSequence = sequence -}
 -- Enable for parallel downloads
-forkSequence acts = mapM (\act -> newEmptyMVar >>= \mvar -> forkIO (act >>= putMVar mvar) >> return mvar) acts >>= mapM takeMVar
+forkSequence acts = do
+    sem <- newQSem 5
+    mvars <- forM acts $ \act -> do
+        mvar <- newEmptyMVar
+        forkIO $ do 
+            waitQSem sem
+            act >>= putMVar mvar
+            signalQSem sem
+        return mvar
+    mapM takeMVar mvars
