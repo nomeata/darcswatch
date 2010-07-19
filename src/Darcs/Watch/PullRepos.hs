@@ -22,6 +22,8 @@ module Darcs.Watch.PullRepos where
 import Control.Monad
 import Control.Concurrent
 import Control.Applicative
+import Control.Exception
+import Prelude hiding (catch)
 import System.Environment (getArgs)
 import System.Directory
 import System.Posix.Files
@@ -74,7 +76,8 @@ forkSequence acts = do
         mvar <- newEmptyMVar
         forkIO $ do 
             waitQSem sem
-            act >>= putMVar mvar
+            catch (act >>= putMVar mvar) (\e -> putMVar mvar (throw e))
+
             signalQSem sem
         return mvar
     mapM takeMVar mvars
