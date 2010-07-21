@@ -28,6 +28,7 @@ import System.IO
 import System.IO.Error
 import System.Posix.Temp
 import Control.Monad
+import Control.Exception (finally)
 import GHC.IOBase
 
 -- | tries to get the lock. If it fails, notifies the running process
@@ -95,8 +96,7 @@ lockRestart dir event combine verbose action = do
 	    workAndCheck event
 	  else
 	    when verbose $ putStrLn "Could not get locked, signaled restart"
-  where workAndCheck event = do
-        action event
+  where workAndCheck event = finally (action event) $ do
 	when verbose $ putStrLn "Trying to release the lock..."
 	msgs <- releaseLock dir
 	if null msgs then do

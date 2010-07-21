@@ -77,7 +77,6 @@ forkSequence acts = do
         forkIO $ do 
             waitQSem sem
             catch (act >>= putMVar mvar) (\e -> putMVar mvar (throw e))
-
             signalQSem sem
         return mvar
     mapM takeMVar mvars
