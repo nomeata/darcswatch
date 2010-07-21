@@ -60,9 +60,11 @@ pullRepos config = do
         putStrLn "Updating repositories..."
 	let updateRepo rep = do
                 writeC $ "Updating " ++ rep ++ ":\n"
-		thisNew <- updateRepository (cData config) writeC rep
-		writeC (if thisNew then "Repostory is new.\n" else "Repository is cached.\n")
-		return thisNew
+		catch ( do
+			thisNew <- updateRepository (cData config) writeC rep
+			writeC (if thisNew then "Repostory is new.\n" else "Repository is cached.\n")
+			return thisNew
+		 ) (\e -> writeC ("Error Updateing " ++ rep ++ ": " ++ show e ++ "\n") >> return False)
 	new <- or <$> forkSequence (map updateRepo (cRepositories config))
 
         unless new $ putStrLn "Nothing new found"
