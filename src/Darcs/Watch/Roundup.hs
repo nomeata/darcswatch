@@ -14,6 +14,7 @@ import HTML
 tellRoundup :: DarcsWatchConfig -> String -> RepositoryURL -> BundleHash -> PatchBundle -> BundleState -> IO ()
 tellRoundup _      _   _    _          _      status | status `notElem` [Applied, Applicable] = return ()
 tellRoundup _      url _    _          _      _      | not $ "http://bugs.darcs.net/" `isPrefixOf` url = return ()
+tellRoundup _      _   repo _          _      status | repo == "http://darcs.net/screened" && status == Applicable = return () -- No applicable mails for the screened repo
 tellRoundup config url repo bundleHash bundle status = do
 	message <- flatten [mk_header ["From: " ++ from]
 	                   ,mk_header ["To: " ++ to]
@@ -27,7 +28,9 @@ tellRoundup config url repo bundleHash bundle status = do
         to = "bugs@darcs.net"
 	subject = case status of
 	 	   Applicable -> "This patch is being tracked by DarcsWatch [" ++ roundupId ++ "] [darcswatchurl=" ++ bundleLink ++ "]"
-		   Applied -> "This patch has been applied [" ++ roundupId ++ "] [status=accepted]"
+		   Applied -> "This patch has been applied [" ++ roundupId ++ "] [status=" ++ roundupStatus ++ "]"
+        roundupStatus | repo == "http://darcs.net/screened" = "needs-review"
+                      | otherwise                           = "accepted"
 	body = case status of
 		Applicable -> "" -- no messages about this, please
 		Applied ->    "This patch bundle (with " ++ show (length (fst bundle)) ++
