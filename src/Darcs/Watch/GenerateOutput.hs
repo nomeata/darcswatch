@@ -108,7 +108,7 @@ generateOutput config patchNew = do
 		(bundleHashes,_) <- readBundleList (cData config) (RepositoryBundleList r)
 		bundleInfos <- mapM getBundleInfos bundleHashes
 		inv <- readRepository (cData config) r
-		return $ strict6 (,,,,,) 
+		return $! strict6 (,,,,,) 
 			r
 			(length inv)
 			(length $ bundleInfoFilter Applied bundleInfos)
@@ -118,7 +118,7 @@ generateOutput config patchNew = do
 	userData <- forM authors $ \u -> do
 		(bundleHashes,_) <- readBundleList (cData config) (AuthorBundleList u)
 		bundleInfos <- mapM getBundleInfos bundleHashes
-		return $ strict5 (,,,,) 
+		return $! strict5 (,,,,) 
 			u
 			(length bundleInfos)
 			(length (bundleInfoFilter Applicable bundleInfos))

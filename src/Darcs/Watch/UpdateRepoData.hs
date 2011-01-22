@@ -41,7 +41,7 @@ import Data.ByteString.Char8 (ByteString)
 import Data.Digest.OpenSSL.MD5 (md5sum)
 import Data.Maybe
 import System.FilePath
-import Control.Monad.Writer
+import Control.Monad.Writer.Strict
 
 -- Darcs stuff
 import Darcs
