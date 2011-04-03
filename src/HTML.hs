@@ -118,7 +118,8 @@ mainPage date
 		count Applied "tracked" tracked +++
 		count Applicable "applicable" applicable +++
 		count Obsoleted "obsolete" obsolete +++
-		count Rejected "rejected" rejected
+		count Rejected "rejected" rejected +++ " " +++
+                hotlink ("http://handra.rampa.sk/dawb/changes?repoPage=0&repoURL=" ++ r ++ "&repoSummary=on&repoLimit=50&repoElem=&repoRegex=") << "view repo"
 	count s t 0 = noHtml
 	count s t n = inColor (stateColor s) << (show n +++ " " +++ t) +++ " "
 
@@ -179,7 +180,8 @@ repoPage date nameMapping r repoInfo bundleInfos = showHtml $
 	) +++
    body << form !!! [ method "GET", action "cgi"] << (
 	h1 << ("DarcsWatch overview for " +++ r) +++
-	p << hotlink "." << "Return to main page" +++
+	p << (hotlink "." << "Return to main page" +++ " " +++
+              hotlink ("http://handra.rampa.sk/dawb/changes?repoPage=0&repoURL=" ++ r ++ "&repoSummary=on&repoLimit=50&repoElem=&repoRegex=") << "View repository") +++
 	bundleList nameMapping "Unapplied patch bundles" (bundleInfoFilter Applicable bundleInfos) +++ 
 	bundleList nameMapping "Applied patch bundles" (bundleInfoFilter Applied bundleInfos) +++ 
 	bundleList nameMapping "Obsoleted patch bundles" (bundleInfoFilter Obsoleted bundleInfos) +++ 
