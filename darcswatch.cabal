@@ -60,7 +60,7 @@ Executable darcswatch-generate
                         , Darcs.Watch.UpdateRepoData
                         , Darcs.Watch.Storage
                         , Darcs.Watch.Mail
-        Build-Depends:  base > 3 && < 4
+        Build-Depends:  base == 4.*
                         , network
                         , HTTP >= 4000
                         , old-time

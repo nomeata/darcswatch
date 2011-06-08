@@ -64,7 +64,7 @@ pullRepos config = do
 			thisNew <- updateRepository (cData config) writeC rep
 			writeC (if thisNew then "Repostory is new.\n" else "Repository is cached.\n")
 			return thisNew
-		 ) (\e -> writeC ("Error Updateing " ++ rep ++ ": " ++ show e ++ "\n") >> return False)
+		 ) (\e -> writeC ("Error Updateing " ++ rep ++ ": " ++ show (e::SomeException) ++ "\n") >> return False)
 	new <- or <$> forkSequence (map updateRepo (cRepositories config))
 
         unless new $ putStrLn "Nothing new found"
@@ -78,7 +78,7 @@ forkSequence acts = do
         mvar <- newEmptyMVar
         forkIO $ do 
             waitQSem sem
-            catch (act >>= putMVar mvar) (\e -> putMVar mvar (throw e))
+            catch (act >>= putMVar mvar) (\e -> putMVar mvar (throw (e::SomeException)))
             signalQSem sem
         return mvar
     mapM takeMVar mvars
