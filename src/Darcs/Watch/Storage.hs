@@ -55,7 +55,8 @@ getBundle path hash =
 -- | Retrieves the meta information for the handle
 getBundleHistory :: StorageConf -> BundleHash -> IO [BundleHistory]
 getBundleHistory path hash =
-	readNote "Bundle data" <$> B.unpack <$> B.readFile (bundleDir path </> hash <.> "data")
+        let filename = bundleDir path </> hash <.> "data"
+	in  readNote ("Bundle data in " ++ filename) <$> B.unpack <$> B.readFile filename
 
 -- | Adds a new entry to the bundle history (stamped with the current time)
 changeBundleState :: StorageConf -> BundleHash -> Source -> BundleState -> IO ()
@@ -80,7 +81,7 @@ updateRepository path write repo = do
 	let infoFile = repoDir path </> safeName repo <.> "data"
 	let repoFile = repoDir path </> safeName repo <.> "inventory"
 	ex <- doesFileExist infoFile
-	info <- if ex then readNote "Repo data" . B.unpack <$> B.readFile infoFile
+	info <- if ex then readNote ("Repo data in " ++ infoFile) . B.unpack <$> B.readFile infoFile
                       else return (RepositoryInfo Nothing Nothing)
 	now <- getCurrentTime
 	(ps,changed) <- getInventory write (cacheDir path) repo
@@ -102,7 +103,7 @@ getRepositoryInfo :: StorageConf -> RepositoryURL -> IO RepositoryInfo
 getRepositoryInfo path repo = do
 	let infoFile = repoDir path </> safeName repo <.> "data"
 	ex <- doesFileExist infoFile
-	if ex then readNote "Repo data" . B.unpack <$> B.readFile infoFile
+	if ex then readNote ("Repo data in " ++ infoFile) . B.unpack <$> B.readFile infoFile
 	      else return (RepositoryInfo Nothing Nothing)
 
 setBundleListList :: StorageConf -> [BundleList] -> IO ()
@@ -111,7 +112,8 @@ setBundleListList path bll = do
 
 getBundleListList :: StorageConf -> IO [BundleList]
 getBundleListList path = do
-	readNote "Bundle index" <$> B.unpack <$> B.readFile (bundleListDir path </> "index")
+        let indexFile = bundleListDir path </> "index"
+	readNote ("Bundle index in " ++ indexFile)  <$> B.unpack <$> B.readFile indexFile
 
 writeBundleList :: StorageConf -> BundleList -> [BundleHash] -> IO ()
 writeBundleList path bl blist = do
@@ -128,7 +130,7 @@ readBundleList path bl = do
 	ex <- doesFileExist filename	
 	if not ex then return ([],UTCTime (ModifiedJulianDay 0) 0) else do
 		(stamp:bhashes) <- lines <$> B.unpack <$> B.readFile filename
-		return (bhashes, readNote "Bundle list stamp" stamp)
+		return (bhashes, readNote ("Bundle list stamp in " ++ filename) stamp)
 
 writeNameMapping :: StorageConf -> M.Map Author String -> IO ()
 writeNameMapping path map = do
@@ -139,7 +141,7 @@ readNameMapping path = do
 	let filename = nameMappingFilename path
 	ex <- doesFileExist filename	
 	if not ex then return M.empty else 
-		readNote "Name mapping file" <$> B.unpack <$> B.readFile filename
+		readNote ("Name mapping in " ++ filename) <$> B.unpack <$> B.readFile filename
 
 bundleListFilename path (RepositoryBundleList repo) =
 	bundleListDir path </> "repo_" ++ safeName repo
