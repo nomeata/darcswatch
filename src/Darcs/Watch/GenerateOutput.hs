@@ -40,6 +40,7 @@ import Data.Digest.OpenSSL.MD5 (md5sum)
 import Data.Maybe
 import Data.Monoid
 import System.FilePath
+import Safe
 
 import qualified Data.ByteString.Char8 as B
 import Data.ByteString.Char8 (ByteString)
@@ -55,7 +56,7 @@ generateOutput config patchNew = do
 	nowStamp <- getCurrentTime
 	let outputStampFile = cData config </> "output.stamp"
 	ex <- doesFileExist outputStampFile
-	lastStamp <- if ex then read . B.unpack <$> B.readFile outputStampFile
+	lastStamp <- if ex then readNote "output.stamp" . B.unpack <$> B.readFile outputStampFile
 	                   else return $ UTCTime (ModifiedJulianDay 0) 0
 
 	date <- getClockTime >>= toCalendarTime

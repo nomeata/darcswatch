@@ -27,6 +27,7 @@ import System.Posix.Files
 import System.Time
 import System.IO
 import System.Terminal.Concurrent
+import Safe
 
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -55,6 +56,6 @@ main = do
                         [confdir] -> confdir
                         _         -> error "Use darcswatch confdir/"
         putStrLn "Reading configuration..."
-        config <- read `fmap` readFile (confdir </> "config")
+        config <- readNote "reading Configuration" `fmap` readFile (confdir </> "config")
 
 	updateRepoData config

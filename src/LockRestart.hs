@@ -30,6 +30,7 @@ import System.Posix.Temp
 import Control.Monad
 import Control.Exception (finally)
 import GHC.IOBase
+import Safe
 
 -- | tries to get the lock. If it fails, notifies the running process
 --   to re-start itself afterwards, with the given information
@@ -64,7 +65,7 @@ releaseLock dir = do
       mapM (\f -> do
     	c <- readFile f
         when (c==c) $ removeFile f
-        return (read c)
+        return (readNote "in releaseLock" c)
         ) files
   where interesting "." = False
         interesting ".." = False

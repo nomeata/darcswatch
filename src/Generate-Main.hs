@@ -36,6 +36,10 @@ import Data.Char
 import Data.List
 import Data.Time
 import System.FilePath
+import Safe
+import Data.Digest.OpenSSL.MD5 (md5sum)
+import Data.Maybe
+
 
 import qualified Data.ByteString.Char8 as B
 import Data.ByteString.Char8 (ByteString)
@@ -46,9 +50,6 @@ import Darcs.Watch.GenerateOutput
 import Darcs.Watch.Data
 import LockRestart
 
-import Data.Digest.OpenSSL.MD5 (md5sum)
-import Data.Maybe
-
 
 main = do
 	hSetBuffering stdout NoBuffering
@@ -58,6 +59,6 @@ main = do
                         [confdir, "new"] -> (addSlash confdir, True)
                         _         -> error "Use darcswatch confdir/"
         putStrLn "Reading configuration..."
-        config <- read `fmap` readFile (confdir ++ "config")
+        config <- readNote "reading Configuration" `fmap` readFile (confdir ++ "config")
 
 	lockRestart (cData config) patchNew or True (generateOutput config)

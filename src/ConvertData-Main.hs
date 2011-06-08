@@ -25,10 +25,11 @@ import System.Environment
 import System.Directory
 import Control.Monad
 import qualified Data.ByteString.Char8 as B
+import Safe
+import Data.Maybe
 
 import Darcs.Watch.Data
 import Darcs.Watch.Storage
-import Data.Maybe
 
 main = do
 	args <- getArgs
@@ -36,7 +37,7 @@ main = do
                         [confdir] -> (addSlash confdir)
                         _         -> error "Use convert confdir/"
         putStrLn "Reading configuration..."
-        config <- read `fmap` readFile (confdir ++ "config")
+        config <- readNote "reading Configuration" `fmap` readFile (confdir ++ "config")
 
 	putStrLn "Reading emails..."
         mailFiles' <- getDirectoryFiles (cMails config)

@@ -23,6 +23,7 @@ import System.Environment
 import System.FilePath
 import Network.CGI
 import Control.Applicative
+import Safe
 
 import Darcs.Watch.Storage
 import Darcs.Watch.Data
@@ -31,8 +32,7 @@ import HTML
 main = do
 	confdir <- getEnv "HTTP_DARCSWATCH_DIR"
 
-        config <- read `fmap` readFile (confdir </> "config") :: IO DarcsWatchConfig
-
+        config <- readNote "reading Configuration" `fmap` readFile (confdir </> "config") :: IO DarcsWatchConfig
 	
 	runCGI $ handleErrors $ authenticated config $ \openID -> do
 

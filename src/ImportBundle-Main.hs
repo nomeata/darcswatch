@@ -27,6 +27,7 @@ import Control.Monad
 import qualified Data.ByteString.Char8 as B
 import Data.Maybe
 import System.FilePath
+import Safe
 
 import Darcs.Watch.Data
 import Darcs.Watch.Storage
@@ -37,7 +38,7 @@ main = do
                         [confdir, file] -> (confdir, file)
                         _         -> error "Use convert confdir/ patchfile"
         putStrLn "Reading configuration..."
-        config <- read `fmap` readFile (confdir </> "config")
+        config <- readNote "reading Configuration" `fmap` readFile (confdir </> "config")
 
 	putStrLn "Reading patch bundle..."
 	mail <- B.readFile file

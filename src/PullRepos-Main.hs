@@ -34,6 +34,7 @@ import qualified MultiMap as MM
 import MultiMap ((!!!!))
 import Data.Char
 import Data.List
+import Safe
 
 import qualified Data.ByteString.Char8 as B
 import Data.ByteString.Char8 (ByteString)
@@ -56,7 +57,7 @@ main = do
                         [confdir] -> confdir
                         _         -> error "Use darcswatch confdir/"
         putStrLn "Reading configuration..."
-        config <- read `fmap` readFile (confdir </> "config")
+        config <- readNote "reading Configuration" `fmap` readFile (confdir </> "config")
 
 	new <- pullRepos config
 	when new $ do

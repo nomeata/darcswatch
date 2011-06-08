@@ -23,6 +23,7 @@ import Control.Monad
 import Data.Maybe
 import System.FilePath
 import System.Posix.IO
+import Safe
 
 import Darcs.Watch.Data
 import Darcs.Watch.ImportMail
@@ -35,7 +36,7 @@ main = do
         let (confdir) = case args of
                         [confdir] -> (confdir)
                         _         -> error "Use import-mail confdir/ and pipe mail to it"
-        config <- read `fmap` readFile (confdir </> "config")
+        config <- readNote "reading Configuration" `fmap` readFile (confdir </> "config")
 	foundMail <- importMail config
 	when foundMail $ do
 		-- We do not want output here
