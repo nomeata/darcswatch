@@ -55,7 +55,7 @@ importMail config  = do
 	    emailSource = ViaEMail from to subject mid
 	case mpatch of
 		Just bundleData -> do
-			let Right bundle = scan_bundle (B.pack bundleData)
+			let bundle = either error id $ scan_bundle (B.pack bundleData)
 			    roundupURL = findRoundupURL message
 			bhash <- addBundle (cData config) bundle
 			case roundupURL of
